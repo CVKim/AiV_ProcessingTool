@@ -193,7 +193,6 @@ class WorkerThread(QThread):
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("작업 중지됨.")
 
-
 class NGSortingDialog(QDialog):
     def __init__(self):
         super().__init__()
