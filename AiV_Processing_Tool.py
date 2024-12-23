@@ -6,14 +6,17 @@ import logging
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog,
     QProgressBar, QMessageBox, QLabel, QHBoxLayout, QTextEdit,
-    QDialog, QFormLayout, QLineEdit, QSpinBox, QCheckBox
+    QDialog, QFormLayout, QLineEdit, QSpinBox, QCheckBox, QListWidget, QListWidgetItem
 )
-from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QIcon
 from PIL import Image
+from datetime import datetime
 
+# 로깅 설정
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s:%(levelname)s:%(message)s')
+
 
 class WorkerThread(QThread):
     progress = pyqtSignal(int)
@@ -36,6 +39,8 @@ class WorkerThread(QThread):
                 self.image_format_copy(self.task)
             elif operation == 'simulation_foldering':
                 self.simulation_foldering(self.task)
+            elif operation == 'ng_count':
+                self.ng_count(self.task)
             else:
                 self.log.emit(f"알 수 없는 작업 유형: {operation}")
                 self.finished.emit("알 수 없는 작업 유형.")
@@ -48,37 +53,45 @@ class WorkerThread(QThread):
         self._is_stopped = True
 
     def ng_folder_sorting(self, task):
-        inputs = task['inputs']
-        outputs = task['outputs']
+        inputs = task['inputs']  # List of selected subfolders (full paths)
+        source2 = task['source2']  # Single source path #2 folder
+        target = task['target']
         self.log.emit("NG Folder Sorting 작업 시작")
         total_tasks = len(inputs)
-        for i, (inp, outp) in enumerate(zip(inputs, outputs), start=1):
+        total_processed = 0  # 총 복사한 폴더 수
+        for i, src_folder in enumerate(inputs, start=1):
             if self._is_stopped:
                 self.log.emit("작업이 중지되었습니다.")
-                self.finished.emit("작업 중지됨.")
+                self.finished.emit(f"작업 중지됨. 총 복사한 폴더: {total_processed}")
                 return
-            self.log.emit(f"Processing {inp} -> {outp}")
-            if not os.path.exists(inp):
-                self.log.emit(f"Input 경로 존재하지 않음: {inp}")
-                continue
-            if not os.path.exists(outp):
-                os.makedirs(outp, exist_ok=True)
-            # 복사 작업
+            folder_name = os.path.basename(src_folder)
+            self.log.emit(f"Processing folder name: {folder_name}")
+            # 소스 경로 #2에서 동일한 폴더 이름을 가진 폴더 찾기 (NG, OK 제외)
             try:
-                for item in os.listdir(inp):
-                    src_path = os.path.join(inp, item)
-                    dst_path = os.path.join(outp, item)
-                    if os.path.isdir(src_path):
-                        shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
-                    else:
-                        shutil.copy2(src_path, dst_path)
-                self.log.emit(f"Copied {inp} to {outp}")
+                if not os.path.exists(source2):
+                    self.log.emit(f"Source Path #2 경로 존재하지 않음: {source2}")
+                    continue
+                matching_folders = [f for f in os.listdir(source2) 
+                                    if f == folder_name and 
+                                    f not in ['NG', 'OK'] and 
+                                    os.path.isdir(os.path.join(source2, f))]
+                if not matching_folders:
+                    self.log.emit(f"No matching folder named '{folder_name}' found in Source Path #2.")
+                    continue
+                for match_folder in matching_folders:
+                    src_path = os.path.join(source2, match_folder)
+                    dst_path = os.path.join(target, match_folder)
+                    if not os.path.exists(dst_path):
+                        os.makedirs(dst_path, exist_ok=True)
+                    shutil.copytree(src_path, dst_path, dirs_exist_ok=True)  # 덮어쓰기
+                    self.log.emit(f"Copied {src_path} to {dst_path}")
+                    total_processed += 1
             except Exception as e:
                 logging.error("NG Folder Sorting 중 오류", exc_info=True)
                 self.log.emit(f"오류 발생: {str(e)}")
             progress_percent = int((i / total_tasks) * 100)
             self.progress.emit(progress_percent)
-        self.finished.emit("NG Folder Sorting 완료.")
+        self.finished.emit(f"NG Folder Sorting 완료. 총 복사한 폴더: {total_processed}")
 
     def date_based_copy(self, task):
         source = task['source']
@@ -90,29 +103,55 @@ class WorkerThread(QThread):
         minute = task['minute']
         second = task['second']
         count = task['count']
+        formats = task['formats']  # 이미지 포맷 필터링
         self.log.emit("Date-Based Copy 작업 시작")
         if not os.path.exists(source):
             self.log.emit(f"Source 경로 존재하지 않음: {source}")
             self.finished.emit("작업 중지됨.")
             return
-        # 특정 날짜 기준으로 폴더 찾기
+        # 설정한 날짜 이후에 수정된 파일 찾기
         try:
-            datetime_str = f"{year}{month:02d}{day:02d}{hour:02d}{minute:02d}{second:02d}"
-            matching_folders = [f for f in os.listdir(source) if f.startswith(datetime_str)]
-            self.log.emit(f"Found {len(matching_folders)} folders matching {datetime_str}")
-            total_folders = min(len(matching_folders), count)
-            for i, folder in enumerate(matching_folders[:total_folders], start=1):
+            # 사용자 설정 날짜와 시간
+            specified_datetime = datetime(year, month, day, hour, minute, second)
+            specified_timestamp = specified_datetime.timestamp()
+
+            # 소스 디렉토리 내의 파일 리스트
+            all_files = [f for f in os.listdir(source) if os.path.isfile(os.path.join(source, f))]
+
+            # 파일의 수정 시간을 기준으로 필터링
+            matching_files = []
+            for file in all_files:
+                file_path = os.path.join(source, file)
+                file_mtime = os.path.getmtime(file_path)
+                if file_mtime > specified_timestamp:
+                    if any(file.lower().endswith(fmt.lower()) for fmt in formats):
+                        matching_files.append((file, file_mtime))
+
+            # 수정 시간 기준으로 정렬 (오래된 순)
+            matching_files.sort(key=lambda x: x[1])
+
+            self.log.emit(f"Found {len(matching_files)} files modified after {specified_datetime} with specified formats")
+
+            # 지정한 개수만큼 선택
+            selected_files = [file for file, mtime in matching_files[:count]]
+            total_files = len(selected_files)
+
+            for i, file in enumerate(selected_files, start=1):
                 if self._is_stopped:
-                    self.log.emit("작업이 중지되었습니다.")
-                    self.finished.emit("작업 중지됨.")
+                    self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {i-1}")
+                    self.finished.emit(f"작업 중지됨. 총 처리한 파일: {i-1}")
                     return
-                src_path = os.path.join(source, folder)
-                dst_path = os.path.join(target, folder)
-                if not os.path.exists(dst_path):
-                    os.makedirs(dst_path, exist_ok=True)
-                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
-                self.log.emit(f"Copied {src_path} to {dst_path}")
-                progress_percent = int((i / total_folders) * 100)
+                src_path = os.path.join(source, file)
+                dst_path = os.path.join(target, file)
+                if not os.path.exists(target):
+                    os.makedirs(target, exist_ok=True)
+                try:
+                    shutil.copy2(src_path, dst_path)  # 덮어쓰기 기본 동작
+                    self.log.emit(f"Copied {src_path} to {dst_path}")
+                except Exception as e:
+                    logging.error("Date-Based Copy 중 오류", exc_info=True)
+                    self.log.emit(f"오류 발생: {str(e)}")
+                progress_percent = int((i / total_files) * 100)
                 self.progress.emit(progress_percent)
             self.finished.emit("Date-Based Copy 완료.")
         except Exception as e:
@@ -124,12 +163,13 @@ class WorkerThread(QThread):
         sources = task['sources']
         targets = task['targets']
         formats = task['formats']
-        self.log.emit("Image Format Copy-Paste 작업 시작")
+        self.log.emit("Image Format Copy 작업 시작")
         total_tasks = len(sources)
+        total_processed = 0  # 총 처리한 파일 수
         for i, (src, tgt) in enumerate(zip(sources, targets), start=1):
             if self._is_stopped:
-                self.log.emit("작업이 중지되었습니다.")
-                self.finished.emit("작업 중지됨.")
+                self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
+                self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
                 return
             self.log.emit(f"Processing {src} -> {tgt}")
             if not os.path.exists(src):
@@ -145,21 +185,27 @@ class WorkerThread(QThread):
                     continue
                 for idx, file in enumerate(image_files, start=1):
                     if self._is_stopped:
-                        self.log.emit("작업이 중지되었습니다.")
-                        self.finished.emit("작업 중지됨.")
+                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
+                        self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
                         return
                     src_file = os.path.join(src, file)
                     dst_file = os.path.join(tgt, file)  # 원본 이름 그대로 복사
-                    shutil.copy2(src_file, dst_file)
-                    self.log.emit(f"Copied {src_file} to {dst_file}")
+                    try:
+                        shutil.copy2(src_file, dst_file)  # 덮어쓰기 기본 동작
+                        self.log.emit(f"Copied {src_file} to {dst_file}")
+                        total_processed += 1
+                    except Exception as e:
+                        logging.error("Image Format Copy 중 오류", exc_info=True)
+                        self.log.emit(f"오류 발생: {str(e)}")
                     progress_percent = int((idx / total_files) * 100)
                     self.progress.emit(progress_percent)
             except Exception as e:
-                logging.error("Image Format Copy-Paste 중 오류", exc_info=True)
+                logging.error("Image Format Copy 중 오류", exc_info=True)
                 self.log.emit(f"오류 발생: {str(e)}")
             progress_percent = int((i / total_tasks) * 100)
             self.progress.emit(progress_percent)
-        self.finished.emit("Image Format Copy-Paste 완료.")
+        self.log.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
+        self.finished.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
 
     def simulation_foldering(self, task):
         source = task['source']
@@ -175,29 +221,73 @@ class WorkerThread(QThread):
         try:
             files = [f for f in os.listdir(source) if any(f.lower().endswith(fmt.lower()) for fmt in formats)]
             total_files = len(files)
+            total_processed = 0  # 총 처리한 파일 수
             for i, file in enumerate(files, start=1):
                 if self._is_stopped:
-                    self.log.emit("작업이 중지되었습니다.")
-                    self.finished.emit("작업 중지됨.")
+                    self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
+                    self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
                     return
                 parts = file.split('_')
                 if len(parts) < 3:
                     self.log.emit(f"파일 이름 형식 오류: {file}")
                     continue
                 folder_name = parts[0]
-                new_file_name = '_'.join(parts[2:])  # 2_Socket_Top_Tilt.bmp
+                new_file_name = '_'.join(parts[2:])  # 예: 2_Socket_Top_Tilt.bmp
                 folder_path = os.path.join(target, folder_name)
                 if not os.path.exists(folder_path):
                     os.makedirs(folder_path, exist_ok=True)
                 src_file = os.path.join(source, file)
                 dst_file = os.path.join(folder_path, new_file_name)
-                shutil.copy2(src_file, dst_file)
-                self.log.emit(f"Copied {src_file} to {dst_file}")
+                try:
+                    shutil.copy2(src_file, dst_file)
+                    self.log.emit(f"Copied {src_file} to {dst_file}")
+                    total_processed += 1
+                except Exception as e:
+                    logging.error("Simulation Foldering 중 오류", exc_info=True)
+                    self.log.emit(f"오류 발생: {str(e)}")
                 progress_percent = int((i / total_files) * 100)
                 self.progress.emit(progress_percent)
-            self.finished.emit("Simulation Foldering 완료.")
+            self.log.emit(f"Simulation Foldering 완료. 총 처리한 파일: {total_processed}")
+            self.finished.emit(f"Simulation Foldering 완료. 총 처리한 파일: {total_processed}")
         except Exception as e:
             logging.error("Simulation Foldering 중 오류", exc_info=True)
+            self.log.emit(f"오류 발생: {str(e)}")
+            self.finished.emit("작업 중지됨.")
+
+    def ng_count(self, task):
+        ng_folder = task['ng_folder']
+        self.log.emit("NG Count 작업 시작")
+        if not os.path.exists(ng_folder):
+            self.log.emit(f"Selected NG folder does not exist: {ng_folder}")
+            self.finished.emit("작업 중지됨.")
+            return
+        try:
+            # 선택한 NG 폴더 내의 모든 폴더 리스트
+            all_subfolders = [f for f in os.listdir(ng_folder) if os.path.isdir(os.path.join(ng_folder, f))]
+
+            # 'Cam_'으로 시작하는 폴더만 필터링
+            cam_folders = [f for f in all_subfolders if f.startswith('Cam_')]
+
+            if not cam_folders:
+                self.log.emit("No 'Cam_' prefixed folders found in the selected NG folder.")
+                self.finished.emit("NG Count 완료.")
+                return
+
+            self.log.emit(f"Counting - Select ng folder : {ng_folder}")
+
+            for cam in cam_folders:
+                cam_path = os.path.join(ng_folder, cam)
+                # cam_path 내의 이너 폴더 리스트
+                inner_folders = [f for f in os.listdir(cam_path) if os.path.isdir(os.path.join(cam_path, f))]
+                for inner in inner_folders:
+                    inner_path = os.path.join(cam_path, inner)
+                    # inner_path 내의 폴더 수 카운팅
+                    count = len([f for f in os.listdir(inner_path) if os.path.isdir(os.path.join(inner_path, f))])
+                    # CamX - InnerFolder : count개 형식으로 로그 출력
+                    self.log.emit(f"{cam} - {inner} : {count}개")
+            self.finished.emit("NG Count 완료.")
+        except Exception as e:
+            logging.error("NG Count 중 오류", exc_info=True)
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("작업 중지됨.")
 
@@ -206,7 +296,7 @@ class NGSortingDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("NG Folder Sorting 설정")
-        self.setFixedSize(600, 500)
+        self.setFixedSize(800, 700)  # 크기 확장
         self.initUI()
 
     def initUI(self):
@@ -215,25 +305,32 @@ class NGSortingDialog(QDialog):
         form_layout = QFormLayout()
 
         # Source Path 1
-        self.source1_button = QPushButton("Select NG Folders")
-        self.source1_button.clicked.connect(self.select_source1)
+        self.add_source_button = QPushButton("Add NG Folder")
+        self.add_source_button.clicked.connect(self.add_source_folder)
         self.source1_list = QListWidget()
-        form_layout.addRow("Source Path #1 (NG Folders):", self.source1_button)
+        self.source1_list.setSelectionMode(QListWidget.ExtendedSelection)
+        form_layout.addRow(QLabel("<b>Source Path #1 (NG Folders):</b>"), self.add_source_button)
         form_layout.addRow("", self.source1_list)
 
+        # Remove Selected Folder Button
+        self.remove_source_button = QPushButton("Remove Selected Folder")
+        self.remove_source_button.clicked.connect(self.remove_selected_source_folder)
+        form_layout.addRow("", self.remove_source_button)
+
         # Source Path 2
-        self.source2_button = QPushButton("Select Matching Folders")
+        self.source2_button = QPushButton("Select Matching Folder")
         self.source2_button.clicked.connect(self.select_source2)
-        self.source2_list = QListWidget()
-        form_layout.addRow("Source Path #2 (Matching Folders):", self.source2_button)
-        form_layout.addRow("", self.source2_list)
+        self.source2_path = QLineEdit()
+        self.source2_path.setReadOnly(True)
+        form_layout.addRow(QLabel("<b>Source Path #2 (Matching Folder):</b>"), self.source2_button)
+        form_layout.addRow("", self.source2_path)
 
         # Target Path
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
         self.target_path.setReadOnly(True)
-        form_layout.addRow("Target Path:", self.target_button)
+        form_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         form_layout.addRow("", self.target_path)
 
         layout.addLayout(form_layout)
@@ -241,25 +338,74 @@ class NGSortingDialog(QDialog):
         # Submit Button
         self.submit_button = QPushButton("Start NG Folder Sorting")
         self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
         layout.addWidget(self.submit_button)
 
         self.setLayout(layout)
 
-    def select_source1(self):
-        # Allow multiple folder selection by selecting one, then repeatedly selecting more
-        folder_paths = QFileDialog.getExistingDirectory(self, "Select NG Folder", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
-        if folder_paths:
-            # Append to list
-            item = QListWidgetItem(folder_paths)
-            if not self.source1_list.findItems(folder_paths, Qt.MatchExactly):
-                self.source1_list.addItem(item)
+    def add_source_folder(self):
+        parent_folder = QFileDialog.getExistingDirectory(self, "Select Parent Folder", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if parent_folder:
+            # 소스 폴더 내의 모든 서브 폴더(OK, NG 제외) 가져오기
+            try:
+                subfolders = [f for f in os.listdir(parent_folder) 
+                              if os.path.isdir(os.path.join(parent_folder, f)) 
+                              and f not in ['OK', 'NG']]
+                if not subfolders:
+                    QMessageBox.information(self, "정보", "선택한 폴더 내에 서브 폴더가 없습니다.")
+                    return
+            except Exception as e:
+                logging.error("서브 폴더 목록 가져오기 중 오류", exc_info=True)
+                QMessageBox.warning(self, "오류", f"서브 폴더 목록 가져오기 중 오류가 발생했습니다:\n{str(e)}")
+                return
+
+            # 서브 폴더 선택 다이얼로그 열기
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Select Subfolders")
+            dialog.setFixedSize(400, 300)
+            dialog_layout = QVBoxLayout()
+
+            list_widget = QListWidget()
+            list_widget.setSelectionMode(QListWidget.MultiSelection)
+            for sub in subfolders:
+                list_widget.addItem(sub)
+            dialog_layout.addWidget(QLabel("Select subfolders to add:"))
+            dialog_layout.addWidget(list_widget)
+
+            button_layout = QHBoxLayout()
+            ok_button = QPushButton("OK")
+            cancel_button = QPushButton("Cancel")
+            ok_button.clicked.connect(dialog.accept)
+            cancel_button.clicked.connect(dialog.reject)
+            button_layout.addWidget(ok_button)
+            button_layout.addWidget(cancel_button)
+            dialog_layout.addLayout(button_layout)
+
+            dialog.setLayout(dialog_layout)
+
+            if dialog.exec_() == QDialog.Accepted:
+                selected_subfolders = [list_widget.item(i).text() for i in range(list_widget.count()) if list_widget.item(i).isSelected()]
+                for sub in selected_subfolders:
+                    full_path = os.path.join(parent_folder, sub)
+                    # 중복된 폴더는 추가하지 않음
+                    existing_items = [self.source1_list.item(i).text() for i in range(self.source1_list.count())]
+                    if full_path not in existing_items:
+                        self.source1_list.addItem(full_path)
+                    else:
+                        QMessageBox.information(self, "정보", f"이미 추가된 폴더입니다:\n{full_path}")
+
+    def remove_selected_source_folder(self):
+        selected_items = self.source1_list.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(self, "선택 오류", "제거할 폴더를 선택하세요.")
+            return
+        for item in selected_items:
+            self.source1_list.takeItem(self.source1_list.row(item))
 
     def select_source2(self):
-        folder_paths = QFileDialog.getExistingDirectory(self, "Select Matching Folder", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
-        if folder_paths:
-            item = QListWidgetItem(folder_paths)
-            if not self.source2_list.findItems(folder_paths, Qt.MatchExactly):
-                self.source2_list.addItem(item)
+        folder = QFileDialog.getExistingDirectory(self, "Select Matching Folder", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if folder:
+            self.source2_path.setText(folder)
 
     def select_target(self):
         target = QFileDialog.getExistingDirectory(self, "Select Target Folder", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
@@ -268,12 +414,12 @@ class NGSortingDialog(QDialog):
 
     def get_parameters(self):
         sources1 = [self.source1_list.item(i).text() for i in range(self.source1_list.count())]
-        sources2 = [self.source2_list.item(i).text() for i in range(self.source2_list.count())]
+        source2 = self.source2_path.text()
         target = self.target_path.text()
         return {
             'operation': 'ng_sorting',
             'inputs': sources1,
-            'outputs': sources2,
+            'source2': source2,
             'target': target
         }
 
@@ -282,33 +428,38 @@ class DateBasedCopyDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Date-Based Copy 설정")
-        self.setFixedSize(500, 400)
+        self.setFixedSize(800, 700)  # 크기 확장
         self.initUI()
 
     def initUI(self):
         layout = QVBoxLayout()
         form_layout = QFormLayout()
 
-        # Date and Time
+        current_time = datetime.now()
+        year, month, day = current_time.year, current_time.month, current_time.day
+        hour, minute, second = current_time.hour, current_time.minute, current_time.second
+
+        # Date and Time (확장된 레이아웃)
         self.year_input = QSpinBox()
-        self.year_input.setRange(1900, 2100)
-        self.year_input.setValue(2024)
+        self.year_input.setRange(2020, 2030)
+        self.year_input.setValue(year)
         self.month_input = QSpinBox()
         self.month_input.setRange(1, 12)
-        self.month_input.setValue(1)
+        self.month_input.setValue(month)
         self.day_input = QSpinBox()
         self.day_input.setRange(1, 31)
-        self.day_input.setValue(1)
+        self.day_input.setValue(day)
         self.hour_input = QSpinBox()
         self.hour_input.setRange(0, 23)
-        self.hour_input.setValue(0)
+        self.hour_input.setValue(hour)
         self.minute_input = QSpinBox()
         self.minute_input.setRange(0, 59)
-        self.minute_input.setValue(0)
+        self.minute_input.setValue(minute)
         self.second_input = QSpinBox()
         self.second_input.setRange(0, 59)
-        self.second_input.setValue(0)
+        self.second_input.setValue(second)
 
+        # 날짜 입력 레이아웃
         date_layout = QHBoxLayout()
         date_layout.addWidget(QLabel("Year:"))
         date_layout.addWidget(self.year_input)
@@ -316,26 +467,42 @@ class DateBasedCopyDialog(QDialog):
         date_layout.addWidget(self.month_input)
         date_layout.addWidget(QLabel("Day:"))
         date_layout.addWidget(self.day_input)
-        date_layout.addWidget(QLabel("Hour:"))
-        date_layout.addWidget(self.hour_input)
-        date_layout.addWidget(QLabel("Minute:"))
-        date_layout.addWidget(self.minute_input)
-        date_layout.addWidget(QLabel("Second:"))
-        date_layout.addWidget(self.second_input)
-        form_layout.addRow("Date and Time:", date_layout)
+        form_layout.addRow(QLabel("<b>Date:</b>"), date_layout)
+
+        # 시간 입력 레이아웃
+        time_layout = QHBoxLayout()
+        time_layout.addWidget(QLabel("Hour:"))
+        time_layout.addWidget(self.hour_input)
+        time_layout.addWidget(QLabel("Minute:"))
+        time_layout.addWidget(self.minute_input)
+        time_layout.addWidget(QLabel("Second:"))
+        time_layout.addWidget(self.second_input)
+        form_layout.addRow(QLabel("<b>Time:</b>"), time_layout)
 
         # Count
         self.count_input = QSpinBox()
         self.count_input.setRange(1, 1000)
         self.count_input.setValue(1)
-        form_layout.addRow("Number of Folders to Copy:", self.count_input)
+        form_layout.addRow(QLabel("<b>Number of Files to Copy:</b>"), self.count_input)
+
+        # Image Formats
+        self.format_bmp = QCheckBox("BMP")
+        self.format_jpg = QCheckBox("JPG")
+        self.format_mim = QCheckBox("MIM")
+        self.format_png = QCheckBox("PNG")
+        formats_layout = QHBoxLayout()
+        formats_layout.addWidget(self.format_bmp)
+        formats_layout.addWidget(self.format_jpg)
+        formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_png)
+        form_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
 
         # Source Path
         self.source_button = QPushButton("Select Source Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
         self.source_path.setReadOnly(True)
-        form_layout.addRow("Source Path:", self.source_button)
+        form_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         form_layout.addRow("", self.source_path)
 
         # Target Path
@@ -343,7 +510,7 @@ class DateBasedCopyDialog(QDialog):
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
         self.target_path.setReadOnly(True)
-        form_layout.addRow("Target Path:", self.target_button)
+        form_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         form_layout.addRow("", self.target_path)
 
         layout.addLayout(form_layout)
@@ -351,6 +518,7 @@ class DateBasedCopyDialog(QDialog):
         # Submit Button
         self.submit_button = QPushButton("Start Date-Based Copy")
         self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
         layout.addWidget(self.submit_button)
 
         self.setLayout(layout)
@@ -366,6 +534,16 @@ class DateBasedCopyDialog(QDialog):
             self.source_path.setText(source)
 
     def get_parameters(self):
+        # 이미지 포맷 필터링
+        formats = []
+        if self.format_bmp.isChecked():
+            formats.append(".bmp")
+        if self.format_jpg.isChecked():
+            formats.append(".jpg")
+        if self.format_mim.isChecked():
+            formats.append(".mim")
+        if self.format_png.isChecked():
+            formats.append(".png")
         return {
             'operation': 'date_copy',
             'source': self.source_path.text(),
@@ -376,15 +554,16 @@ class DateBasedCopyDialog(QDialog):
             'hour': self.hour_input.value(),
             'minute': self.minute_input.value(),
             'second': self.second_input.value(),
-            'count': self.count_input.value()
+            'count': self.count_input.value(),
+            'formats': formats  # 이미지 포맷 필터링
         }
 
 
 class ImageFormatCopyDialog(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Image Format Copy-Paste 설정")
-        self.setFixedSize(600, 400)
+        self.setWindowTitle("Image Format Copy 설정")
+        self.setFixedSize(800, 700)  # 크기 확장
         self.initUI()
 
     def initUI(self):
@@ -396,7 +575,7 @@ class ImageFormatCopyDialog(QDialog):
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
         self.source_path.setReadOnly(True)
-        form_layout.addRow("Source Path:", self.source_button)
+        form_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         form_layout.addRow("", self.source_path)
 
         # Target Path
@@ -404,7 +583,7 @@ class ImageFormatCopyDialog(QDialog):
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
         self.target_path.setReadOnly(True)
-        form_layout.addRow("Target Path:", self.target_button)
+        form_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         form_layout.addRow("", self.target_path)
 
         # Image Formats
@@ -417,13 +596,14 @@ class ImageFormatCopyDialog(QDialog):
         formats_layout.addWidget(self.format_jpg)
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
-        form_layout.addRow("Image Formats:", formats_layout)
+        form_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
 
         layout.addLayout(form_layout)
 
         # Submit Button
-        self.submit_button = QPushButton("Start Image Format Copy-Paste")
+        self.submit_button = QPushButton("Start Image Format Copy")
         self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
         layout.addWidget(self.submit_button)
 
         self.setLayout(layout)
@@ -460,7 +640,7 @@ class SimulationFolderingDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Simulation Foldering 설정")
-        self.setFixedSize(600, 400)
+        self.setFixedSize(800, 700)  # 크기 확장
         self.initUI()
 
     def initUI(self):
@@ -472,7 +652,7 @@ class SimulationFolderingDialog(QDialog):
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
         self.source_path.setReadOnly(True)
-        form_layout.addRow("Source Path:", self.source_button)
+        form_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         form_layout.addRow("", self.source_path)
 
         # Target Path
@@ -480,7 +660,7 @@ class SimulationFolderingDialog(QDialog):
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
         self.target_path.setReadOnly(True)
-        form_layout.addRow("Target Path:", self.target_button)
+        form_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         form_layout.addRow("", self.target_path)
 
         # Image Formats
@@ -491,13 +671,14 @@ class SimulationFolderingDialog(QDialog):
         formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_jpg)
         formats_layout.addWidget(self.format_mim)
-        form_layout.addRow("Image Formats:", formats_layout)
+        form_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
 
         layout.addLayout(form_layout)
 
         # Submit Button
         self.submit_button = QPushButton("Start Simulation Foldering")
         self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
         layout.addWidget(self.submit_button)
 
         self.setLayout(layout)
@@ -528,12 +709,53 @@ class SimulationFolderingDialog(QDialog):
         }
 
 
+class NGCountDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("NG Count 설정")
+        self.setFixedSize(800, 700)  # 크기 확장
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+        form_layout = QFormLayout()
+
+        # NG Folder Path
+        self.ng_folder_button = QPushButton("Select NG Folder")
+        self.ng_folder_button.clicked.connect(self.select_ng_folder)
+        self.ng_folder_path = QLineEdit()
+        self.ng_folder_path.setReadOnly(True)
+        form_layout.addRow(QLabel("<b>Counting - Select NG folder:</b>"), self.ng_folder_button)
+        form_layout.addRow("", self.ng_folder_path)
+
+        # Submit Button
+        self.submit_button = QPushButton("Start NG Count")
+        self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
+        form_layout.addRow("", self.submit_button)
+
+        layout.addLayout(form_layout)
+
+        self.setLayout(layout)
+
+    def select_ng_folder(self):
+        ng_folder = QFileDialog.getExistingDirectory(self, "Select NG Folder", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if ng_folder:
+            self.ng_folder_path.setText(ng_folder)
+
+    def get_parameters(self):
+        return {
+            'operation': 'ng_count',
+            'ng_folder': self.ng_folder_path.text()
+        }
+
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("AiV PROCESS TOOL")
-        self.setWindowIcon(QIcon('./AiV.png'))
-        self.setFixedSize(700, 600)
+        self.setWindowTitle("File Processor")
+        self.setWindowIcon(QIcon('./AiV.png'))  # 아이콘 유지
+        self.setFixedSize(900, 800)  # 크기 확장
         self.initUI()
         self.worker = None
 
@@ -545,22 +767,82 @@ class MainWindow(QWidget):
 
         self.ng_sorting_button = QPushButton("NG Folder Sorting")
         self.ng_sorting_button.clicked.connect(self.open_ng_sorting)
-        self.ng_sorting_button.setStyleSheet("background-color: #8B0000; color: white; padding: 10px;")
+        self.ng_sorting_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                padding: 20px;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
         button_layout.addWidget(self.ng_sorting_button)
+
+        self.ng_count_button = QPushButton("NG Count")
+        self.ng_count_button.clicked.connect(self.open_ng_count)
+        self.ng_count_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                padding: 20px;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
+        button_layout.addWidget(self.ng_count_button)
 
         self.date_copy_button = QPushButton("Date-Based Copy")
         self.date_copy_button.clicked.connect(self.open_date_copy)
-        self.date_copy_button.setStyleSheet("background-color: #8B0000; color: white; padding: 10px;")
+        self.date_copy_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                padding: 20px;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
         button_layout.addWidget(self.date_copy_button)
 
-        self.image_copy_button = QPushButton("Image Format Copy-Paste")
+        self.image_copy_button = QPushButton("Image Format Copy")
         self.image_copy_button.clicked.connect(self.open_image_copy)
-        self.image_copy_button.setStyleSheet("background-color: #8B0000; color: white; padding: 10px;")
+        self.image_copy_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                padding: 20px;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
         button_layout.addWidget(self.image_copy_button)
 
         self.simulation_button = QPushButton("Simulation Foldering")
         self.simulation_button.clicked.connect(self.open_simulation_foldering)
-        self.simulation_button.setStyleSheet("background-color: #8B0000; color: white; padding: 10px;")
+        self.simulation_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                padding: 20px;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
         button_layout.addWidget(self.simulation_button)
 
         main_layout.addLayout(button_layout)
@@ -571,8 +853,9 @@ class MainWindow(QWidget):
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: 2px solid grey;
-                border-radius: 5px;
+                border-radius: 10px;
                 text-align: center;
+                height: 30px;
             }
             QProgressBar::chunk {
                 background-color: #8B0000;
@@ -584,15 +867,35 @@ class MainWindow(QWidget):
         # Log Area
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
-        self.log_area.setStyleSheet("background-color: #F5F5F5;")
-        main_layout.addWidget(QLabel("Logs:"))
+        self.log_area.setStyleSheet("""
+            QTextEdit {
+                background-color: #F5F5F5;
+                font-family: Consolas;
+                font-size: 14px;
+                padding: 10px;
+                border: 1px solid #CCC;
+                border-radius: 5px;
+            }
+        """)
+        main_layout.addWidget(QLabel("<b>Logs:</b>"))
         main_layout.addWidget(self.log_area)
 
         # Stop Button
         self.stop_button = QPushButton("Stop")
         self.stop_button.clicked.connect(self.stop_task)
         self.stop_button.setEnabled(False)
-        self.stop_button.setStyleSheet("background-color: #A9A9A9; color: white; padding: 10px;")
+        self.stop_button.setStyleSheet("""
+            QPushButton {
+                background-color: #A9A9A9;
+                color: white;
+                padding: 15px;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+            QPushButton:hover {
+                background-color: #696969;
+            }
+        """)
         main_layout.addWidget(self.stop_button)
 
         self.setLayout(main_layout)
@@ -601,24 +904,74 @@ class MainWindow(QWidget):
         dialog = NGSortingDialog()
         if dialog.exec_() == QDialog.Accepted:
             params = dialog.get_parameters()
+            # 유효성 검사
+            if not params['inputs']:
+                QMessageBox.warning(self, "입력 오류", "Source Path #1에 최소 하나의 폴더를 추가해야 합니다.")
+                return
+            if not params['source2']:
+                QMessageBox.warning(self, "입력 오류", "Source Path #2를 선택해야 합니다.")
+                return
+            if not params['target']:
+                QMessageBox.warning(self, "입력 오류", "Target Path를 선택해야 합니다.")
+                return
+            self.start_task(params)
+
+    def open_ng_count(self):
+        dialog = NGCountDialog()
+        if dialog.exec_() == QDialog.Accepted:
+            params = dialog.get_parameters()
+            # 유효성 검사
+            if not params['ng_folder']:
+                QMessageBox.warning(self, "입력 오류", "NG 폴더를 선택해야 합니다.")
+                return
             self.start_task(params)
 
     def open_date_copy(self):
         dialog = DateBasedCopyDialog()
         if dialog.exec_() == QDialog.Accepted:
             params = dialog.get_parameters()
+            # 유효성 검사
+            if not params['source']:
+                QMessageBox.warning(self, "입력 오류", "Source Path를 선택해야 합니다.")
+                return
+            if not params['target']:
+                QMessageBox.warning(self, "입력 오류", "Target Path를 선택해야 합니다.")
+                return
+            if not params['formats']:
+                QMessageBox.warning(self, "입력 오류", "적어도 하나의 이미지 포맷을 선택해야 합니다.")
+                return
             self.start_task(params)
 
     def open_image_copy(self):
         dialog = ImageFormatCopyDialog()
         if dialog.exec_() == QDialog.Accepted:
             params = dialog.get_parameters()
+            # 유효성 검사
+            if not params['sources'][0]:
+                QMessageBox.warning(self, "입력 오류", "Source Path를 선택해야 합니다.")
+                return
+            if not params['targets'][0]:
+                QMessageBox.warning(self, "입력 오류", "Target Path를 선택해야 합니다.")
+                return
+            if not params['formats']:
+                QMessageBox.warning(self, "입력 오류", "적어도 하나의 이미지 포맷을 선택해야 합니다.")
+                return
             self.start_task(params)
 
     def open_simulation_foldering(self):
         dialog = SimulationFolderingDialog()
         if dialog.exec_() == QDialog.Accepted:
             params = dialog.get_parameters()
+            # 유효성 검사
+            if not params['source']:
+                QMessageBox.warning(self, "입력 오류", "Source Path를 선택해야 합니다.")
+                return
+            if not params['target']:
+                QMessageBox.warning(self, "입력 오류", "Target Path를 선택해야 합니다.")
+                return
+            if not params['formats']:
+                QMessageBox.warning(self, "입력 오류", "적어도 하나의 이미지 포맷을 선택해야 합니다.")
+                return
             self.start_task(params)
 
     def start_task(self, params):
