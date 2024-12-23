@@ -879,7 +879,7 @@ class MainWindow(QWidget):
         """)
         main_layout.addWidget(QLabel("<b>Logs:</b>"))
         main_layout.addWidget(self.log_area)
-
+ 
         # Stop Button
         self.stop_button = QPushButton("Stop")
         self.stop_button.clicked.connect(self.stop_task)
