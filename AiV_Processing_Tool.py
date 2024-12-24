@@ -6,11 +6,11 @@ import logging
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog,
     QProgressBar, QMessageBox, QLabel, QHBoxLayout, QTextEdit,
-    QDialog, QFormLayout, QLineEdit, QSpinBox, QCheckBox, QListWidget, QListWidgetItem
+    QDialog, QFormLayout, QLineEdit, QSpinBox, QCheckBox, QListWidget, QListWidgetItem,
+    QTableWidget, QTableWidgetItem, QHeaderView
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
-from PIL import Image
 from datetime import datetime
 
 # 로깅 설정
@@ -204,7 +204,7 @@ class WorkerThread(QThread):
                 self.log.emit(f"오류 발생: {str(e)}")
             progress_percent = int((i / total_tasks) * 100)
             self.progress.emit(progress_percent)
-        self.log.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
+        # self.log.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
         self.finished.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
 
     def simulation_foldering(self, task):
@@ -362,15 +362,39 @@ class NGSortingDialog(QDialog):
             # 서브 폴더 선택 다이얼로그 열기
             dialog = QDialog(self)
             dialog.setWindowTitle("Select Subfolders")
-            dialog.setFixedSize(400, 300)
+            dialog.setFixedSize(600, 400)
             dialog_layout = QVBoxLayout()
 
-            list_widget = QListWidget()
-            list_widget.setSelectionMode(QListWidget.MultiSelection)
-            for sub in subfolders:
-                list_widget.addItem(sub)
+            table_widget = QTableWidget()
+            table_widget.setRowCount(len(subfolders))
+            table_widget.setColumnCount(2)
+            table_widget.setHorizontalHeaderLabels(["Folder Name", "Last Modified Date"])
+            table_widget.setSelectionBehavior(QTableWidget.SelectRows)
+            table_widget.setSelectionMode(QTableWidget.MultiSelection)
+            table_widget.setEditTriggers(QTableWidget.NoEditTriggers)
+            table_widget.setSortingEnabled(True)
+            table_widget.horizontalHeader().setStretchLastSection(True)
+            table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+            for row, folder in enumerate(subfolders):
+                folder_name_item = QTableWidgetItem(folder)
+                folder_name_item.setFlags(folder_name_item.flags() ^ Qt.ItemIsEditable)
+                table_widget.setItem(row, 0, folder_name_item)
+
+                folder_path = os.path.join(parent_folder, folder)
+                try:
+                    modified_timestamp = os.path.getmtime(folder_path)
+                    modified_datetime = datetime.fromtimestamp(modified_timestamp)
+                    modified_str = modified_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                except Exception as e:
+                    modified_str = "N/A"
+                    logging.error("폴더 수정 시간 가져오기 중 오류", exc_info=True)
+                date_item = QTableWidgetItem(modified_str)
+                date_item.setFlags(date_item.flags() ^ Qt.ItemIsEditable)
+                table_widget.setItem(row, 1, date_item)
+
             dialog_layout.addWidget(QLabel("Select subfolders to add:"))
-            dialog_layout.addWidget(list_widget)
+            dialog_layout.addWidget(table_widget)
 
             button_layout = QHBoxLayout()
             ok_button = QPushButton("OK")
@@ -384,7 +408,8 @@ class NGSortingDialog(QDialog):
             dialog.setLayout(dialog_layout)
 
             if dialog.exec_() == QDialog.Accepted:
-                selected_subfolders = [list_widget.item(i).text() for i in range(list_widget.count()) if list_widget.item(i).isSelected()]
+                selected_rows = table_widget.selectionModel().selectedRows()
+                selected_subfolders = [table_widget.item(row.row(), 0).text() for row in selected_rows]
                 for sub in selected_subfolders:
                     full_path = os.path.join(parent_folder, sub)
                     # 중복된 폴더는 추가하지 않음
@@ -879,7 +904,7 @@ class MainWindow(QWidget):
         """)
         main_layout.addWidget(QLabel("<b>Logs:</b>"))
         main_layout.addWidget(self.log_area)
- 
+
         # Stop Button
         self.stop_button = QPushButton("Stop")
         self.stop_button.clicked.connect(self.stop_task)
