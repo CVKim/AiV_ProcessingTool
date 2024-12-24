@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog,
     QProgressBar, QMessageBox, QLabel, QHBoxLayout, QTextEdit,
     QDialog, QFormLayout, QLineEdit, QSpinBox, QCheckBox, QListWidget, QListWidgetItem,
-    QTableWidget, QTableWidgetItem, QHeaderView
+    QTableWidget, QTableWidgetItem, QHeaderView, QGridLayout
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -41,6 +41,16 @@ class WorkerThread(QThread):
                 self.simulation_foldering(self.task)
             elif operation == 'ng_count':
                 self.ng_count(self.task)
+            elif operation == 'basic_sorting':
+                self.basic_sorting(self.task)
+            elif operation == 'crop':
+                self.crop_images(self.task)
+            elif operation == 'resize':
+                self.resize_images(self.task)
+            elif operation == 'flip':
+                self.flip_images(self.task)
+            elif operation == 'rotate':
+                self.rotate_images(self.task)
             else:
                 self.log.emit(f"알 수 없는 작업 유형: {operation}")
                 self.finished.emit("알 수 없는 작업 유형.")
@@ -53,6 +63,7 @@ class WorkerThread(QThread):
         self._is_stopped = True
 
     def ng_folder_sorting(self, task):
+        # 기존 NG Folder Sorting 기능 유지
         inputs = task['inputs']  # List of selected subfolders (full paths)
         source2 = task['source2']  # Single source path #2 folder
         target = task['target']
@@ -94,6 +105,7 @@ class WorkerThread(QThread):
         self.finished.emit(f"NG Folder Sorting 완료. 총 복사한 폴더: {total_processed}")
 
     def date_based_copy(self, task):
+        # 기존 Date-Based Copy 기능 유지
         source = task['source']
         target = task['target']
         year = task['year']
@@ -160,6 +172,7 @@ class WorkerThread(QThread):
             self.finished.emit("작업 중지됨.")
 
     def image_format_copy(self, task):
+        # 기존 Image Format Copy 기능 유지
         sources = task['sources']
         targets = task['targets']
         formats = task['formats']
@@ -204,10 +217,11 @@ class WorkerThread(QThread):
                 self.log.emit(f"오류 발생: {str(e)}")
             progress_percent = int((i / total_tasks) * 100)
             self.progress.emit(progress_percent)
-        # self.log.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
+        self.log.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
         self.finished.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
 
     def simulation_foldering(self, task):
+        # 기존 Simulation Foldering 기능 유지
         source = task['source']
         target = task['target']
         formats = task['formats']
@@ -255,6 +269,7 @@ class WorkerThread(QThread):
             self.finished.emit("작업 중지됨.")
 
     def ng_count(self, task):
+        # 기존 NG Count 기능 유지
         ng_folder = task['ng_folder']
         self.log.emit("NG Count 작업 시작")
         if not os.path.exists(ng_folder):
@@ -288,6 +303,67 @@ class WorkerThread(QThread):
             self.finished.emit("NG Count 완료.")
         except Exception as e:
             logging.error("NG Count 중 오류", exc_info=True)
+            self.log.emit(f"오류 발생: {str(e)}")
+            self.finished.emit("작업 중지됨.")
+
+    # 새로운 기능을 위한 메서드들 (기능 구현 필요)
+    def basic_sorting(self, task):
+        self.log.emit("Basic Sorting 작업 시작")
+        # 기능 구현 필요
+        try:
+            # 예시: Basic Sorting 로직을 여기에 구현
+            self.log.emit("Basic Sorting 기능이 아직 구현되지 않았습니다.")
+            self.finished.emit("Basic Sorting 완료.")
+        except Exception as e:
+            logging.error("Basic Sorting 중 오류", exc_info=True)
+            self.log.emit(f"오류 발생: {str(e)}")
+            self.finished.emit("작업 중지됨.")
+
+    def crop_images(self, task):
+        self.log.emit("Crop 작업 시작")
+        # 기능 구현 필요
+        try:
+            # 예시: Crop 로직을 여기에 구현
+            self.log.emit("Crop 기능이 아직 구현되지 않았습니다.")
+            self.finished.emit("Crop 완료.")
+        except Exception as e:
+            logging.error("Crop 중 오류", exc_info=True)
+            self.log.emit(f"오류 발생: {str(e)}")
+            self.finished.emit("작업 중지됨.")
+
+    def resize_images(self, task):
+        self.log.emit("Resize 작업 시작")
+        # 기능 구현 필요
+        try:
+            # 예시: Resize 로직을 여기에 구현
+            self.log.emit("Resize 기능이 아직 구현되지 않았습니다.")
+            self.finished.emit("Resize 완료.")
+        except Exception as e:
+            logging.error("Resize 중 오류", exc_info=True)
+            self.log.emit(f"오류 발생: {str(e)}")
+            self.finished.emit("작업 중지됨.")
+
+    def flip_images(self, task):
+        self.log.emit("FLIP 작업 시작")
+        # 기능 구현 필요
+        try:
+            # 예시: FLIP 로직을 여기에 구현
+            self.log.emit("FLIP 기능이 아직 구현되지 않았습니다.")
+            self.finished.emit("FLIP 완료.")
+        except Exception as e:
+            logging.error("FLIP 중 오류", exc_info=True)
+            self.log.emit(f"오류 발생: {str(e)}")
+            self.finished.emit("작업 중지됨.")
+
+    def rotate_images(self, task):
+        self.log.emit("Rotate 작업 시작")
+        # 기능 구현 필요
+        try:
+            # 예시: Rotate 로직을 여기에 구현
+            self.log.emit("Rotate 기능이 아직 구현되지 않았습니다.")
+            self.finished.emit("Rotate 완료.")
+        except Exception as e:
+            logging.error("Rotate 중 오류", exc_info=True)
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("작업 중지됨.")
 
@@ -775,100 +851,324 @@ class NGCountDialog(QDialog):
         }
 
 
+# 새로운 기능을 위한 Dialog 클래스 추가
+class BasicSortingDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Basic Sorting 설정")
+        self.setFixedSize(800, 700)  # 크기 확장
+        self.initUI()
+
+    def initUI(self):
+        # 기능 구현 필요
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Basic Sorting 기능을 설정하세요."))
+        # 추가 설정 요소들을 여기에 구현
+        self.submit_button = QPushButton("Start Basic Sorting")
+        self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
+        layout.addWidget(self.submit_button)
+        self.setLayout(layout)
+
+    def get_parameters(self):
+        # 설정된 파라미터 반환
+        return {
+            'operation': 'basic_sorting',
+            # 추가 파라미터들
+        }
+
+
+class CropDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Crop 설정")
+        self.setFixedSize(800, 700)  # 크기 확장
+        self.initUI()
+
+    def initUI(self):
+        # 기능 구현 필요
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Crop 기능을 설정하세요."))
+        # 추가 설정 요소들을 여기에 구현
+        self.submit_button = QPushButton("Start Crop")
+        self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
+        layout.addWidget(self.submit_button)
+        self.setLayout(layout)
+
+    def get_parameters(self):
+        # 설정된 파라미터 반환
+        return {
+            'operation': 'crop',
+            # 추가 파라미터들
+        }
+
+
+class ResizeDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Resize 설정")
+        self.setFixedSize(800, 700)  # 크기 확장
+        self.initUI()
+
+    def initUI(self):
+        # 기능 구현 필요
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Resize 기능을 설정하세요."))
+        # 추가 설정 요소들을 여기에 구현
+        self.submit_button = QPushButton("Start Resize")
+        self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
+        layout.addWidget(self.submit_button)
+        self.setLayout(layout)
+
+    def get_parameters(self):
+        # 설정된 파라미터 반환
+        return {
+            'operation': 'resize',
+            # 추가 파라미터들
+        }
+
+
+class FlipDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("FLIP 설정")
+        self.setFixedSize(800, 700)  # 크기 확장
+        self.initUI()
+
+    def initUI(self):
+        # 기능 구현 필요
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("FLIP 기능을 설정하세요."))
+        # 추가 설정 요소들을 여기에 구현
+        self.submit_button = QPushButton("Start FLIP")
+        self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
+        layout.addWidget(self.submit_button)
+        self.setLayout(layout)
+
+    def get_parameters(self):
+        # 설정된 파라미터 반환
+        return {
+            'operation': 'flip',
+            # 추가 파라미터들
+        }
+
+
+class RotateDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Rotate 설정")
+        self.setFixedSize(800, 700)  # 크기 확장
+        self.initUI()
+
+    def initUI(self):
+        # 기능 구현 필요
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Rotate 기능을 설정하세요."))
+        # 추가 설정 요소들을 여기에 구현
+        self.submit_button = QPushButton("Start Rotate")
+        self.submit_button.clicked.connect(self.accept)
+        self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
+        layout.addWidget(self.submit_button)
+        self.setLayout(layout)
+
+    def get_parameters(self):
+        # 설정된 파라미터 반환
+        return {
+            'operation': 'rotate',
+            # 추가 파라미터들
+        }
+
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("File Processor")
         self.setWindowIcon(QIcon('./AiV.png'))  # 아이콘 유지
-        self.setFixedSize(900, 800)  # 크기 확장
+        self.setFixedSize(1000, 800)  # 약간 넓혀서 버튼들이 작아질 여유를 줌
         self.initUI()
         self.worker = None
 
     def initUI(self):
         main_layout = QVBoxLayout()
 
-        # Buttons for each functionality
-        button_layout = QHBoxLayout()
+        # Buttons for each functionality in 2 rows of 5
+        button_layout = QGridLayout()
+        button_layout.setSpacing(20)  # 버튼 간 간격 설정
 
+        # First Row Buttons
         self.ng_sorting_button = QPushButton("NG Folder Sorting")
         self.ng_sorting_button.clicked.connect(self.open_ng_sorting)
+        self.ng_sorting_button.setFixedSize(150, 80)
         self.ng_sorting_button.setStyleSheet("""
             QPushButton {
                 background-color: #8B0000;
                 color: white;
-                padding: 20px;
-                font-size: 16px;
-                border-radius: 10px;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
             }
             QPushButton:hover {
                 background-color: #A52A2A;
             }
         """)
-        button_layout.addWidget(self.ng_sorting_button)
-
-        self.ng_count_button = QPushButton("NG Count")
-        self.ng_count_button.clicked.connect(self.open_ng_count)
-        self.ng_count_button.setStyleSheet("""
-            QPushButton {
-                background-color: #8B0000;
-                color: white;
-                padding: 20px;
-                font-size: 16px;
-                border-radius: 10px;
-            }
-            QPushButton:hover {
-                background-color: #A52A2A;
-            }
-        """)
-        button_layout.addWidget(self.ng_count_button)
+        button_layout.addWidget(self.ng_sorting_button, 0, 0)
 
         self.date_copy_button = QPushButton("Date-Based Copy")
         self.date_copy_button.clicked.connect(self.open_date_copy)
+        self.date_copy_button.setFixedSize(150, 80)
         self.date_copy_button.setStyleSheet("""
             QPushButton {
                 background-color: #8B0000;
                 color: white;
-                padding: 20px;
-                font-size: 16px;
-                border-radius: 10px;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
             }
             QPushButton:hover {
                 background-color: #A52A2A;
             }
         """)
-        button_layout.addWidget(self.date_copy_button)
+        button_layout.addWidget(self.date_copy_button, 0, 1)
 
         self.image_copy_button = QPushButton("Image Format Copy")
         self.image_copy_button.clicked.connect(self.open_image_copy)
+        self.image_copy_button.setFixedSize(150, 80)
         self.image_copy_button.setStyleSheet("""
             QPushButton {
                 background-color: #8B0000;
                 color: white;
-                padding: 20px;
-                font-size: 16px;
-                border-radius: 10px;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
             }
             QPushButton:hover {
                 background-color: #A52A2A;
             }
         """)
-        button_layout.addWidget(self.image_copy_button)
+        button_layout.addWidget(self.image_copy_button, 0, 2)
 
+        self.basic_sorting_button = QPushButton("Basic Sorting")
+        self.basic_sorting_button.clicked.connect(self.open_basic_sorting)
+        self.basic_sorting_button.setFixedSize(150, 80)
+        self.basic_sorting_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
+        button_layout.addWidget(self.basic_sorting_button, 0, 3)
+
+        self.ng_count_button = QPushButton("NG Count")
+        self.ng_count_button.clicked.connect(self.open_ng_count)
+        self.ng_count_button.setFixedSize(150, 80)
+        self.ng_count_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
+        button_layout.addWidget(self.ng_count_button, 0, 4)
+
+        # Second Row Buttons
         self.simulation_button = QPushButton("Simulation Foldering")
         self.simulation_button.clicked.connect(self.open_simulation_foldering)
+        self.simulation_button.setFixedSize(150, 80)
         self.simulation_button.setStyleSheet("""
             QPushButton {
                 background-color: #8B0000;
                 color: white;
-                padding: 20px;
-                font-size: 16px;
-                border-radius: 10px;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
             }
             QPushButton:hover {
                 background-color: #A52A2A;
             }
         """)
-        button_layout.addWidget(self.simulation_button)
+        button_layout.addWidget(self.simulation_button, 1, 0)
+
+        self.crop_button = QPushButton("Crop")
+        self.crop_button.clicked.connect(self.open_crop)
+        self.crop_button.setFixedSize(150, 80)
+        self.crop_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
+        button_layout.addWidget(self.crop_button, 1, 1)
+
+        self.resize_button = QPushButton("Resize")
+        self.resize_button.clicked.connect(self.open_resize)
+        self.resize_button.setFixedSize(150, 80)
+        self.resize_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
+        button_layout.addWidget(self.resize_button, 1, 2)
+
+        self.flip_button = QPushButton("FLIP")
+        self.flip_button.clicked.connect(self.open_flip)
+        self.flip_button.setFixedSize(150, 80)
+        self.flip_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
+        button_layout.addWidget(self.flip_button, 1, 3)
+
+        self.rotate_button = QPushButton("Rotate")
+        self.rotate_button.clicked.connect(self.open_rotate)
+        self.rotate_button.setFixedSize(150, 80)
+        self.rotate_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8B0000;
+                color: white;
+                font-size: 14px;
+                border: 2px solid black;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #A52A2A;
+            }
+        """)
+        button_layout.addWidget(self.rotate_button, 1, 4)
 
         main_layout.addLayout(button_layout)
 
@@ -925,6 +1225,7 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
+    # 기존 기능에 대한 열기 메서드 유지
     def open_ng_sorting(self):
         dialog = NGSortingDialog()
         if dialog.exec_() == QDialog.Accepted:
@@ -997,6 +1298,37 @@ class MainWindow(QWidget):
             if not params['formats']:
                 QMessageBox.warning(self, "입력 오류", "적어도 하나의 이미지 포맷을 선택해야 합니다.")
                 return
+            self.start_task(params)
+
+    # 새로운 기능에 대한 열기 메서드 추가
+    def open_basic_sorting(self):
+        dialog = BasicSortingDialog()
+        if dialog.exec_() == QDialog.Accepted:
+            params = dialog.get_parameters()
+            self.start_task(params)
+
+    def open_crop(self):
+        dialog = CropDialog()
+        if dialog.exec_() == QDialog.Accepted:
+            params = dialog.get_parameters()
+            self.start_task(params)
+
+    def open_resize(self):
+        dialog = ResizeDialog()
+        if dialog.exec_() == QDialog.Accepted:
+            params = dialog.get_parameters()
+            self.start_task(params)
+
+    def open_flip(self):
+        dialog = FlipDialog()
+        if dialog.exec_() == QDialog.Accepted:
+            params = dialog.get_parameters()
+            self.start_task(params)
+
+    def open_rotate(self):
+        dialog = RotateDialog()
+        if dialog.exec_() == QDialog.Accepted:
+            params = dialog.get_parameters()
             self.start_task(params)
 
     def start_task(self, params):
