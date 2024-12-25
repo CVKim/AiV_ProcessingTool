@@ -11,3 +11,129 @@ Traceback (most recent call last):
   File "d:\anaconda\envs\local\Lib\shutil.py", line 547, in _copytree
     raise Error(errors)
 shutil.Error: [('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\10_RIGHT_BALLSTUD.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\10_RIGHT_BALLSTUD.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\11_RIGHT_BALLSTUD.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\11_RIGHT_BALLSTUD.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\12_RIGHT_BALLSTUD.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\12_RIGHT_BALLSTUD.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\13_LEFT_TILT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\13_LEFT_TILT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\14_LEFT_TILT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\14_LEFT_TILT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\15_LEFT_TILT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\15_LEFT_TILT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\16_LEFT_TILT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\16_LEFT_TILT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\17_LEFT_TILT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\17_LEFT_TILT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\18_LEFT_TILT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\18_LEFT_TILT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\19_LEFT_TILT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\19_LEFT_TILT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\1_LEFT_PLUG.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\1_LEFT_PLUG.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\20_LEFT_TILT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\20_LEFT_TILT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\21_LEFT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\21_LEFT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\22_LEFT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\22_LEFT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\23_LEFT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\23_LEFT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\24_LEFT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\24_LEFT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\25_LEFT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\25_LEFT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\26_LEFT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\26_LEFT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\27_LEFT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\27_LEFT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\28_LEFT_BOOT.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\28_LEFT_BOOT.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\2_TOP_TILT_SOCKET.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\2_TOP_TILT_SOCKET.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\3_LEFT_TILT_SOCKET.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\3_LEFT_TILT_SOCKET.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\4_TOP_HEXA_SIX.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\4_TOP_HEXA_SIX.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\5_RIGHT_BALLSTUD.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\5_RIGHT_BALLSTUD.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\6_RIGHT_BALLSTUD.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\6_RIGHT_BALLSTUD.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\7_RIGHT_BALLSTUD.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\7_RIGHT_BALLSTUD.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\8_RIGHT_BALLSTUD.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\8_RIGHT_BALLSTUD.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\9_RIGHT_BALLSTUD.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\9_RIGHT_BALLSTUD.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov10_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov10_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov11_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov11_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov12_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov12_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov13_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov13_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov14_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov14_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov15_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov15_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov16_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov16_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov17_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov17_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov18_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov18_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov19_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov19_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov1_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov1_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov20_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov20_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov21_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov21_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov22_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov22_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov23_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov23_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov24_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov24_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov25_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov25_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov26_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov26_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov27_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov27_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov28_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov28_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov2_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov2_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov3_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov3_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov4_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov4_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov5_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov5_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov6_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov6_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov7_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov7_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov8_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov8_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다'), ('E:/RESULT_IMG/202412/13/NG\\1124121108445141\\fov9_defect.jpg', 'E:/RESULT_IMG/202412/13\\1124121108445141\\fov9_defect.jpg', '[WinError 32] 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다')]
+2024-12-24 16:44:38,434:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113270912_소켓찍힘_7ea_2_Socket_Top_Tilt.bmp
+2024-12-24 16:44:38,558:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113305757_소켓찍힘_2_Socket_Top_Tilt.bmp
+2024-12-24 17:03:33,332:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113270912_소켓찍힘_7ea_2_Socket_Top_Tilt.bmp
+2024-12-24 17:03:33,396:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113305757_소켓찍힘_2_Socket_Top_Tilt.bmp
+2024-12-24 17:04:07,809:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113270912_소켓찍힘_7ea_2_Socket_Top_Tilt.bmp
+2024-12-24 17:04:07,872:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113305757_소켓찍힘_2_Socket_Top_Tilt.bmp
+2024-12-24 17:04:49,401:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113270912_소켓찍힘_7ea_2_Socket_Top_Tilt.bmp
+2024-12-24 17:04:49,469:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113305757_소켓찍힘_2_Socket_Top_Tilt.bmp
+2024-12-24 17:09:48,542:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113270912_소켓찍힘_7ea_2_Socket_Top_Tilt.bmp
+2024-12-24 17:09:48,608:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113305757_소켓찍힘_2_Socket_Top_Tilt.bmp
+2024-12-24 17:11:21,830:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113270912_소켓찍힘_7ea_2_Socket_Top_Tilt.bmp
+2024-12-24 17:11:21,891:ERROR:Crop 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 156, in crop_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113305757_소켓찍힘_2_Socket_Top_Tilt.bmp
+2024-12-24 17:12:04,098:ERROR:Resize 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 270, in resize_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113270912_소켓찍힘_7ea_2_Socket_Top_Tilt.bmp
+2024-12-24 17:12:04,158:ERROR:Resize 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 270, in resize_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113305757_소켓찍힘_2_Socket_Top_Tilt.bmp
+2024-12-24 17:12:37,250:ERROR:FLIP 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 371, in flip_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113270912_소켓찍힘_7ea_2_Socket_Top_Tilt.bmp
+2024-12-24 17:12:38,402:ERROR:FLIP 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 371, in flip_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113305757_소켓찍힘_2_Socket_Top_Tilt.bmp
+2024-12-24 17:13:12,630:ERROR:Rotate 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 473, in rotate_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113270912_소켓찍힘_7ea_2_Socket_Top_Tilt.bmp
+2024-12-24 17:13:13,801:ERROR:Rotate 작업 중 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 473, in rotate_images
+    image = self.load_image(src_path)
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 71, in load_image
+    raise ValueError(f"이미지를 로드할 수 없습니다: {path}")
+ValueError: 이미지를 로드할 수 없습니다: F:/000. PJT/99. TEST/MatchingBMPMove/24.12.12_SOCKET_TOP_TILT_STABBED\122083113305757_소켓찍힘_2_Socket_Top_Tilt.bmp
