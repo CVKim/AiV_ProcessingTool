@@ -1190,6 +1190,17 @@ class MainWindow(QWidget):
         main_layout.addWidget(self.progress_bar)
 
         # Log Area
+        # <--- 변경 시작: Logs 라벨과 Clear 버튼을 포함하는 레이아웃 추가 --->
+        log_layout = QHBoxLayout()
+        log_label = QLabel("<b>Logs:</b>")
+        self.clear_log_button = QPushButton("Clear")  # Clear 버튼 생성
+        self.clear_log_button.clicked.connect(self.clear_logs)  # 클릭 시 clear_logs 메서드 호출
+        log_layout.addWidget(log_label)
+        log_layout.addStretch()  # Clear 버튼을 오른쪽으로 이동
+        log_layout.addWidget(self.clear_log_button)
+        main_layout.addLayout(log_layout)
+        # <--- 변경 끝 --->
+        
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
         self.log_area.setStyleSheet("""
@@ -1202,7 +1213,6 @@ class MainWindow(QWidget):
                 border-radius: 5px;
             }
         """)
-        main_layout.addWidget(QLabel("<b>Logs:</b>"))
         main_layout.addWidget(self.log_area)
 
         # Stop Button
@@ -1370,6 +1380,11 @@ class MainWindow(QWidget):
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         if reply == QMessageBox.Yes:
             QApplication.instance().quit()
+
+    # <--- 추가: Clear 버튼을 눌렀을 때 로그를 클리어하는 메서드 --->
+    def clear_logs(self):
+        self.log_area.clear()
+    # <--- 추가 끝 --->
 
 
 def main():
