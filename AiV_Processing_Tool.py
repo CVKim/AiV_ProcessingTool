@@ -7,13 +7,12 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog,
     QProgressBar, QMessageBox, QLabel, QHBoxLayout, QTextEdit,
     QDialog, QFormLayout, QLineEdit, QSpinBox, QCheckBox, QListWidget, QListWidgetItem,
-    QTableWidget, QTableWidgetItem, QHeaderView, QGridLayout
+    QTableWidget, QTableWidgetItem, QHeaderView, QGridLayout, QDateTimeEdit
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QDateTime
 from PyQt5.QtGui import QIcon
 from datetime import datetime
 
-# 로깅 설정
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s:%(levelname)s:%(message)s')
 
@@ -108,12 +107,10 @@ class WorkerThread(QThread):
         # 기존 Date-Based Copy 기능 유지
         source = task['source']
         target = task['target']
-        year = task['year']
-        month = task['month']
-        day = task['day']
-        hour = task['hour']
-        minute = task['minute']
-        second = task['second']
+        specified_datetime = datetime(
+            task['year'], task['month'], task['day'],
+            task['hour'], task['minute'], task['second']
+        )
         count = task['count']
         formats = task['formats']  # 이미지 포맷 필터링
         self.log.emit("Date-Based Copy 작업 시작")
@@ -123,8 +120,6 @@ class WorkerThread(QThread):
             return
         # 설정한 날짜 이후에 수정된 파일 찾기
         try:
-            # 사용자 설정 날짜와 시간
-            specified_datetime = datetime(year, month, day, hour, minute, second)
             specified_timestamp = specified_datetime.timestamp()
 
             # 소스 디렉토리 내의 파일 리스트
@@ -536,49 +531,14 @@ class DateBasedCopyDialog(QDialog):
         layout = QVBoxLayout()
         form_layout = QFormLayout()
 
-        current_time = datetime.now()
-        year, month, day = current_time.year, current_time.month, current_time.day
-        hour, minute, second = current_time.hour, current_time.minute, current_time.second
-
-        # Date and Time (확장된 레이아웃)
-        self.year_input = QSpinBox()
-        self.year_input.setRange(2020, 2030)
-        self.year_input.setValue(year)
-        self.month_input = QSpinBox()
-        self.month_input.setRange(1, 12)
-        self.month_input.setValue(month)
-        self.day_input = QSpinBox()
-        self.day_input.setRange(1, 31)
-        self.day_input.setValue(day)
-        self.hour_input = QSpinBox()
-        self.hour_input.setRange(0, 23)
-        self.hour_input.setValue(hour)
-        self.minute_input = QSpinBox()
-        self.minute_input.setRange(0, 59)
-        self.minute_input.setValue(minute)
-        self.second_input = QSpinBox()
-        self.second_input.setRange(0, 59)
-        self.second_input.setValue(second)
-
-        # 날짜 입력 레이아웃
-        date_layout = QHBoxLayout()
-        date_layout.addWidget(QLabel("Year:"))
-        date_layout.addWidget(self.year_input)
-        date_layout.addWidget(QLabel("Month:"))
-        date_layout.addWidget(self.month_input)
-        date_layout.addWidget(QLabel("Day:"))
-        date_layout.addWidget(self.day_input)
-        form_layout.addRow(QLabel("<b>Date:</b>"), date_layout)
-
-        # 시간 입력 레이아웃
-        time_layout = QHBoxLayout()
-        time_layout.addWidget(QLabel("Hour:"))
-        time_layout.addWidget(self.hour_input)
-        time_layout.addWidget(QLabel("Minute:"))
-        time_layout.addWidget(self.minute_input)
-        time_layout.addWidget(QLabel("Second:"))
-        time_layout.addWidget(self.second_input)
-        form_layout.addRow(QLabel("<b>Time:</b>"), time_layout)
+        # <--- 변경 시작: QDateTimeEdit 사용 --->
+        # Date and Time 선택을 위한 QDateTimeEdit 위젯 추가
+        self.datetime_edit = QDateTimeEdit(self)
+        self.datetime_edit.setCalendarPopup(True)  # 달력 팝업 활성화
+        self.datetime_edit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+        self.datetime_edit.setDateTime(QDateTime.currentDateTime())
+        form_layout.addRow(QLabel("<b>Date and Time:</b>"), self.datetime_edit)
+        # <--- 변경 끝 --->
 
         # Count
         self.count_input = QSpinBox()
@@ -645,16 +605,21 @@ class DateBasedCopyDialog(QDialog):
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
+        
+        # QDateTimeEdit에서 날짜와 시간 가져오기
+        datetime_qt = self.datetime_edit.dateTime()
+        specified_datetime = datetime_qt.toPyDateTime()
+
         return {
             'operation': 'date_copy',
             'source': self.source_path.text(),
             'target': self.target_path.text(),
-            'year': self.year_input.value(),
-            'month': self.month_input.value(),
-            'day': self.day_input.value(),
-            'hour': self.hour_input.value(),
-            'minute': self.minute_input.value(),
-            'second': self.second_input.value(),
+            'year': specified_datetime.year,
+            'month': specified_datetime.month,
+            'day': specified_datetime.day,
+            'hour': specified_datetime.hour,
+            'minute': specified_datetime.minute,
+            'second': specified_datetime.second,
             'count': self.count_input.value(),
             'formats': formats  # 이미지 포맷 필터링
         }
@@ -986,8 +951,19 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("File Processor")
-        self.setWindowIcon(QIcon('./AiV.png'))  # 아이콘 유지
-        self.setFixedSize(1000, 800)  # 약간 넓혀서 버튼들이 작아질 여유를 줌
+        
+        # 아이콘 경로 수정
+        if getattr(sys, 'frozen', False):
+            # 실행 파일로 패키징된 경우 (PyInstaller)
+            application_path = sys._MEIPASS
+        else:
+            # 개발 중인 경우
+            application_path = os.path.dirname(os.path.abspath(__file__))
+        
+        icon_path = os.path.join(application_path, 'AiV.ico')  # 'AiV.ico'로 변경
+        self.setWindowIcon(QIcon(icon_path))
+        
+        self.setFixedSize(1000, 800)
         self.initUI()
         self.worker = None
 
