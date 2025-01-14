@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QDateTime
 from PyQt5.QtGui import QIcon
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s:%(levelname)s:%(message)s')
@@ -191,22 +192,28 @@ class WorkerThread(QThread):
                 if total_files == 0:
                     self.log.emit(f"No image files found in {src} with specified formats.")
                     continue
-                for idx, file in enumerate(image_files, start=1):
-                    if self._is_stopped:
-                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
-                        self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
-                        return
-                    src_file = os.path.join(src, file)
-                    dst_file = os.path.join(tgt, file)  # 원본 이름 그대로 복사
-                    try:
-                        shutil.copy2(src_file, dst_file)  # 덮어쓰기 기본 동작
-                        self.log.emit(f"Copied {src_file} to {dst_file}")
-                        total_processed += 1
-                    except Exception as e:
-                        logging.error("Image Format Copy 중 오류", exc_info=True)
-                        self.log.emit(f"오류 발생: {str(e)}")
-                    progress_percent = int((idx / total_files) * 100)
-                    self.progress.emit(progress_percent)
+                with ThreadPoolExecutor(max_workers=8) as executor:
+                    futures = []
+                    for file in image_files:
+                        if self._is_stopped:
+                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
+                            return
+                        src_file = os.path.join(src, file)
+                        dst_file = os.path.join(tgt, file)  # 원본 이름 그대로 복사
+                        futures.append(executor.submit(self.copy_file, src_file, dst_file))
+                    
+                    for idx, future in enumerate(as_completed(futures), start=1):
+                        if self._is_stopped:
+                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
+                            return
+                        result = future.result()
+                        if result:
+                            total_processed += 1
+                            self.log.emit(result)
+                        progress_percent = int((idx / total_files) * 100)
+                        self.progress.emit(progress_percent)
             except Exception as e:
                 logging.error("Image Format Copy 중 오류", exc_info=True)
                 self.log.emit(f"오류 발생: {str(e)}")
@@ -214,6 +221,14 @@ class WorkerThread(QThread):
             self.progress.emit(progress_percent)
         self.log.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
         self.finished.emit(f"Image Format Copy 완료. 총 처리한 파일: {total_processed}")
+
+    def copy_file(self, src, dst):
+        try:
+            shutil.copy2(src, dst)
+            return f"Copied {src} to {dst}"
+        except Exception as e:
+            logging.error("Image Format Copy 중 오류", exc_info=True)
+            return f"오류 발생: {str(e)}"
 
     def simulation_foldering(self, task):
         # 기존 Simulation Foldering 기능 유지
@@ -304,15 +319,144 @@ class WorkerThread(QThread):
     # 새로운 기능을 위한 메서드들 (기능 구현 필요)
     def basic_sorting(self, task):
         self.log.emit("Basic Sorting 작업 시작")
-        # 기능 구현 필요
+        # 기능 구현
         try:
-            # 예시: Basic Sorting 로직을 여기에 구현
-            self.log.emit("Basic Sorting 기능이 아직 구현되지 않았습니다.")
-            self.finished.emit("Basic Sorting 완료.")
+            source = task['source']
+            target = task['target']
+            inner_id_list_path = task.get('inner_id_list', '')
+            use_inner_id = task.get('use_inner_id', False)
+            fov_number_input = task.get('fov_number', '').strip()
+            inner_id = task.get('inner_id', '').strip()
+            formats = task['formats']
+
+            # FOV Number를 다중 입력으로 처리 및 유효성 검증
+            if fov_number_input:
+                # 콤마로 분리하고, 공백 제거
+                fov_numbers_raw = [num.strip() for num in fov_number_input.split(',') if num.strip()]
+                fov_numbers = []
+                invalid_fov = []
+                for num in fov_numbers_raw:
+                    if num.isdigit():
+                        fov_numbers.append(num)
+                    else:
+                        invalid_fov.append(num)
+                if invalid_fov:
+                    QMessageBox.warning(self, "입력 오류", f"다음 FOV Number가 유효하지 않습니다:\n{', '.join(invalid_fov)}")
+                    self.finished.emit("Basic Sorting 중지됨.")
+                    return
+            else:
+                fov_numbers = []
+
+            inner_ids = []
+
+            if inner_id_list_path and os.path.exists(inner_id_list_path):
+                # Inner ID List Path가 설정된 경우
+                inner_ids = [f for f in os.listdir(inner_id_list_path) 
+                            if os.path.isdir(os.path.join(inner_id_list_path, f)) and f not in ['OK', 'NG']]
+            elif use_inner_id and inner_id:
+                # Inner ID가 설정된 경우
+                inner_ids = [inner_id]
+            else:
+                self.log.emit("Inner ID List Path도 Inner ID도 설정되지 않았습니다.")
+                self.finished.emit("Basic Sorting 중지됨.")
+                return
+
+            if not inner_ids:
+                self.log.emit("유효한 Inner ID가 없습니다.")
+                self.finished.emit("Basic Sorting 완료.")
+                return
+
+            if not fov_numbers:
+                self.log.emit("FOV Number가 입력되지 않았습니다.")
+                self.finished.emit("Basic Sorting 중지됨.")
+                return
+
+            total_tasks = len(inner_ids)
+            total_processed = 0
+
+            for i, folder_name in enumerate(inner_ids, start=1):
+                if self._is_stopped:
+                    self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
+                    self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
+                    return
+
+                source_folder = os.path.join(source, folder_name)
+                if not os.path.exists(source_folder):
+                    self.log.emit(f"Source Path 내에 '{folder_name}' 폴더가 존재하지 않습니다.")
+                    continue
+
+                # 선택된 이미지 포맷에 맞는 이미지 파일들 가져오기
+                image_files = [f for f in os.listdir(source_folder) 
+                               if any(f.lower().endswith(fmt.lower()) for fmt in formats) 
+                               and os.path.isfile(os.path.join(source_folder, f))]
+
+                if not image_files:
+                    self.log.emit(f"'{folder_name}' 폴더에 지정된 이미지 포맷의 파일이 없습니다.")
+                    continue
+
+                # FOV Numbers에 매칭되는 파일 필터링
+                matching_files = []
+                for file in image_files:
+                    if self._is_stopped:
+                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
+                        self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
+                        return
+                    parts = file.split('_', 1)  # 첫 번째 언더스코어 기준으로 분리
+                    if len(parts) < 2:
+                        self.log.emit(f"파일 이름 형식 오류: {file}")
+                        continue
+                    file_fov_number = parts[0]
+                    if file_fov_number in fov_numbers:
+                        matching_files.append(file)
+
+                if not matching_files:
+                    self.log.emit(f"'{folder_name}' 폴더에 FOV Number '{', '.join(fov_numbers)}'에 매칭되는 파일이 없습니다.")
+                    continue
+
+                # 병렬 복사를 위한 ThreadPoolExecutor 사용
+                with ThreadPoolExecutor(max_workers=8) as executor:
+                    futures = []
+                    for image_file in matching_files:
+                        if self._is_stopped:
+                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
+                            return
+                        src_file = os.path.join(source_folder, image_file)
+                        # 새로운 파일명: (Inner ID)_(원본 이미지 파일명).format
+                        file_base, file_ext = os.path.splitext(image_file)
+                        new_file_name = f"{folder_name}_{file_base}{file_ext}"
+                        dst_file = os.path.join(target, new_file_name)
+                        futures.append(executor.submit(self.copy_file, src_file, dst_file))
+                    
+                    for future in as_completed(futures):
+                        if self._is_stopped:
+                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 파일: {total_processed}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 파일: {total_processed}")
+                            return
+                        result = future.result()
+                        if result:
+                            total_processed += 1
+                            self.log.emit(result)
+                        # 전체 진행률을 업데이트하기 위해 계산
+                        progress_percent = int((total_processed / len(matching_files)) * 100)
+                        self.progress.emit(progress_percent)
+
+                self.log.emit(f"'{folder_name}' 폴더에서 {len(matching_files)}개의 파일을 복사했습니다.")
+                progress_percent = int((i / total_tasks) * 100)
+                self.progress.emit(progress_percent)
+            self.finished.emit(f"Basic Sorting 완료. 총 처리한 파일: {total_processed}")
         except Exception as e:
             logging.error("Basic Sorting 중 오류", exc_info=True)
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("작업 중지됨.")
+
+    def copy_file(self, src, dst):
+        try:
+            shutil.copy2(src, dst)
+            return f"Copied {src} to {dst}"
+        except Exception as e:
+            logging.error("Basic Sorting 중 오류", exc_info=True)
+            return f"오류 발생: {str(e)}"
 
     def crop_images(self, task):
         self.log.emit("Crop 작업 시작")
@@ -558,6 +702,21 @@ class DateBasedCopyDialog(QDialog):
         formats_layout.addWidget(self.format_png)
         form_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
 
+        # Inner ID List Path (Optional)
+        self.inner_id_list_checkbox = QCheckBox("Use Inner ID List Path")
+        self.inner_id_list_checkbox.stateChanged.connect(self.toggle_inner_id_list_path)
+        form_layout.addRow(QLabel("<b>Inner ID List Path:</b>"), self.inner_id_list_checkbox)
+
+        self.inner_id_list_path = QLineEdit()
+        self.inner_id_list_path.setReadOnly(True)
+        self.inner_id_list_path.setEnabled(False)
+        self.inner_id_list_button = QPushButton("Select Inner ID List Path")
+        self.inner_id_list_button.setEnabled(False)
+        self.inner_id_list_button.clicked.connect(self.select_inner_id_list)
+        inner_id_layout = QHBoxLayout()
+        inner_id_layout.addWidget(self.inner_id_list_button)
+        form_layout.addRow("", self.inner_id_list_path)
+
         # Source Path
         self.source_button = QPushButton("Select Source Path")
         self.source_button.clicked.connect(self.select_source)
@@ -583,6 +742,20 @@ class DateBasedCopyDialog(QDialog):
         layout.addWidget(self.submit_button)
 
         self.setLayout(layout)
+
+    def toggle_inner_id_list_path(self, state):
+        if state == Qt.Checked:
+            self.inner_id_list_path.setEnabled(True)
+            self.inner_id_list_button.setEnabled(True)
+        else:
+            self.inner_id_list_path.setEnabled(False)
+            self.inner_id_list_button.setEnabled(False)
+            self.inner_id_list_path.clear()
+
+    def select_inner_id_list(self):
+        inner_id_list = QFileDialog.getExistingDirectory(self, "Select Inner ID List Path", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if inner_id_list:
+            self.inner_id_list_path.setText(inner_id_list)
 
     def select_target(self):
         target = QFileDialog.getExistingDirectory(self, "Select Target Folder", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
@@ -610,10 +783,13 @@ class DateBasedCopyDialog(QDialog):
         datetime_qt = self.datetime_edit.dateTime()
         specified_datetime = datetime_qt.toPyDateTime()
 
+        inner_id_list = self.inner_id_list_path.text() if self.inner_id_list_checkbox.isChecked() else ''
+
         return {
             'operation': 'date_copy',
             'source': self.source_path.text(),
             'target': self.target_path.text(),
+            'inner_id_list': inner_id_list,
             'year': specified_datetime.year,
             'month': specified_datetime.month,
             'day': specified_datetime.day,
@@ -733,10 +909,12 @@ class SimulationFolderingDialog(QDialog):
         self.format_bmp = QCheckBox("BMP")
         self.format_jpg = QCheckBox("JPG")
         self.format_mim = QCheckBox("MIM")
+        self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
         formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_jpg)
         formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_png)
         form_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
 
         layout.addLayout(form_layout)
@@ -767,6 +945,8 @@ class SimulationFolderingDialog(QDialog):
             formats.append(".jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
+        if self.format_png.isChecked():
+            formats.append(".png")
         return {
             'operation': 'simulation_foldering',
             'source': self.source_path.text(),
@@ -825,21 +1005,118 @@ class BasicSortingDialog(QDialog):
         self.initUI()
 
     def initUI(self):
-        # 기능 구현 필요
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Basic Sorting 기능을 설정하세요."))
-        # 추가 설정 요소들을 여기에 구현
+        form_layout = QFormLayout()
+
+        # Inner ID List Path
+        self.inner_id_list_button = QPushButton("Select Inner ID List Path")
+        self.inner_id_list_button.clicked.connect(self.select_inner_id_list)
+        self.inner_id_list_path = QLineEdit()
+        self.inner_id_list_path.setReadOnly(True)
+        form_layout.addRow(QLabel("<b>Inner ID List Path:</b>"), self.inner_id_list_button)
+        form_layout.addRow("", self.inner_id_list_path)
+
+        # Source Path
+        self.source_button = QPushButton("Select Source Path")
+        self.source_button.clicked.connect(self.select_source)
+        self.source_path = QLineEdit()
+        self.source_path.setReadOnly(True)
+        form_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
+        form_layout.addRow("", self.source_path)
+
+        # Target Path
+        self.target_button = QPushButton("Select Target Path")
+        self.target_button.clicked.connect(self.select_target)
+        self.target_path = QLineEdit()
+        self.target_path.setReadOnly(True)
+        form_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
+        form_layout.addRow("", self.target_path)
+
+        # FOV Number
+        self.fov_input = QLineEdit()
+        self.fov_input.setPlaceholderText("Enter FOV Number(s), separated by commas (e.g., 1,2,3)")
+        form_layout.addRow(QLabel("<b>FOV Number(s):</b>"), self.fov_input)
+
+        # Inner ID (Optional)
+        self.inner_id_checkbox = QCheckBox("Use Inner ID")
+        self.inner_id_checkbox.stateChanged.connect(self.toggle_inner_id)
+        form_layout.addRow(QLabel("<b>Inner ID:</b>"), self.inner_id_checkbox)
+
+        self.inner_id_input = QLineEdit()
+        self.inner_id_input.setPlaceholderText("Enter Inner ID")
+        self.inner_id_input.setEnabled(False)
+        form_layout.addRow("", self.inner_id_input)
+
+        # Image Formats
+        self.format_bmp = QCheckBox("BMP")
+        self.format_jpg = QCheckBox("JPG")
+        self.format_mim = QCheckBox("MIM")
+        self.format_png = QCheckBox("PNG")
+        formats_layout = QHBoxLayout()
+        formats_layout.addWidget(self.format_bmp)
+        formats_layout.addWidget(self.format_jpg)
+        formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_png)
+        form_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+
+        layout.addLayout(form_layout)
+
+        # Submit Button
         self.submit_button = QPushButton("Start Basic Sorting")
         self.submit_button.clicked.connect(self.accept)
         self.submit_button.setStyleSheet("background-color: #8B0000; color: white; padding: 15px; font-size: 14px; border-radius: 5px;")
         layout.addWidget(self.submit_button)
+
         self.setLayout(layout)
 
+    def toggle_inner_id(self, state):
+        if state == Qt.Checked:
+            self.inner_id_input.setEnabled(True)
+            self.inner_id_list_path.setEnabled(False)
+            self.inner_id_list_button.setEnabled(False)
+            self.inner_id_list_path.clear()
+        else:
+            self.inner_id_input.setEnabled(False)
+            self.inner_id_input.clear()
+            self.inner_id_list_path.setEnabled(True)
+            self.inner_id_list_button.setEnabled(True)
+
+    def select_inner_id_list(self):
+        inner_id_list = QFileDialog.getExistingDirectory(self, "Select Inner ID List Path", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if inner_id_list:
+            self.inner_id_list_path.setText(inner_id_list)
+
+    def select_target(self):
+        target = QFileDialog.getExistingDirectory(self, "Select Target Folder", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if target:
+            self.target_path.setText(target)
+
+    def select_source(self):
+        source = QFileDialog.getExistingDirectory(self, "Select Source Folder", "", QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if source:
+            self.source_path.setText(source)
+
     def get_parameters(self):
-        # 설정된 파라미터 반환
+        # 이미지 포맷 필터링
+        formats = []
+        if self.format_bmp.isChecked():
+            formats.append(".bmp")
+        if self.format_jpg.isChecked():
+            formats.append(".jpg")
+        if self.format_mim.isChecked():
+            formats.append(".mim")
+        if self.format_png.isChecked():
+            formats.append(".png")
+        
         return {
             'operation': 'basic_sorting',
-            # 추가 파라미터들
+            'source': self.source_path.text(),
+            'target': self.target_path.text(),
+            'inner_id_list': self.inner_id_list_path.text(),
+            'use_inner_id': self.inner_id_checkbox.isChecked(),
+            'inner_id': self.inner_id_input.text(),
+            'fov_number': self.fov_input.text(),
+            'formats': formats
         }
 
 
@@ -1176,7 +1453,7 @@ class MainWindow(QWidget):
         log_layout.addWidget(self.clear_log_button)
         main_layout.addLayout(log_layout)
         # <--- 변경 끝 --->
-        
+
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
         self.log_area.setStyleSheet("""
@@ -1291,6 +1568,25 @@ class MainWindow(QWidget):
         dialog = BasicSortingDialog()
         if dialog.exec_() == QDialog.Accepted:
             params = dialog.get_parameters()
+            # 유효성 검사
+            missing_fields = []
+            if not params['inner_id_list'] and not params['use_inner_id']:
+                missing_fields.append("Inner ID List Path 또는 Inner ID")
+            if not params['source']:
+                missing_fields.append("Source Path")
+            if not params['target']:
+                missing_fields.append("Target Path")
+            if not params['fov_number']:
+                missing_fields.append("FOV Number(s)")
+            if not params['formats']:
+                missing_fields.append("Image Formats")
+
+            if not params['inner_id_list'] and params['use_inner_id'] and not params['inner_id']:
+                missing_fields.append("Inner ID")
+
+            if missing_fields:
+                QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
+                return
             self.start_task(params)
 
     def open_crop(self):
@@ -1357,10 +1653,8 @@ class MainWindow(QWidget):
         if reply == QMessageBox.Yes:
             QApplication.instance().quit()
 
-    # <--- 추가: Clear 버튼을 눌렀을 때 로그를 클리어하는 메서드 --->
     def clear_logs(self):
         self.log_area.clear()
-    # <--- 추가 끝 --->
 
 
 def main():
