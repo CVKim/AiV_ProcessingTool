@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # 로그 설정
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s:%(levelname)s:%(message)s')
-
+cpu_cores = os.cpu_count() or 4
 
 class WorkerThread(QThread):
     progress = pyqtSignal(int)
@@ -285,8 +285,8 @@ class WorkerThread(QThread):
 
                 self.log.emit(f"Specified Date and Time: {specified_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
                 self.log.emit(f"Number of Folders to Copy: {total_folders}")
-
-                with ThreadPoolExecutor(max_workers=4) as executor:
+                
+                with ThreadPoolExecutor(max_workers=8) as executor:
                     futures = []
                     for folder_path in matching_folders:
                         if self._is_stopped:
@@ -1020,7 +1020,7 @@ class BaseTaskDialog(QDialog):
         layout.addLayout(log_layout)
 
         self.log_area = QTextEdit()
-        self.log_area.setReadOnly(True)
+        self.log_area.setReadOnly(False)
         self.log_area.setStyleSheet("""
             QTextEdit {
                 background-color: #F5F5F5;
@@ -1128,6 +1128,17 @@ class BaseTaskDialog(QDialog):
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
+
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target', 'inner_id_list', 'source2', 'ng_folder']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
+        if missing_fields:
+            QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
+            return False
         return True
 
     def get_parameters(self):
@@ -1150,7 +1161,7 @@ class BasicSortingDialog(BaseTaskDialog):
         self.inner_id_list_button = QPushButton("Select Inner ID List Path")
         self.inner_id_list_button.clicked.connect(self.select_inner_id_list)
         self.inner_id_list_path = QLineEdit()
-        self.inner_id_list_path.setReadOnly(True)
+        self.inner_id_list_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Inner ID List Path:</b>"), self.inner_id_list_button)
         self.specific_layout.addRow("", self.inner_id_list_path)
 
@@ -1158,7 +1169,7 @@ class BasicSortingDialog(BaseTaskDialog):
         self.source_button = QPushButton("Select Matching Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
-        self.source_path.setReadOnly(True)
+        self.source_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         self.specific_layout.addRow("", self.source_path)
 
@@ -1166,7 +1177,7 @@ class BasicSortingDialog(BaseTaskDialog):
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
-        self.target_path.setReadOnly(True)
+        self.target_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
@@ -1266,6 +1277,13 @@ class BasicSortingDialog(BaseTaskDialog):
         if not params['inner_id_list'] and params['use_inner_id'] and not params['inner_id']:
             missing_fields.append("Inner ID")
 
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target', 'inner_id_list']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
@@ -1295,7 +1313,7 @@ class NGSortingDialog(BaseTaskDialog):
         self.source2_button = QPushButton("Select Matching Folder")
         self.source2_button.clicked.connect(self.select_source2)
         self.source2_path = QLineEdit()
-        self.source2_path.setReadOnly(True)
+        self.source2_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Source Path #2 (Matching Folder):</b>"), self.source2_button)
         self.specific_layout.addRow("", self.source2_path)
 
@@ -1303,7 +1321,7 @@ class NGSortingDialog(BaseTaskDialog):
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
-        self.target_path.setReadOnly(True)
+        self.target_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
@@ -1452,6 +1470,17 @@ class NGSortingDialog(BaseTaskDialog):
             return False
         return True
 
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
+        if missing_fields:
+            QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
+            return False
+        return True
 
 class DateBasedCopyDialog(BaseTaskDialog):
     def __init__(self):
@@ -1476,7 +1505,7 @@ class DateBasedCopyDialog(BaseTaskDialog):
         self.source_button = QPushButton("Select Source Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
-        self.source_path.setReadOnly(True)
+        self.source_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         self.specific_layout.addRow("", self.source_path)
 
@@ -1484,7 +1513,7 @@ class DateBasedCopyDialog(BaseTaskDialog):
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
-        self.target_path.setReadOnly(True)
+        self.target_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
@@ -1526,6 +1555,14 @@ class DateBasedCopyDialog(BaseTaskDialog):
             missing_fields.append("Target Path")
         if not params['count']:
             missing_fields.append("Number of Folders to Copy")
+
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
@@ -1542,7 +1579,7 @@ class ImageFormatCopyDialog(BaseTaskDialog):
         self.source_button = QPushButton("Select Source Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
-        self.source_path.setReadOnly(True)
+        self.source_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         self.specific_layout.addRow("", self.source_path)
 
@@ -1550,7 +1587,7 @@ class ImageFormatCopyDialog(BaseTaskDialog):
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
-        self.target_path.setReadOnly(True)
+        self.target_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
@@ -1605,6 +1642,14 @@ class ImageFormatCopyDialog(BaseTaskDialog):
             missing_fields.append("Target Path")
         if not params['formats']:
             missing_fields.append("Image Formats")
+
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
@@ -1621,7 +1666,7 @@ class SimulationFolderingDialog(BaseTaskDialog):
         self.source_button = QPushButton("Select Source Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
-        self.source_path.setReadOnly(True)
+        self.source_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         self.specific_layout.addRow("", self.source_path)
 
@@ -1629,7 +1674,7 @@ class SimulationFolderingDialog(BaseTaskDialog):
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
-        self.target_path.setReadOnly(True)
+        self.target_path.setReadOnly(False)
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
@@ -1684,6 +1729,14 @@ class SimulationFolderingDialog(BaseTaskDialog):
             missing_fields.append("Target Path")
         if not params['formats']:
             missing_fields.append("Image Formats")
+
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
@@ -1706,7 +1759,7 @@ class NGCountDialog(QDialog):
         self.ng_folder_button = QPushButton("Select NG Folder")
         self.ng_folder_button.clicked.connect(self.select_ng_folder)
         self.ng_folder_path = QLineEdit()
-        self.ng_folder_path.setReadOnly(True)
+        self.ng_folder_path.setReadOnly(False)
         form_layout.addRow(QLabel("<b>Counting - Select NG folder:</b>"), self.ng_folder_button)
         form_layout.addRow("", self.ng_folder_path)
 
@@ -1837,7 +1890,7 @@ class NGCountDialog(QDialog):
                     row_data.append('')
             data.append('\t'.join(row_data))
         clipboard.setText('\n'.join(data))
-        QMessageBox.information(self, "복사 완료", "표가 클립보드에 복사되었습니다.")
+        QMessageBox.information(self, "복사 완료", "Copy to the clipboard")
 
 
 class CropDialog(BaseTaskDialog):
@@ -1893,11 +1946,18 @@ class CropDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if not params['crop_area']:
             missing_fields.append("Crop Area Parameters")
+
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
         return True
-
 
 class ResizeDialog(BaseTaskDialog):
     def __init__(self):
@@ -1952,11 +2012,18 @@ class ResizeDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if not params['resize_dimensions']:
             missing_fields.append("Resize Dimensions")
+
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
         return True
-
 
 class FlipDialog(BaseTaskDialog):
     def __init__(self):
@@ -2011,6 +2078,14 @@ class FlipDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if not params['flip_direction']:
             missing_fields.append("Flip Direction")
+
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
@@ -2070,6 +2145,14 @@ class RotateDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if not params['rotate_angle']:
             missing_fields.append("Rotate Angle")
+
+        # 추가: 경로 유효성 검증
+        path_fields = ['source', 'target']
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
@@ -2079,9 +2162,8 @@ class RotateDialog(BaseTaskDialog):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("AiV File Processor🖥️")
+        self.setWindowTitle("AiV File Processor🗂️📂📁")
 
-        # 아이콘 경로 수정
         if getattr(sys, 'frozen', False):
             # 실행 파일로 패키징된 경우 (PyInstaller)
             application_path = sys._MEIPASS
@@ -2093,10 +2175,9 @@ class MainWindow(QWidget):
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         else:
-            # 아이콘 파일이 없을 경우 기본 아이콘 사용
             pass
 
-        self.setFixedSize(1000, 300)
+        self.setFixedSize(1000, 200)
         self.initUI()
         self.dialogs = {}  # 열린 Dialog를 저장할 딕셔너리 생성
 
@@ -2113,7 +2194,7 @@ class MainWindow(QWidget):
                 QPushButton {
                     background-color: #8B0000;
                     color: white;
-                    font-size: 14px;
+                    font-size: 12px;
                     border: 2px solid black;
                     border-radius: 5px;
                 }
@@ -2125,62 +2206,62 @@ class MainWindow(QWidget):
         # First Row Buttons
         self.ng_sorting_button = QPushButton("NG Folder Sorting")
         self.ng_sorting_button.clicked.connect(self.open_ng_sorting)
-        self.ng_sorting_button.setFixedSize(150, 80)
+        self.ng_sorting_button.setFixedSize(150, 60)
         self.ng_sorting_button.setStyleSheet(button_style())
         button_layout.addWidget(self.ng_sorting_button, 0, 0)
 
         self.date_copy_button = QPushButton("Date-Based Copy")
         self.date_copy_button.clicked.connect(self.open_date_copy)
-        self.date_copy_button.setFixedSize(150, 80)
+        self.date_copy_button.setFixedSize(150, 60)
         self.date_copy_button.setStyleSheet(button_style())
         button_layout.addWidget(self.date_copy_button, 0, 1)
 
         self.image_copy_button = QPushButton("Image Format Copy")
         self.image_copy_button.clicked.connect(self.open_image_copy)
-        self.image_copy_button.setFixedSize(150, 80)
+        self.image_copy_button.setFixedSize(150, 60)
         self.image_copy_button.setStyleSheet(button_style())
         button_layout.addWidget(self.image_copy_button, 0, 2)
 
         self.basic_sorting_button = QPushButton("Basic Sorting")
         self.basic_sorting_button.clicked.connect(self.open_basic_sorting)
-        self.basic_sorting_button.setFixedSize(150, 80)
+        self.basic_sorting_button.setFixedSize(150, 60)
         self.basic_sorting_button.setStyleSheet(button_style())
         button_layout.addWidget(self.basic_sorting_button, 0, 3)
 
         self.ng_count_button = QPushButton("NG Count")
         self.ng_count_button.clicked.connect(self.open_ng_count)
-        self.ng_count_button.setFixedSize(150, 80)
+        self.ng_count_button.setFixedSize(150, 60)
         self.ng_count_button.setStyleSheet(button_style())
         button_layout.addWidget(self.ng_count_button, 0, 4)
 
         # Second Row Buttons
         self.simulation_button = QPushButton("Simulation Foldering")
         self.simulation_button.clicked.connect(self.open_simulation_foldering)
-        self.simulation_button.setFixedSize(150, 80)
+        self.simulation_button.setFixedSize(150, 60)
         self.simulation_button.setStyleSheet(button_style())
         button_layout.addWidget(self.simulation_button, 1, 0)
 
         self.crop_button = QPushButton("Crop")
         self.crop_button.clicked.connect(self.open_crop)
-        self.crop_button.setFixedSize(150, 80)
+        self.crop_button.setFixedSize(150, 60)
         self.crop_button.setStyleSheet(button_style())
         button_layout.addWidget(self.crop_button, 1, 1)
 
         self.resize_button = QPushButton("Resize")
         self.resize_button.clicked.connect(self.open_resize)
-        self.resize_button.setFixedSize(150, 80)
+        self.resize_button.setFixedSize(150, 60)
         self.resize_button.setStyleSheet(button_style())
         button_layout.addWidget(self.resize_button, 1, 2)
 
         self.flip_button = QPushButton("FLIP")
         self.flip_button.clicked.connect(self.open_flip)
-        self.flip_button.setFixedSize(150, 80)
+        self.flip_button.setFixedSize(150, 60)
         self.flip_button.setStyleSheet(button_style())
         button_layout.addWidget(self.flip_button, 1, 3)
 
         self.rotate_button = QPushButton("Rotate")
         self.rotate_button.clicked.connect(self.open_rotate)
-        self.rotate_button.setFixedSize(150, 80)
+        self.rotate_button.setFixedSize(150, 60)
         self.rotate_button.setStyleSheet(button_style())
         button_layout.addWidget(self.rotate_button, 1, 4)
 
@@ -2188,7 +2269,6 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
-    # 각 Dialog 열기 메서드 수정
     def open_ng_sorting(self):
         if 'ng_sorting' not in self.dialogs:
             self.dialogs['ng_sorting'] = NGSortingDialog()
@@ -2253,7 +2333,7 @@ class MainWindow(QWidget):
 def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
-    # Palette 설정을 통해 다크 레드, 회색, 흰색 사용
+    
     palette = app.palette()
     palette.setColor(palette.Window, Qt.white)
     palette.setColor(palette.Button, Qt.darkGray)
