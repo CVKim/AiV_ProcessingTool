@@ -2,10 +2,11 @@ import sys
 import os
 import shutil
 import logging
+from PIL import Image
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog,
     QProgressBar, QMessageBox, QLabel, QHBoxLayout, QTextEdit,
-    QDialog, QFormLayout, QLineEdit, QSpinBox, QCheckBox, QListWidget, QListWidgetItem,
+    QDialog, QFormLayout, QLineEdit, QSpinBox, QCheckBox, QListWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QGridLayout, QDateTimeEdit
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QDateTime
@@ -16,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # 로그 설정
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s:%(levelname)s:%(message)s')
-cpu_cores = os.cpu_count() or 4
+
 
 class WorkerThread(QThread):
     progress = pyqtSignal(int)
@@ -940,7 +941,7 @@ class WorkerThread(QThread):
 
     def crop_image(self, src, dst, crop_coords):
         try:
-            from PIL import Image
+            
             with Image.open(src) as img:
                 cropped_img = img.crop(crop_coords)
                 cropped_img.save(dst)
@@ -951,7 +952,7 @@ class WorkerThread(QThread):
 
     def resize_image(self, src, dst, width, height):
         try:
-            from PIL import Image
+            
             with Image.open(src) as img:
                 resized_img = img.resize((width, height))
                 resized_img.save(dst)
@@ -962,7 +963,7 @@ class WorkerThread(QThread):
 
     def flip_image(self, src, dst, flip_direction):
         try:
-            from PIL import Image
+            
             with Image.open(src) as img:
                 if flip_direction.lower() == 'horizontal':
                     flipped_img = img.transpose(Image.FLIP_LEFT_RIGHT)
@@ -978,7 +979,7 @@ class WorkerThread(QThread):
 
     def rotate_image(self, src, dst, angle):
         try:
-            from PIL import Image
+            
             with Image.open(src) as img:
                 rotated_img = img.rotate(angle, expand=True)
                 rotated_img.save(dst)
