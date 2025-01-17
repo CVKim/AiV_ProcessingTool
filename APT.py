@@ -2540,7 +2540,7 @@ def main():
 
 if __name__ == '__main__':
     main()
-
+ 
 ## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py 
 ## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." --upx-dir "E:\Dev\DL_Tool\upx-4.2.4-win64" APT.py
 ## AiV_ProTool\Scripts\activate
