@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['AiV_Processing_Tool.py'],
+    ['APT.py'],
     pathex=[],
     binaries=[],
-    datas=[('AiV.ico', '.')],
+    datas=[('AiV_LOGO.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='AiV_Processing_Tool',
+    name='APT',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['AiV.ico'],
+    icon=['AiV_LOGO.ico'],
 )

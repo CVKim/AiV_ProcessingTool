@@ -219,3 +219,9 @@ Traceback (most recent call last):
     subfolders = [f for f in os.listdir(sources1)
                              ~~~~~~~~~~^^^^^^^^^^
 TypeError: listdir: path should be string, bytes, os.PathLike or None, not list
+2025-01-15 13:13:52,357:ERROR:Basic Sorting Áß ¿À·ù
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\AiV_Processing_Tool.py", line 519, in basic_sorting
+    self.is_valid_file(f, formats)]
+    ^^^^^^^^^^^^^^^^^^
+AttributeError: 'WorkerThread' object has no attribute 'is_valid_file'
