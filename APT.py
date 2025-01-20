@@ -140,11 +140,11 @@ class WorkerThread(QThread):
                             filtered_images.append(img)
                         elif 'fov_jpg' in formats and img.lower().startswith('fov'):
                             filtered_images.append(img)
-                    elif img.lower().endswith('.bmp') and 'bmp' in formats:
+                    elif img.lower().endswith('.bmp') and '.bmp' in formats:
                         filtered_images.append(img)
-                    elif img.lower().endswith('.mim') and 'mim' in formats:
+                    elif img.lower().endswith('.mim') and '.mim' in formats:
                         filtered_images.append(img)
-                    elif img.lower().endswith('.png') and 'png' in formats:
+                    elif img.lower().endswith('.png') and '.png' in formats:
                         filtered_images.append(img)
                 if filtered_images:
                     images_to_copy[inner_id] = filtered_images
@@ -261,14 +261,17 @@ class WorkerThread(QThread):
     def date_based_copy(self, task):
         self.log.emit("------ Date-Based Copy 작업 시작 ------")
         try:
+            mode = task.get('mode', 'folder')  # 'folder' 또는 'image'
             source = task['source']
             target = task['target']
             specified_datetime = datetime(task['year'], task['month'], task['day'],
                                          task['hour'], task['minute'], task['second'])
             count = task['count']
+            fov_numbers = task.get('fov_numbers', [])  # 이미지 모드일 때만 사용
+            formats = task.get('formats', [])
 
             if not os.path.exists(source):
-                self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
+                self.log.emit(f"Source 경로가 존재합니다: {source}")
                 self.finished.emit("Date-Based Copy 중지됨.")
                 return
             if not os.path.exists(target):
@@ -297,43 +300,132 @@ class WorkerThread(QThread):
                 self.finished.emit("Date-Based Copy 완료.")
                 return
 
-            total_processed_folders = 0
-
             self.log.emit(f"Specified Date and Time: {specified_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
             self.log.emit(f"Number of Folders to Copy: {total_folders}")
 
-            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                futures = []
+            if mode == 'folder':
+                # 폴더 모드: 지정된 날짜와 count 기반으로 폴더 복사
+                total_processed_folders = 0
+
+                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                    futures = []
+                    for folder_path in matching_folders:
+                        if self._is_stopped:
+                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {total_processed_folders}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {total_processed_folders}")
+                            return
+                        folder_name = os.path.basename(folder_path)
+                        dst_folder = os.path.join(target, folder_name)
+
+                        self.log.emit(f"Source Folder path : {folder_path}")
+                        self.log.emit(f"Destination Folder path : {dst_folder}")
+
+                        futures.append(executor.submit(self.copy_folder, folder_path, dst_folder))
+
+                    for future in as_completed(futures):
+                        if self._is_stopped:
+                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {total_processed_folders}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {total_processed_folders}")
+                            return
+                        result = future.result()
+                        if result.startswith("오류 발생"):
+                            self.log.emit(result)
+                        else:
+                            total_processed_folders += 1
+                            self.log.emit(result)
+
+                            progress_percent = int((total_processed_folders / total_folders) * 100)
+                            self.progress.emit(min(progress_percent, 100))
+
+                self.finished.emit(f"Date-Based Copy (Folder Mode) 완료. 총 처리한 폴더: {total_processed_folders}")
+                self.log.emit("------ Date-Based Copy (Folder Mode) 작업 완료 ------")
+
+            elif mode == 'image':
+                # 이미지 모드: 지정된 날짜와 count 기반으로 폴더를 선택하고, 각 폴더에서 fov_numbers에 해당하는 이미지만 복사
+                if not fov_numbers:
+                    self.log.emit("Image 모드에서는 FOV Numbers를 입력해야 합니다.")
+                    self.finished.emit("Date-Based Copy 중지됨.")
+                    return
+
+                # Inner ID 수집
+                inner_ids = set()
                 for folder_path in matching_folders:
-                    if self._is_stopped:
-                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {total_processed_folders}")
-                        self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {total_processed_folders}")
-                        return
                     folder_name = os.path.basename(folder_path)
-                    dst_folder = os.path.join(target, folder_name)
+                    inner_ids.add(folder_name)
 
-                    self.log.emit(f"Source Folder path : {folder_path}")
-                    self.log.emit(f"Destination Folder path : {dst_folder}")
+                # 타겟 경로에 inner_id 기반 폴더 생성은 제거
+                # self.create_target_folders(target, inner_ids)
 
-                    futures.append(executor.submit(self.copy_folder, folder_path, dst_folder))
+                # 전체 이미지 수 계산 및 이미지 수집
+                images_to_copy, total_images = self.collect_images_to_copy(inner_ids, source, formats)
+                if total_images == 0:
+                    self.log.emit("선택한 이미지 포맷에 해당하는 이미지가 없습니다.")
+                    self.finished.emit("Date-Based Copy 완료.")
+                    return
+                self.log.emit(f"총 복사할 이미지 수: {total_images}")
 
-                for future in as_completed(futures):
-                    if self._is_stopped:
-                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {total_processed_folders}")
-                        self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {total_processed_folders}")
-                        return
-                    result = future.result()
-                    if result.startswith("오류 발생"):
-                        self.log.emit(result)
-                    else:
-                        total_processed_folders += 1
-                        self.log.emit(result)
-                        
-                        progress_percent = int((total_processed_folders / total_folders) * 100)
-                        self.progress.emit(min(progress_percent, 100))
+                total_processed_images = 0
 
-            self.finished.emit(f"Date-Based Copy 완료. 총 처리한 폴더: {total_processed_folders}")
-            self.log.emit("------ Date-Based Copy 작업 완료 ------")
+                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                    futures = {}
+                    for inner_id, images in images_to_copy.items():
+                        if self._is_stopped:
+                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {total_processed_images}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {total_processed_images}")
+                            return
+
+                        source_inner_id_folder = os.path.join(source, inner_id)
+                        # target_inner_id_folder = os.path.join(target, inner_id)  # 제거
+
+                        for image in images:
+                            if self._is_stopped:
+                                self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {total_processed_images}")
+                                self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {total_processed_images}")
+                                return
+
+                            src_file = os.path.join(source_inner_id_folder, image)
+
+                            # FOV 번호 추출
+                            parts = image.split('_', 1)
+                            if len(parts) < 2:
+                                self.log.emit(f"파일 이름 형식 오류: {image}")
+                                continue
+                            fov_part = parts[0]  # 확장자 제거
+                            # fov_part에서 숫자 추출
+                            fov_number = ''.join(filter(str.isdigit, fov_part))
+                            if fov_number not in fov_numbers:
+                                continue
+
+                            # 새로운 파일명: (Inner ID)_(FOV Number).format
+                            file_base, file_ext = os.path.splitext(image)
+                            new_file_name = f"{inner_id}_{fov_number}{file_ext}"
+                            dst_file = os.path.join(target, new_file_name)
+
+                            # 파일이 이미 존재하는지 확인 (옵션: 덮어쓸지 여부)
+                            if os.path.exists(dst_file):
+                                self.log.emit(f"파일이 이미 존재하여 건너뜁니다: {dst_file}")
+                                continue
+
+                            futures[executor.submit(self.copy_file, src_file, dst_file)] = (src_file, dst_file)
+
+                    for future in as_completed(futures):
+                        if self._is_stopped:
+                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {total_processed_images}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {total_processed_images}")
+                            return
+
+                        result = future.result()
+                        if result.startswith("오류 발생"):
+                            self.log.emit(result)
+                        else:
+                            total_processed_images += 1
+                            self.log.emit(result)
+                            # 전체 진행률 업데이트
+                            progress_percent = int((total_processed_images / total_images) * 100)
+                            self.progress.emit(min(progress_percent, 100))  # 100% 초과 방지
+
+                self.finished.emit(f"Date-Based Copy (Image Mode) 완료. 총 처리한 이미지: {total_processed_images}")
+                self.log.emit("------ Date-Based Copy (Image Mode) 작업 완료 ------")
         except Exception as e:
             logging.error("Date-Based Copy 중 오류 발생", exc_info=True)
             self.log.emit(f"오류 발생: {str(e)}")
@@ -370,11 +462,11 @@ class WorkerThread(QThread):
                                 filtered_images.append(img)
                             elif 'fov_jpg' in formats and img.lower().startswith('fov'):
                                 filtered_images.append(img)
-                        elif img.lower().endswith('.bmp') and 'bmp' in formats:
+                        elif img.lower().endswith('.bmp') and '.bmp' in formats:
                             filtered_images.append(img)
-                        elif img.lower().endswith('.mim') and 'mim' in formats:
+                        elif img.lower().endswith('.mim') and '.mim' in formats:
                             filtered_images.append(img)
-                        elif img.lower().endswith('.png') and 'png' in formats:
+                        elif img.lower().endswith('.png') and '.png' in formats:
                             filtered_images.append(img)
                     total_images += len(filtered_images)
 
@@ -411,11 +503,11 @@ class WorkerThread(QThread):
                                 filtered_images.append(img)
                             elif 'fov_jpg' in formats and img.lower().startswith('fov'):
                                 filtered_images.append(img)
-                        elif img.lower().endswith('.bmp') and 'bmp' in formats:
+                        elif img.lower().endswith('.bmp') and '.bmp' in formats:
                             filtered_images.append(img)
-                        elif img.lower().endswith('.mim') and 'mim' in formats:
+                        elif img.lower().endswith('.mim') and '.mim' in formats:
                             filtered_images.append(img)
-                        elif img.lower().endswith('.png') and 'png' in formats:
+                        elif img.lower().endswith('.png') and '.png' in formats:
                             filtered_images.append(img)
 
                     for file_name in filtered_images:
@@ -541,7 +633,7 @@ class WorkerThread(QThread):
             for i, folder_name in enumerate(inner_ids, start=1):
                 if self._is_stopped:
                     self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                    self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
+                    self.finished.emit(f"작업이 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
                     return
 
                 source_folder = os.path.join(source, folder_name)
@@ -1598,6 +1690,18 @@ class DateBasedCopyDialog(BaseTaskDialog):
         self.init_specific_ui()
 
     def init_specific_ui(self):
+        # Mode Selection: Folder or Image
+        self.mode_folder_checkbox = QCheckBox("Folder")
+        self.mode_image_checkbox = QCheckBox("Image")
+        self.mode_folder_checkbox.setChecked(True)  # 기본적으로 Folder 모드 선택
+        self.mode_folder_checkbox.stateChanged.connect(self.toggle_mode)
+        self.mode_image_checkbox.stateChanged.connect(self.toggle_mode)
+
+        mode_layout = QHBoxLayout()
+        mode_layout.addWidget(self.mode_folder_checkbox)
+        mode_layout.addWidget(self.mode_image_checkbox)
+        self.specific_layout.addRow(QLabel("<b>Mode:</b>"), mode_layout)
+
         # Date and Time 선택을 위한 QDateTimeEdit 위젯 추가
         self.datetime_edit = QDateTimeEdit(self)
         self.datetime_edit.setCalendarPopup(True)  # 달력 팝업 활성화
@@ -1610,6 +1714,13 @@ class DateBasedCopyDialog(BaseTaskDialog):
         self.count_input.setRange(1, 1000)
         self.count_input.setValue(1)
         self.specific_layout.addRow(QLabel("<b>Number of Folders to Copy:</b>"), self.count_input)
+
+        # FOV Numbers (Image Mode에만 활성화)
+        self.fov_numbers_label = QLabel("<b>FOV Numbers:</b>")
+        self.fov_numbers_input = QLineEdit()
+        self.fov_numbers_input.setPlaceholderText("Enter FOV Number(s), separated by commas (e.g., 1,2,3~5)")
+        self.fov_numbers_input.setEnabled(False)  # 초기에는 비활성화
+        self.specific_layout.addRow(self.fov_numbers_label, self.fov_numbers_input)
 
         # Source Path
         self.source_button = QPushButton("Select Source Path")
@@ -1627,6 +1738,32 @@ class DateBasedCopyDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
+        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
+        self.format_bmp = QCheckBox("BMP")
+        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
+        self.format_fov_jpg = QCheckBox("fov_jpg")  # 'fov_jpg' 추가
+        self.format_mim = QCheckBox("MIM")
+        self.format_png = QCheckBox("PNG")
+        formats_layout = QHBoxLayout()
+        formats_layout.addWidget(self.format_bmp)
+        formats_layout.addWidget(self.format_org_jpg)
+        formats_layout.addWidget(self.format_fov_jpg)
+        formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_png)
+        self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+
+    def toggle_mode(self, state):
+        if self.sender() == self.mode_folder_checkbox and state == Qt.Checked:
+            self.mode_image_checkbox.setChecked(False)
+            self.fov_numbers_input.setEnabled(False)
+        elif self.sender() == self.mode_image_checkbox and state == Qt.Checked:
+            self.mode_folder_checkbox.setChecked(False)
+            self.fov_numbers_input.setEnabled(True)
+        elif self.mode_folder_checkbox.isChecked() and self.mode_image_checkbox.isChecked():
+            # 둘 다 선택된 경우, 폴더 모드를 우선으로 선택
+            self.mode_image_checkbox.setChecked(False)
+            self.fov_numbers_input.setEnabled(False)
+
     def select_target(self):
         target = QFileDialog.getExistingDirectory(self, "Select Target Folder", "",
                                                  QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
@@ -1640,21 +1777,71 @@ class DateBasedCopyDialog(BaseTaskDialog):
             self.source_path.setText(source)
 
     def get_parameters(self):
-        # QDateTimeEdit에서 날짜와 시간 가져오기
-        datetime_qt = self.datetime_edit.dateTime()
-        specified_datetime = datetime_qt.toPyDateTime()
+        # 이미지 포맷 필터링
+        formats = []
+        if self.format_bmp.isChecked():
+            formats.append(".bmp")
+        if self.format_org_jpg.isChecked():
+            formats.append("org_jpg")  # 'org_jpg'로 변경
+        if self.format_fov_jpg.isChecked():
+            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+        if self.format_mim.isChecked():
+            formats.append(".mim")
+        if self.format_png.isChecked():
+            formats.append(".png")
+
+        # Mode 설정
+        if self.mode_folder_checkbox.isChecked():
+            mode = 'folder'
+        elif self.mode_image_checkbox.isChecked():
+            mode = 'image'
+        else:
+            mode = 'folder'  # 기본값
+
+        # FOV Numbers 처리
+        fov_numbers = []
+        if mode == 'image':
+            fov_number_input = self.fov_numbers_input.text().strip()
+            if fov_number_input:
+                fov_numbers_raw = [num.strip() for num in fov_number_input.split(',') if num.strip()]
+                for part in fov_numbers_raw:
+                    if '~' in part:
+                        try:
+                            start, end = part.split('~')
+                            start = int(start.strip())
+                            end = int(end.strip())
+                            if start > end:
+                                continue
+                            fov_numbers.extend([str(n) for n in range(start, end+1)])
+                        except:
+                            continue
+                    else:
+                        if part.isdigit():
+                            fov_numbers.append(part)
+
+        # 수정된 부분: QDateTime에서 date()와 time()을 통해 연, 월, 일, 시, 분, 초를 추출
+        dt = self.datetime_edit.dateTime()
+        year = dt.date().year()
+        month = dt.date().month()
+        day = dt.date().day()
+        hour = dt.time().hour()
+        minute = dt.time().minute()
+        second = dt.time().second()
 
         return {
             'operation': 'date_copy',
+            'mode': mode,
             'source': self.source_path.text(),
             'target': self.target_path.text(),
-            'year': specified_datetime.year,
-            'month': specified_datetime.month,
-            'day': specified_datetime.day,
-            'hour': specified_datetime.hour,
-            'minute': specified_datetime.minute,
-            'second': specified_datetime.second,
-            'count': self.count_input.value()
+            'year': year,
+            'month': month,
+            'day': day,
+            'hour': hour,
+            'minute': minute,
+            'second': second,
+            'count': self.count_input.value(),
+            'fov_numbers': fov_numbers,
+            'formats': formats
         }
 
     def validate_parameters(self, params):
@@ -1663,8 +1850,10 @@ class DateBasedCopyDialog(BaseTaskDialog):
             missing_fields.append("Source Path")
         if not params['target']:
             missing_fields.append("Target Path")
-        if not params['count']:
-            missing_fields.append("Number of Folders to Copy")
+        if params['mode'] == 'image' and not params['fov_numbers']:
+            missing_fields.append("FOV Numbers")
+        if not params['formats'] and params['operation'] != 'ng_count':
+            missing_fields.append("Image Formats")
 
         # 추가: 경로 유효성 검증
         path_fields = ['source', 'target']
@@ -2542,5 +2731,6 @@ if __name__ == '__main__':
     main()
  
 ## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py 
+## pyinstaller --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py
 ## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." --upx-dir "E:\Dev\DL_Tool\upx-4.2.4-win64" APT.py
 ## AiV_ProTool\Scripts\activate

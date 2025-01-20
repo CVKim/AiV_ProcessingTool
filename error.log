@@ -225,3 +225,21 @@ Traceback (most recent call last):
     self.is_valid_file(f, formats)]
     ^^^^^^^^^^^^^^^^^^
 AttributeError: 'WorkerThread' object has no attribute 'is_valid_file'
+2025-01-20 19:25:19,045:ERROR:작업 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\APT.py", line 39, in run
+    self.date_based_copy(self.task)
+    ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'WorkerThread' object has no attribute 'date_based_copy'
+2025-01-20 19:25:52,881:ERROR:작업 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\APT.py", line 39, in run
+    self.date_based_copy(self.task)
+    ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'WorkerThread' object has no attribute 'date_based_copy'
+2025-01-20 19:25:56,721:ERROR:작업 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\APT.py", line 39, in run
+    self.date_based_copy(self.task)
+    ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'WorkerThread' object has no attribute 'date_based_copy'
