@@ -28,7 +28,7 @@ class WorkerThread(QThread):
         super().__init__()
         self.task = task
         self._is_stopped = False
-        self.max_workers = min(32, (multiprocessing.cpu_count() or 1) + 4)  # 동적으로 설정
+        self.max_workers = min(32, (multiprocessing.cpu_count() or 1) + 4)
 
     def run(self):
         try:
@@ -140,16 +140,16 @@ class WorkerThread(QThread):
                             filtered_images.append(img)
                         elif 'fov_jpg' in formats and img.lower().startswith('fov'):
                             filtered_images.append(img)
-                    elif img.lower().endswith('.bmp') and 'bmp' in formats:
+                    elif img.lower().endswith('.bmp') and '.bmp' in formats:
                         filtered_images.append(img)
-                    elif img.lower().endswith('.mim') and 'mim' in formats:
+                    elif img.lower().endswith('.mim') and '.mim' in formats:
                         filtered_images.append(img)
-                    elif img.lower().endswith('.png') and 'png' in formats:
+                    elif img.lower().endswith('.png') and '.png' in formats:
                         filtered_images.append(img)
                 if filtered_images:
                     images_to_copy[inner_id] = filtered_images
                     total_images += len(filtered_images)
-                    self.log.emit(f"{inner_id} 폴더의 이미지 수: {len(filtered_images)}")
+                    ## self.log.emit(f"{inner_id} 폴더의 이미지 수: {len(filtered_images)}")
             except Exception as e:
                 self.log.emit(f"이미지 수집 중 오류 발생: {source_inner_id_folder} | 에러: {e}")
         return images_to_copy, total_images
@@ -353,8 +353,8 @@ class WorkerThread(QThread):
                     folder_name = os.path.basename(folder_path)
                     inner_ids.add(folder_name)
 
-                # 타겟 경로에 inner_id 기반 폴더 생성
-                self.create_target_folders(target, inner_ids)
+                # 타겟 경로에 inner_id 기반 폴더 생성은 제거
+                # self.create_target_folders(target, inner_ids)
 
                 # 전체 이미지 수 계산 및 이미지 수집
                 images_to_copy, total_images = self.collect_images_to_copy(inner_ids, source, formats)
@@ -375,7 +375,7 @@ class WorkerThread(QThread):
                             return
 
                         source_inner_id_folder = os.path.join(source, inner_id)
-                        target_inner_id_folder = os.path.join(target, inner_id)
+                        # target_inner_id_folder = os.path.join(target, inner_id)  # 제거
 
                         for image in images:
                             if self._is_stopped:
@@ -383,12 +383,14 @@ class WorkerThread(QThread):
                                 self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {total_processed_images}")
                                 return
 
+                            src_file = os.path.join(source_inner_id_folder, image)
+
                             # FOV 번호 추출
                             parts = image.split('_', 1)
                             if len(parts) < 2:
                                 self.log.emit(f"파일 이름 형식 오류: {image}")
                                 continue
-                            fov_part = parts[1].split('.')[0]  # 확장자 제거
+                            fov_part = parts[0]  # 확장자 제거
                             # fov_part에서 숫자 추출
                             fov_number = ''.join(filter(str.isdigit, fov_part))
                             if fov_number not in fov_numbers:
@@ -396,9 +398,8 @@ class WorkerThread(QThread):
 
                             # 새로운 파일명: (Inner ID)_(FOV Number).format
                             file_base, file_ext = os.path.splitext(image)
-                            new_file_name = f"{inner_id}_fov{fov_number}{file_ext}"
-                            src_file = os.path.join(source_inner_id_folder, image)
-                            dst_file = os.path.join(target_inner_id_folder, new_file_name)
+                            new_file_name = f"{inner_id}_{fov_number}{file_ext}"
+                            dst_file = os.path.join(target, new_file_name)
 
                             # 파일이 이미 존재하는지 확인 (옵션: 덮어쓸지 여부)
                             if os.path.exists(dst_file):
@@ -461,11 +462,11 @@ class WorkerThread(QThread):
                                 filtered_images.append(img)
                             elif 'fov_jpg' in formats and img.lower().startswith('fov'):
                                 filtered_images.append(img)
-                        elif img.lower().endswith('.bmp') and 'bmp' in formats:
+                        elif img.lower().endswith('.bmp') and '.bmp' in formats:
                             filtered_images.append(img)
-                        elif img.lower().endswith('.mim') and 'mim' in formats:
+                        elif img.lower().endswith('.mim') and '.mim' in formats:
                             filtered_images.append(img)
-                        elif img.lower().endswith('.png') and 'png' in formats:
+                        elif img.lower().endswith('.png') and '.png' in formats:
                             filtered_images.append(img)
                     total_images += len(filtered_images)
 
@@ -502,11 +503,11 @@ class WorkerThread(QThread):
                                 filtered_images.append(img)
                             elif 'fov_jpg' in formats and img.lower().startswith('fov'):
                                 filtered_images.append(img)
-                        elif img.lower().endswith('.bmp') and 'bmp' in formats:
+                        elif img.lower().endswith('.bmp') and '.bmp' in formats:
                             filtered_images.append(img)
-                        elif img.lower().endswith('.mim') and 'mim' in formats:
+                        elif img.lower().endswith('.mim') and '.mim' in formats:
                             filtered_images.append(img)
-                        elif img.lower().endswith('.png') and 'png' in formats:
+                        elif img.lower().endswith('.png') and '.png' in formats:
                             filtered_images.append(img)
 
                     for file_name in filtered_images:
@@ -609,7 +610,7 @@ class WorkerThread(QThread):
                 return
 
             total_folders = len(inner_ids)
-            total_images = 0
+            total_images = 100
             # 전체 이미지 수 미리 계산
             for folder_name in inner_ids:
                 source_folder = os.path.join(source, folder_name)
@@ -632,7 +633,7 @@ class WorkerThread(QThread):
             for i, folder_name in enumerate(inner_ids, start=1):
                 if self._is_stopped:
                     self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                    self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
+                    self.finished.emit(f"작업이 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
                     return
 
                 source_folder = os.path.join(source, folder_name)
@@ -2730,6 +2731,7 @@ if __name__ == '__main__':
     main()
  
 ## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py 
+## 아래가 별도 폴더 가지고 생성하는 것
 ## pyinstaller --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py
 ## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." --upx-dir "E:\Dev\DL_Tool\upx-4.2.4-win64" APT.py
 ## AiV_ProTool\Scripts\activate

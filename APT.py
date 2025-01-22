@@ -28,7 +28,9 @@ class WorkerThread(QThread):
         super().__init__()
         self.task = task
         self._is_stopped = False
-        self.max_workers = min(32, (multiprocessing.cpu_count() or 1) + 4)  # 동적으로 설정
+        # self.max_workers = min(32, (multiprocessing.cpu_count() or 1) + 4)
+        # 멀티스레딩의 오버헤드를 줄이기 위해 max_workers를 더 낮게 설정
+        self.max_workers = min(16, (multiprocessing.cpu_count() or 1) * 2)
 
     def run(self):
         try:
@@ -74,10 +76,8 @@ class WorkerThread(QThread):
                 self.log.emit(f"Source Path #1이 존재하지 않습니다: {source1_path}")
                 continue
             try:
-                subfolders = [
-                    f for f in os.listdir(source1_path)
-                    if os.path.isdir(os.path.join(source1_path, f)) and f.lower() not in ['ok', 'ng']
-                ]
+                with os.scandir(source1_path) as it:
+                    subfolders = [entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng']]
                 inner_ids.update(subfolders)
                 self.log.emit(f"추가된 서브폴더들 from {source1_path}: {subfolders}")
             except Exception as e:
@@ -93,8 +93,8 @@ class WorkerThread(QThread):
             self.log.emit(f"source2 경로가 존재하지 않습니다: {source2}")
             return inner_ids_source2
         try:
-            inner_ids_source2 = {f for f in os.listdir(source2)
-                                 if os.path.isdir(os.path.join(source2, f)) and f.lower() not in ['ok', 'ng']}
+            with os.scandir(source2) as it:
+                inner_ids_source2 = {entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng']}
             self.log.emit(f"source2에서 수집한 Inner IDs: {inner_ids_source2}")
         except Exception as e:
             self.log.emit(f"source2에서 Inner ID 수집 중 오류 발생: {str(e)}")
@@ -127,11 +127,8 @@ class WorkerThread(QThread):
                 self.log.emit(f"source2 경로에 Inner ID 폴더가 존재하지 않습니다: {source_inner_id_folder}")
                 continue
             try:
-                images = [
-                    f for f in os.listdir(source_inner_id_folder)
-                    if os.path.isfile(os.path.join(source_inner_id_folder, f)) and
-                    self.is_valid_file(f, formats)
-                ]
+                with os.scandir(source_inner_id_folder) as it:
+                    images = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
                 # 필터링 로직 추가
                 filtered_images = []
                 for img in images:
@@ -149,7 +146,7 @@ class WorkerThread(QThread):
                 if filtered_images:
                     images_to_copy[inner_id] = filtered_images
                     total_images += len(filtered_images)
-                    self.log.emit(f"{inner_id} 폴더의 이미지 수: {len(filtered_images)}")
+                    ## self.log.emit(f"{inner_id} 폴더의 이미지 수: {len(filtered_images)}")
             except Exception as e:
                 self.log.emit(f"이미지 수집 중 오류 발생: {source_inner_id_folder} | 에러: {e}")
         return images_to_copy, total_images
@@ -271,7 +268,7 @@ class WorkerThread(QThread):
             formats = task.get('formats', [])
 
             if not os.path.exists(source):
-                self.log.emit(f"Source 경로가 존재합니다: {source}")
+                self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
                 self.finished.emit("Date-Based Copy 중지됨.")
                 return
             if not os.path.exists(target):
@@ -451,9 +448,12 @@ class WorkerThread(QThread):
             total_images = 0
             for source, target in zip(sources, targets):
                 if os.path.exists(source):
-                    image_files = [f for f in os.listdir(source)
-                                   if os.path.isfile(os.path.join(source, f)) and
-                                   self.is_valid_file(f, formats)]
+                    try:
+                        with os.scandir(source) as it:
+                            image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                    except Exception as e:
+                        self.log.emit(f"이미지 목록 가져오기 중 오류 발생: {source} | 에러: {e}")
+                        continue
                     # 필터링 로직 수정
                     filtered_images = []
                     for img in image_files:
@@ -489,12 +489,19 @@ class WorkerThread(QThread):
                         self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
                         continue
                     if not os.path.exists(target):
-                        os.makedirs(target)
+                        try:
+                            os.makedirs(target)
+                            self.log.emit(f"Target 경로 생성: {target}")
+                        except Exception as e:
+                            self.log.emit(f"Target 경로 생성 실패: {target} | 에러: {e}")
+                            continue
 
-                    # 파일 복사
-                    image_files = [f for f in os.listdir(source)
-                                   if os.path.isfile(os.path.join(source, f)) and
-                                   self.is_valid_file(f, formats)]
+                    try:
+                        with os.scandir(source) as it:
+                            image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                    except Exception as e:
+                        self.log.emit(f"이미지 목록 가져오기 중 오류 발생: {source} | 에러: {e}")
+                        continue
                     # 필터링 로직 수정
                     filtered_images = []
                     for img in image_files:
@@ -589,8 +596,13 @@ class WorkerThread(QThread):
 
             if inner_id_list_path and os.path.exists(inner_id_list_path):
                 # Inner ID List Path가 설정된 경우
-                inner_ids = [f for f in os.listdir(inner_id_list_path)
-                            if os.path.isdir(os.path.join(inner_id_list_path, f)) and f not in ['OK', 'NG']]
+                try:
+                    with os.scandir(inner_id_list_path) as it:
+                        inner_ids = [entry.name for entry in it if entry.is_dir() and entry.name not in ['OK', 'NG']]
+                except Exception as e:
+                    self.log.emit(f"Inner ID List Path에서 폴더 목록 가져오기 중 오류: {str(e)}")
+                    self.finished.emit("Basic Sorting 중지됨.")
+                    return
             elif use_inner_id and inner_id:
                 # Inner ID가 설정된 경우
                 inner_ids = [inner_id]
@@ -615,12 +627,14 @@ class WorkerThread(QThread):
             for folder_name in inner_ids:
                 source_folder = os.path.join(source, folder_name)
                 if os.path.exists(source_folder):
-                    image_files = [f for f in os.listdir(source_folder)
-                                if os.path.isfile(os.path.join(source_folder, f)) and
-                                self.is_valid_file(f, formats)]
-                    matching_files = [f for f in image_files
-                                    if any(f.split('_', 1)[0] == num for num in fov_numbers)]
-                    total_images += len(matching_files)
+                    try:
+                        with os.scandir(source_folder) as it:
+                            image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                        matching_files = [f for f in image_files
+                                        if any(f.split('_', 1)[0] == num for num in fov_numbers)]
+                        total_images += len(matching_files)
+                    except Exception as e:
+                        self.log.emit(f"이미지 목록 가져오기 중 오류: {source_folder} | 에러: {e}")
 
             if total_images == 0:
                 self.log.emit("선택한 FOV Number에 해당하는 이미지가 없습니다.")
@@ -642,9 +656,12 @@ class WorkerThread(QThread):
                     continue
 
                 # 선택된 이미지 포맷에 맞는 이미지 파일들 가져오기
-                image_files = [f for f in os.listdir(source_folder)
-                            if os.path.isfile(os.path.join(source_folder, f)) and
-                            self.is_valid_file(f, formats)]
+                try:
+                    with os.scandir(source_folder) as it:
+                        image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                except Exception as e:
+                    self.log.emit(f"이미지 목록 가져오기 중 오류: {source_folder} | 에러: {e}")
+                    continue
 
                 if not image_files:
                     self.log.emit(f"'{folder_name}' 폴더에 지정된 이미지 포맷의 파일이 없습니다.")
@@ -655,7 +672,7 @@ class WorkerThread(QThread):
                 for file in image_files:
                     if self._is_stopped:
                         self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                        self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
+                        self.finished.emit(f"작업이 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
                         return
                     parts = file.split('_', 1)  # 첫 번째 언더스코어 기준으로 분리
                     if len(parts) < 2:
@@ -686,7 +703,7 @@ class WorkerThread(QThread):
                     for image_file in matching_files:
                         if self._is_stopped:
                             self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                            self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
+                            self.finished.emit(f"작업이 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
                             return
                         src_file = os.path.join(source_folder, image_file)
                         # 새로운 파일명: (Inner ID)_(원본 이미지 파일명).format
@@ -747,9 +764,14 @@ class WorkerThread(QThread):
                 return
 
             # 전체 이미지 수 미리 계산
-            image_files = [f for f in os.listdir(source)
-                        if os.path.isfile(os.path.join(source, f)) and
-                        self.is_valid_file(f, formats)]
+            try:
+                with os.scandir(source) as it:
+                    image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+            except Exception as e:
+                self.log.emit(f"이미지 목록 가져오기 중 오류: {source} | 에러: {e}")
+                self.finished.emit("Crop 중지됨.")
+                return
+
             total_images = len(image_files)
             if total_images == 0:
                 self.log.emit("선택한 이미지 포맷에 해당하는 이미지가 없습니다.")
@@ -815,9 +837,14 @@ class WorkerThread(QThread):
                 return
 
             # 전체 이미지 수 미리 계산
-            image_files = [f for f in os.listdir(source)
-                        if os.path.isfile(os.path.join(source, f)) and
-                        self.is_valid_file(f, formats)]
+            try:
+                with os.scandir(source) as it:
+                    image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+            except Exception as e:
+                self.log.emit(f"이미지 목록 가져오기 중 오류: {source} | 에러: {e}")
+                self.finished.emit("Resize 중지됨.")
+                return
+
             total_images = len(image_files)
             if total_images == 0:
                 self.log.emit("선택한 이미지 포맷에 해당하는 이미지가 없습니다.")
@@ -882,9 +909,14 @@ class WorkerThread(QThread):
                 return
 
             # 전체 이미지 수 미리 계산
-            image_files = [f for f in os.listdir(source)
-                        if os.path.isfile(os.path.join(source, f)) and
-                        self.is_valid_file(f, formats)]
+            try:
+                with os.scandir(source) as it:
+                    image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+            except Exception as e:
+                self.log.emit(f"이미지 목록 가져오기 중 오류: {source} | 에러: {e}")
+                self.finished.emit("Flip 중지됨.")
+                return
+
             total_images = len(image_files)
             if total_images == 0:
                 self.log.emit("선택한 이미지 포맷에 해당하는 이미지가 없습니다.")
@@ -950,9 +982,14 @@ class WorkerThread(QThread):
                 return
 
             # 전체 이미지 수 미리 계산
-            image_files = [f for f in os.listdir(source)
-                        if os.path.isfile(os.path.join(source, f)) and
-                        self.is_valid_file(f, formats)]
+            try:
+                with os.scandir(source) as it:
+                    image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+            except Exception as e:
+                self.log.emit(f"이미지 목록 가져오기 중 오류: {source} | 에러: {e}")
+                self.finished.emit("Rotate 중지됨.")
+                return
+
             total_images = len(image_files)
             if total_images == 0:
                 self.log.emit("선택한 이미지 포맷에 해당하는 이미지가 없습니다.")
@@ -1003,8 +1040,14 @@ class WorkerThread(QThread):
                 return
 
             # 'Cam_'으로 시작하는 폴더들 탐색
-            cam_folders = [f for f in os.listdir(ng_folder)
-                           if os.path.isdir(os.path.join(ng_folder, f)) and f.startswith('Cam_')]
+            try:
+                with os.scandir(ng_folder) as it:
+                    cam_folders = [entry.name for entry in it if entry.is_dir() and entry.name.startswith('Cam_')]
+            except Exception as e:
+                self.log.emit(f"Cam_ 폴더 탐색 중 오류 발생: {str(e)}")
+                self.finished.emit("NG Count 중지됨.")
+                return
+
             total_cams = len(cam_folders)
             total_defects = 0
             ng_count_data = []
@@ -1021,13 +1064,22 @@ class WorkerThread(QThread):
                     return
 
                 cam_path = os.path.join(ng_folder, cam)
-                # Defect Name별 폴더 수 카운팅
-                defect_folders = [f for f in os.listdir(cam_path) if os.path.isdir(os.path.join(cam_path, f))]
+                try:
+                    with os.scandir(cam_path) as it:
+                        defect_folders = [entry.name for entry in it if entry.is_dir()]
+                except Exception as e:
+                    self.log.emit(f"Defect 폴더 탐색 중 오류 발생: {cam_path} | 에러: {e}")
+                    continue
+
                 for defect in defect_folders:
                     defect_path = os.path.join(cam_path, defect)
-                    count = len([f for f in os.listdir(defect_path) if os.path.isdir(os.path.join(defect_path, f))])
-                    ng_count_data.append([cam, defect, count])
-                    total_defects += count
+                    try:
+                        with os.scandir(defect_path) as it_defect:
+                            count = sum(1 for _ in it_defect if _.is_dir())
+                        ng_count_data.append([cam, defect, count])
+                        total_defects += count
+                    except Exception as e:
+                        self.log.emit(f"Defect 폴더 내 항목 수 계산 중 오류 발생: {defect_path} | 에러: {e}")
 
                 # 진행률 업데이트 (Cam 단위)
                 progress_percent = int((i / total_cams) * 100)
@@ -1128,13 +1180,7 @@ class WorkerThread(QThread):
 
     def copy_file(self, src, dst):
         try:
-            with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:
-                while True:
-                    buf = fsrc.read(1024 * 1024)  # 1MB 청크 단위로 읽기
-                    if not buf:
-                        break
-                    fdst.write(buf)
-            shutil.copystat(src, dst)
+            shutil.copy2(src, dst)  # shutil.copy2로 대체하여 최적화
             return f"Copied {src} to {dst}"
         except Exception as e:
             logging.error("파일 복사 중 오류", exc_info=True)
@@ -1148,28 +1194,7 @@ class WorkerThread(QThread):
             # Target Path에 이미 같은 이름의 폴더가 존재하면 삭제 (덮어쓰기)
             if os.path.exists(dst):
                 shutil.rmtree(dst)
-            os.makedirs(dst)
-            for root, dirs, files in os.walk(src):
-                # 폴더 단위로 Stop 신호 확인
-                if self._is_stopped:
-                    return f"Copy stopped: {src}"
-                # 상대 경로 계산
-                rel_path = os.path.relpath(root, src)
-                dst_root = os.path.join(dst, rel_path)
-                if not os.path.exists(dst_root):
-                    os.makedirs(dst_root)
-                for file in files:
-                    # 파일 단위로 Stop 신호 확인
-                    if self._is_stopped:
-                        return f"Copy stopped: {src}"
-                    src_file = os.path.join(root, file)
-                    dst_file = os.path.join(dst_root, file)
-                    result = self.copy_file(src_file, dst_file)
-                    if result.startswith("오류 발생"):
-                        self.log.emit(result)
-                    else:
-                        self.log.emit(result)
-            shutil.copystat(src, dst)
+            shutil.copytree(src, dst, dirs_exist_ok=True)  # shutil.copytree로 대체하여 최적화
             return f"Copied folder {src} to {dst}"
         except Exception as e:
             logging.error("폴더 복사 중 오류", exc_info=True)
@@ -1542,8 +1567,8 @@ class NGSortingDialog(BaseTaskDialog):
         if parent_folder:
             # 소스 폴더 내의 모든 서브 폴더(OK, NG 제외) 가져오기
             try:
-                subfolders = [f for f in os.listdir(parent_folder)
-                              if os.path.isdir(os.path.join(parent_folder, f)) and f.lower() not in ['ok', 'ng']]
+                with os.scandir(parent_folder) as it:
+                    subfolders = [entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng']]
                 if not subfolders:
                     QMessageBox.information(self, "정보", "선택한 폴더 내에 서브 폴더가 없습니다.")
                     return
@@ -2731,6 +2756,7 @@ if __name__ == '__main__':
     main()
  
 ## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py 
+## 아래가 별도 폴더 가지고 생성하는 것
 ## pyinstaller --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py
 ## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." --upx-dir "E:\Dev\DL_Tool\upx-4.2.4-win64" APT.py
 ## AiV_ProTool\Scripts\activate
