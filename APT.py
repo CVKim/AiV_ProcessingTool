@@ -2,6 +2,7 @@ import sys
 import os
 import shutil
 import logging
+import random
 from PIL import Image
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog,
@@ -21,20 +22,18 @@ logging.basicConfig(filename='error.log', level=logging.ERROR,
 class WorkerThread(QThread):
     progress = pyqtSignal(int)
     log = pyqtSignal(str)
-    ng_count_result = pyqtSignal(list)  # NG Count 결과를 전달하는 시그널
+    ng_count_result = pyqtSignal(list)
     finished = pyqtSignal(str)
 
     def __init__(self, task):
         super().__init__()
         self.task = task
         self._is_stopped = False
-        # self.max_workers = min(32, (multiprocessing.cpu_count() or 1) + 4)
-        # 멀티스레딩의 오버헤드를 줄이기 위해 max_workers를 더 낮게 설정
         self.max_workers = min(16, (multiprocessing.cpu_count() or 1) * 2)
 
     def run(self):
         try:
-            operation = self.task['operation']
+            operation = self.task.get('operation', '')
             if operation == 'ng_sorting':
                 self.ng_folder_sorting(self.task)
             elif operation == 'date_copy':
@@ -56,102 +55,16 @@ class WorkerThread(QThread):
             elif operation == 'rotate':
                 self.rotate_images(self.task)
             else:
-                self.log.emit(f"알 수 없는 작업 유형: {operation}")
-                self.finished.emit("알 수 없는 작업 유형.")
+                self.log.emit("알 수 없는 작업 유형입니다.")
+                self.finished.emit("알 수 없는 작업 유형입니다.")
         except Exception as e:
             logging.error("작업 중 오류 발생", exc_info=True)
             self.log.emit(f"오류 발생: {str(e)}")
-            self.finished.emit("작업 중 오류 발생.")
+            self.finished.emit("작업 중 오류 발생했습니다.")
 
     def stop(self):
         self._is_stopped = True
 
-    def collect_inner_ids(self, sources1):
-        """
-        sources1 내의 모든 서브폴더를 수집하여 inner_ids 집합을 반환.
-        """
-        inner_ids = set()
-        for source1_path in sources1:
-            if not os.path.exists(source1_path):
-                self.log.emit(f"Source Path #1이 존재하지 않습니다: {source1_path}")
-                continue
-            try:
-                with os.scandir(source1_path) as it:
-                    subfolders = [entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng']]
-                inner_ids.update(subfolders)
-                self.log.emit(f"추가된 서브폴더들 from {source1_path}: {subfolders}")
-            except Exception as e:
-                self.log.emit(f"서브폴더 수집 중 오류 발생: {source1_path} | 에러: {e}")
-        return inner_ids
-
-    def collect_inner_ids_from_source2(self, source2):
-        """
-        source2 내의 모든 서브폴더를 수집하여 inner_ids_source2 집합을 반환.
-        """
-        inner_ids_source2 = set()
-        if not os.path.exists(source2):
-            self.log.emit(f"source2 경로가 존재하지 않습니다: {source2}")
-            return inner_ids_source2
-        try:
-            with os.scandir(source2) as it:
-                inner_ids_source2 = {entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng']}
-            self.log.emit(f"source2에서 수집한 Inner IDs: {inner_ids_source2}")
-        except Exception as e:
-            self.log.emit(f"source2에서 Inner ID 수집 중 오류 발생: {str(e)}")
-        return inner_ids_source2
-
-    def create_target_folders(self, target, inner_ids):
-        """
-        타겟 디렉토리에 inner_id 기반 폴더를 생성.
-        """
-        for inner_id in inner_ids:
-            target_inner_id_folder = os.path.join(target, inner_id)
-            try:
-                if not os.path.exists(target_inner_id_folder):
-                    os.makedirs(target_inner_id_folder)
-                    self.log.emit(f"Created target Inner ID folder: {target_inner_id_folder}")
-                else:
-                    self.log.emit(f"Target Inner ID folder already exists: {target_inner_id_folder}")
-            except Exception as e:
-                self.log.emit(f"타겟 폴더 생성 중 오류 발생: {target_inner_id_folder} | 에러: {e}")
-
-    def collect_images_to_copy(self, inner_ids, source2, formats):
-        """
-        복사할 이미지 파일들을 inner_id별로 수집.
-        """
-        images_to_copy = {}
-        total_images = 0
-        for inner_id in inner_ids:
-            source_inner_id_folder = os.path.join(source2, inner_id)
-            if not os.path.exists(source_inner_id_folder):
-                self.log.emit(f"source2 경로에 Inner ID 폴더가 존재하지 않습니다: {source_inner_id_folder}")
-                continue
-            try:
-                with os.scandir(source_inner_id_folder) as it:
-                    images = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
-                # 필터링 로직 추가
-                filtered_images = []
-                for img in images:
-                    if img.lower().endswith('.jpg'):
-                        if 'org_jpg' in formats and not img.lower().startswith('fov') and '_fov' not in img.lower():
-                            filtered_images.append(img)
-                        elif 'fov_jpg' in formats and img.lower().startswith('fov'):
-                            filtered_images.append(img)
-                    elif img.lower().endswith('.bmp') and '.bmp' in formats:
-                        filtered_images.append(img)
-                    elif img.lower().endswith('.mim') and '.mim' in formats:
-                        filtered_images.append(img)
-                    elif img.lower().endswith('.png') and '.png' in formats:
-                        filtered_images.append(img)
-                if filtered_images:
-                    images_to_copy[inner_id] = filtered_images
-                    total_images += len(filtered_images)
-                    ## self.log.emit(f"{inner_id} 폴더의 이미지 수: {len(filtered_images)}")
-            except Exception as e:
-                self.log.emit(f"이미지 수집 중 오류 발생: {source_inner_id_folder} | 에러: {e}")
-        return images_to_copy, total_images
-
-    # 각 기능별 메서드 구현
     def ng_folder_sorting(self, task):
         self.log.emit("------ NG Folder Sorting 작업 시작 ------")
         try:
@@ -179,7 +92,6 @@ class WorkerThread(QThread):
             else:
                 self.log.emit(f"Target 디렉토리 존재: {target}")
 
-            # Inner ID 폴더 목록 가져오기 (sources1 내의 모든 서브폴더)
             inner_ids_sources1 = self.collect_inner_ids(sources1)
             inner_ids_source2 = self.collect_inner_ids_from_source2(source2)
             matched_inner_ids = inner_ids_sources1.intersection(inner_ids_source2)
@@ -191,10 +103,8 @@ class WorkerThread(QThread):
                 return
             self.log.emit(f"총 매칭된 Inner ID 수: {total_matched_inner_ids}")
 
-            # 타겟 경로에 매칭된 Inner ID 기반 폴더 생성
             self.create_target_folders(target, matched_inner_ids)
 
-            # 전체 이미지 수 계산 및 이미지 수집
             images_to_copy, total_images = self.collect_images_to_copy(matched_inner_ids, source2, formats)
 
             if total_images == 0:
@@ -225,7 +135,6 @@ class WorkerThread(QThread):
                         src_file = os.path.join(source_inner_id_folder, image)
                         dst_file = os.path.join(target_inner_id_folder, image)
 
-                        # 파일이 이미 존재하는지 확인 (옵션: 덮어쓸지 여부)
                         if os.path.exists(dst_file):
                             self.log.emit(f"파일이 이미 존재하여 건너뜁니다: {dst_file}")
                             continue
@@ -244,9 +153,8 @@ class WorkerThread(QThread):
                     else:
                         total_processed_images += 1
                         self.log.emit(result)
-                        # 전체 진행률 업데이트
                         progress_percent = int((total_processed_images / total_images) * 100)
-                        self.progress.emit(min(progress_percent, 100))  # 100% 초과 방지
+                        self.progress.emit(min(progress_percent, 100))
 
             self.finished.emit(f"NG Folder Sorting 완료. 총 처리한 이미지: {total_processed_images}")
             self.log.emit("------ NG Folder Sorting 작업 완료 ------")
@@ -258,14 +166,17 @@ class WorkerThread(QThread):
     def date_based_copy(self, task):
         self.log.emit("------ Date-Based Copy 작업 시작 ------")
         try:
-            mode = task.get('mode', 'folder')  # 'folder' 또는 'image'
+            mode = task.get('mode', 'folder')
             source = task['source']
             target = task['target']
-            specified_datetime = datetime(task['year'], task['month'], task['day'],
-                                         task['hour'], task['minute'], task['second'])
             count = task['count']
-            fov_numbers = task.get('fov_numbers', [])  # 이미지 모드일 때만 사용
             formats = task.get('formats', [])
+            specified_datetime = datetime(task['year'], task['month'], task['day'],
+                                          task['hour'], task['minute'], task['second'])
+            strong_random = task.get('strong_random', False)
+            conditional_random = task.get('conditional_random', False)
+            random_count = task.get('random_count', 0)
+            fov_numbers = task.get('fov_numbers', [])
 
             if not os.path.exists(source):
                 self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
@@ -274,154 +185,163 @@ class WorkerThread(QThread):
             if not os.path.exists(target):
                 os.makedirs(target)
 
-            # 전체 폴더 수 미리 계산
-            all_folders = [f for f in os.listdir(source)
-                           if os.path.isdir(os.path.join(source, f))]
-            # 폴더의 수정 날짜 필터링
-            matching_folders = []
+            # 모든 폴더 수집 및 날짜 필터 적용
+            all_folders = [os.path.join(source, f) for f in os.listdir(source) if os.path.isdir(os.path.join(source, f))]
+            eligible_folders = []
             for folder in all_folders:
-                folder_path = os.path.join(source, folder)
                 try:
-                    folder_mtime = datetime.fromtimestamp(os.path.getmtime(folder_path))
+                    folder_mtime = datetime.fromtimestamp(os.path.getmtime(folder))
                     if folder_mtime >= specified_datetime:
-                        matching_folders.append(folder_path)
-                        if len(matching_folders) >= count:
-                            break
+                        eligible_folders.append(folder)
                 except Exception as e:
-                    logging.error(f"폴더 수정 시간 가져오기 중 오류: {folder_path}", exc_info=True)
-                    self.log.emit(f"폴더 수정 시간 가져오기 중 오류: {folder_path} - {str(e)}")
-
-            total_folders = len(matching_folders)
-            if total_folders == 0:
-                self.log.emit("지정된 날짜 이후의 복사할 폴더가 없습니다.")
+                    self.log.emit(f"폴더 {folder}의 수정 시간 확인 중 오류: {str(e)}")
+            if not eligible_folders:
+                self.log.emit("지정된 날짜 이후의 폴더가 없습니다.")
                 self.finished.emit("Date-Based Copy 완료.")
                 return
 
-            self.log.emit(f"Specified Date and Time: {specified_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
-            self.log.emit(f"Number of Folders to Copy: {total_folders}")
+            # 날짜 기준 정렬 (오름차순)
+            sorted_folders = sorted(eligible_folders, key=lambda x: os.path.getmtime(x))
 
             if mode == 'folder':
-                # 폴더 모드: 지정된 날짜와 count 기반으로 폴더 복사
-                total_processed_folders = 0
+                if strong_random:
+                    self.log.emit("Strong Random 옵션 선택됨 (Folder Mode)")
+                    if len(sorted_folders) < count:
+                        selected_folders = sorted_folders
+                    else:
+                        selected_folders = random.sample(sorted_folders, count)
+                elif conditional_random:
+                    self.log.emit(f"Conditional Random 옵션 선택됨 (Folder Mode, Random Count: {random_count})")
+                    selected_folders = []
+                    index = 0
+                    while index < len(sorted_folders) and len(selected_folders) < count:
+                        selected_folders.append(sorted_folders[index])
+                        index += (random_count + 1)
+                else:
+                    selected_folders = sorted_folders[:count]
 
+                total_folders = len(selected_folders)
+                self.log.emit(f"Specified Date and Time: {specified_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+                self.log.emit(f"Number of Folders to Copy: {total_folders}")
+
+                total_processed_folders = 0
                 with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                     futures = []
-                    for folder_path in matching_folders:
+                    for folder_path in selected_folders:
                         if self._is_stopped:
                             self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {total_processed_folders}")
                             self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {total_processed_folders}")
                             return
                         folder_name = os.path.basename(folder_path)
                         dst_folder = os.path.join(target, folder_name)
-
                         self.log.emit(f"Source Folder path : {folder_path}")
                         self.log.emit(f"Destination Folder path : {dst_folder}")
-
-                        futures.append(executor.submit(self.copy_folder, folder_path, dst_folder))
-
+                        futures.append(executor.submit(self.copy_folder_filtered, folder_path, dst_folder, formats))
                     for future in as_completed(futures):
                         if self._is_stopped:
                             self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {total_processed_folders}")
                             self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {total_processed_folders}")
                             return
                         result = future.result()
-                        if result.startswith("오류 발생"):
-                            self.log.emit(result)
-                        else:
-                            total_processed_folders += 1
-                            self.log.emit(result)
-
-                            progress_percent = int((total_processed_folders / total_folders) * 100)
-                            self.progress.emit(min(progress_percent, 100))
-
+                        self.log.emit(result)
+                        total_processed_folders += 1
+                        progress_percent = int((total_processed_folders / total_folders) * 100)
+                        self.progress.emit(min(progress_percent, 100))
                 self.finished.emit(f"Date-Based Copy (Folder Mode) 완료. 총 처리한 폴더: {total_processed_folders}")
                 self.log.emit("------ Date-Based Copy (Folder Mode) 작업 완료 ------")
 
             elif mode == 'image':
-                # 이미지 모드: 지정된 날짜와 count 기반으로 폴더를 선택하고, 각 폴더에서 fov_numbers에 해당하는 이미지만 복사
                 if not fov_numbers:
                     self.log.emit("Image 모드에서는 FOV Numbers를 입력해야 합니다.")
                     self.finished.emit("Date-Based Copy 중지됨.")
                     return
 
-                # Inner ID 수집
-                inner_ids = set()
-                for folder_path in matching_folders:
-                    folder_name = os.path.basename(folder_path)
-                    inner_ids.add(folder_name)
+                # 폴더 선택 (랜덤 옵션 적용)
+                if strong_random:
+                    self.log.emit("Strong Random 옵션 선택됨 (Image Mode)")
+                    if len(sorted_folders) < count:
+                        selected_folders = sorted_folders
+                    else:
+                        selected_folders = random.sample(sorted_folders, count)
+                elif conditional_random:
+                    self.log.emit(f"Conditional Random 옵션 선택됨 (Image Mode, Random Count: {random_count})")
+                    selected_folders = []
+                    index = 0
+                    # 수정: 각 폴더를 선택할 때, random_count 만큼 건너뛰도록 (기존 random_count+1 대신 random_count 사용)
+                    while index < len(sorted_folders) and len(selected_folders) < count:
+                        selected_folders.append(sorted_folders[index])
+                        index += random_count
+                else:
+                    selected_folders = sorted_folders[:count]
 
-                # 타겟 경로에 inner_id 기반 폴더 생성은 제거
-                # self.create_target_folders(target, inner_ids)
-
-                # 전체 이미지 수 계산 및 이미지 수집
-                images_to_copy, total_images = self.collect_images_to_copy(inner_ids, source, formats)
-                if total_images == 0:
-                    self.log.emit("선택한 이미지 포맷에 해당하는 이미지가 없습니다.")
-                    self.finished.emit("Date-Based Copy 완료.")
-                    return
-                self.log.emit(f"총 복사할 이미지 수: {total_images}")
-
+                total_folders = len(selected_folders)
+                self.log.emit(f"총 선택된 폴더 수 (Image Mode): {total_folders}")
+                total_processed_folders = 0
                 total_processed_images = 0
 
-                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                    futures = {}
-                    for inner_id, images in images_to_copy.items():
-                        if self._is_stopped:
-                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {total_processed_images}")
-                            self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {total_processed_images}")
-                            return
+                # 각 폴더별로 fov number에 해당하는 이미지들을 복사
+                for i, folder_path in enumerate(selected_folders, start=1):
+                    if self._is_stopped:
+                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {total_processed_folders}")
+                        self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {total_processed_folders}")
+                        return
+                    inner_id = os.path.basename(folder_path)
+                    source_inner_id_folder = folder_path
+                    try:
+                        with os.scandir(source_inner_id_folder) as it:
+                            image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                    except Exception as e:
+                        self.log.emit(f"이미지 목록 가져오기 중 오류: {source_inner_id_folder} | 에러: {e}")
+                        continue
 
-                        source_inner_id_folder = os.path.join(source, inner_id)
-                        # target_inner_id_folder = os.path.join(target, inner_id)  # 제거
+                    matching_images = []
+                    for image in image_files:
+                        parts = image.split('_', 1)
+                        if len(parts) < 2:
+                            self.log.emit(f"파일 이름 형식 오류: {image}")
+                            continue
+                        fov_part = parts[0]
+                        if 'fov' in fov_part.lower():
+                            fov_part = fov_part.lower().replace('fov', '')
+                        fov_number = ''.join(filter(str.isdigit, fov_part))
+                        if fov_number in fov_numbers:
+                            matching_images.append(image)
 
-                        for image in images:
-                            if self._is_stopped:
-                                self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {total_processed_images}")
-                                self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {total_processed_images}")
-                                return
-
-                            src_file = os.path.join(source_inner_id_folder, image)
-
-                            # FOV 번호 추출
-                            parts = image.split('_', 1)
-                            if len(parts) < 2:
-                                self.log.emit(f"파일 이름 형식 오류: {image}")
-                                continue
-                            fov_part = parts[0]  # 확장자 제거
-                            # fov_part에서 숫자 추출
-                            fov_number = ''.join(filter(str.isdigit, fov_part))
-                            if fov_number not in fov_numbers:
-                                continue
-
-                            # 새로운 파일명: (Inner ID)_(FOV Number).format
-                            file_base, file_ext = os.path.splitext(image)
-                            new_file_name = f"{inner_id}_{fov_number}{file_ext}"
-                            dst_file = os.path.join(target, new_file_name)
-
-                            # 파일이 이미 존재하는지 확인 (옵션: 덮어쓸지 여부)
-                            if os.path.exists(dst_file):
-                                self.log.emit(f"파일이 이미 존재하여 건너뜁니다: {dst_file}")
-                                continue
-
-                            futures[executor.submit(self.copy_file, src_file, dst_file)] = (src_file, dst_file)
-
-                    for future in as_completed(futures):
-                        if self._is_stopped:
-                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {total_processed_images}")
-                            self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {total_processed_images}")
-                            return
-
-                        result = future.result()
-                        if result.startswith("오류 발생"):
-                            self.log.emit(result)
-                        else:
-                            total_processed_images += 1
-                            self.log.emit(result)
-                            # 전체 진행률 업데이트
-                            progress_percent = int((total_processed_images / total_images) * 100)
-                            self.progress.emit(min(progress_percent, 100))  # 100% 초과 방지
-
-                self.finished.emit(f"Date-Based Copy (Image Mode) 완료. 총 처리한 이미지: {total_processed_images}")
+                    if not matching_images:
+                        self.log.emit(f"폴더 {source_inner_id_folder}에 FOV Number와 매칭되는 이미지가 없습니다.")
+                    else:
+                        self.log.emit(f"폴더 {source_inner_id_folder}에서 {len(matching_images)}개의 이미지 복사 시작")
+                        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                            futures = []
+                            for image in matching_images:
+                                src_file = os.path.join(source_inner_id_folder, image)
+                                parts = image.split('_', 1)
+                                fov_part = parts[0]
+                                if 'fov' in fov_part.lower():
+                                    fov_part = fov_part.lower().replace('fov', '')
+                                fov_number = ''.join(filter(str.isdigit, fov_part))
+                                file_base, file_ext = os.path.splitext(image)
+                                new_file_name = f"{inner_id}_{fov_number}{file_ext}"
+                                dst_file = os.path.join(target, new_file_name)
+                                if os.path.exists(dst_file):
+                                    self.log.emit(f"파일이 이미 존재하여 건너뜁니다: {dst_file}")
+                                    continue
+                                futures.append(executor.submit(self.copy_file, src_file, dst_file))
+                            for future in as_completed(futures):
+                                if self._is_stopped:
+                                    self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {total_processed_images}")
+                                    self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {total_processed_images}")
+                                    return
+                                result = future.result()
+                                if result.startswith("오류 발생"):
+                                    self.log.emit(result)
+                                else:
+                                    total_processed_images += 1
+                                    self.log.emit(result)
+                    total_processed_folders += 1
+                    progress_percent = int((total_processed_folders / total_folders) * 100)
+                    self.progress.emit(min(progress_percent, 100))
+                self.finished.emit(f"Date-Based Copy (Image Mode) 완료. 총 처리한 폴더: {total_processed_folders}, 이미지: {total_processed_images}")
                 self.log.emit("------ Date-Based Copy (Image Mode) 작업 완료 ------")
         except Exception as e:
             logging.error("Date-Based Copy 중 오류 발생", exc_info=True)
@@ -444,7 +364,6 @@ class WorkerThread(QThread):
             total_processed_folders = 0
             total_processed_images = 0
 
-            # 전체 이미지 수 미리 계산
             total_images = 0
             for source, target in zip(sources, targets):
                 if os.path.exists(source):
@@ -454,7 +373,6 @@ class WorkerThread(QThread):
                     except Exception as e:
                         self.log.emit(f"이미지 목록 가져오기 중 오류 발생: {source} | 에러: {e}")
                         continue
-                    # 필터링 로직 수정
                     filtered_images = []
                     for img in image_files:
                         if img.lower().endswith('.jpg'):
@@ -502,7 +420,6 @@ class WorkerThread(QThread):
                     except Exception as e:
                         self.log.emit(f"이미지 목록 가져오기 중 오류 발생: {source} | 에러: {e}")
                         continue
-                    # 필터링 로직 수정
                     filtered_images = []
                     for img in image_files:
                         if img.lower().endswith('.jpg'):
@@ -537,9 +454,8 @@ class WorkerThread(QThread):
                     else:
                         total_processed_images += 1
                         self.log.emit(result)
-                        # 전체 진행률을 업데이트하기 위해 계산
                         progress_percent = int((total_processed_images / total_images) * 100)
-                        self.progress.emit(min(progress_percent, 100))  # 100% 초과 방지
+                        self.progress.emit(min(progress_percent, 100))
 
             self.finished.emit(f"Image Format Copy 완료. 총 처리한 경로: {total_processed_folders}, 이미지: {total_processed_images}")
             self.log.emit("------ Image Format Copy 작업 완료 ------")
@@ -548,8 +464,10 @@ class WorkerThread(QThread):
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("Image Format Copy 중 오류 발생.")
 
-    def simulation_foldering_worker(self, task):
-        pass
+    def simulation_foldering(self, task):
+        self.log.emit("------ Simulation Foldering 작업 시작 ------")
+        # 기능 구현 필요
+        self.finished.emit("Simulation Foldering 작업 완료.")
 
     def basic_sorting(self, task):
         self.log.emit("------ Basic Sorting 작업 시작 ------")
@@ -562,16 +480,14 @@ class WorkerThread(QThread):
             inner_id = task.get('inner_id', '').strip()
             formats = task['formats']
 
-            # FOV Number를 다중 입력으로 처리 및 유효성 검증
             if fov_number_input:
-                # 콤마로 분리하고, 공백 제거
                 fov_numbers_raw = [num.strip() for num in fov_number_input.split(',') if num.strip()]
                 fov_numbers = []
                 invalid_fov = []
                 for part in fov_numbers_raw:
-                    if '~' in part:
+                    if '/' in part:
                         try:
-                            start, end = part.split('~')
+                            start, end = part.split('/')
                             start = int(start.strip())
                             end = int(end.strip())
                             if start > end:
@@ -595,7 +511,6 @@ class WorkerThread(QThread):
             inner_ids = []
 
             if inner_id_list_path and os.path.exists(inner_id_list_path):
-                # Inner ID List Path가 설정된 경우
                 try:
                     with os.scandir(inner_id_list_path) as it:
                         inner_ids = [entry.name for entry in it if entry.is_dir() and entry.name not in ['OK', 'NG']]
@@ -604,7 +519,6 @@ class WorkerThread(QThread):
                     self.finished.emit("Basic Sorting 중지됨.")
                     return
             elif use_inner_id and inner_id:
-                # Inner ID가 설정된 경우
                 inner_ids = [inner_id]
             else:
                 self.log.emit("Inner ID List Path도 Inner ID도 설정되지 않았습니다.")
@@ -623,7 +537,6 @@ class WorkerThread(QThread):
 
             total_folders = len(inner_ids)
             total_images = 0
-            # 전체 이미지 수 미리 계산
             for folder_name in inner_ids:
                 source_folder = os.path.join(source, folder_name)
                 if os.path.exists(source_folder):
@@ -635,7 +548,6 @@ class WorkerThread(QThread):
                         total_images += len(matching_files)
                     except Exception as e:
                         self.log.emit(f"이미지 목록 가져오기 중 오류: {source_folder} | 에러: {e}")
-
             if total_images == 0:
                 self.log.emit("선택한 FOV Number에 해당하는 이미지가 없습니다.")
                 self.finished.emit("Basic Sorting 완료.")
@@ -647,7 +559,7 @@ class WorkerThread(QThread):
             for i, folder_name in enumerate(inner_ids, start=1):
                 if self._is_stopped:
                     self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                    self.finished.emit(f"작업이 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
+                    self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
                     return
 
                 source_folder = os.path.join(source, folder_name)
@@ -655,7 +567,6 @@ class WorkerThread(QThread):
                     self.log.emit(f"Source Path 내에 '{folder_name}' 폴더가 존재하지 않습니다.")
                     continue
 
-                # 선택된 이미지 포맷에 맞는 이미지 파일들 가져오기
                 try:
                     with os.scandir(source_folder) as it:
                         image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
@@ -667,14 +578,13 @@ class WorkerThread(QThread):
                     self.log.emit(f"'{folder_name}' 폴더에 지정된 이미지 포맷의 파일이 없습니다.")
                     continue
 
-                # FOV Numbers에 매칭되는 파일 필터링
                 matching_files = []
                 for file in image_files:
                     if self._is_stopped:
                         self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                        self.finished.emit(f"작업이 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
+                        self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
                         return
-                    parts = file.split('_', 1)  # 첫 번째 언더스코어 기준으로 분리
+                    parts = file.split('_', 1)
                     if len(parts) < 2:
                         self.log.emit(f"파일 이름 형식 오류: {file}")
                         continue
@@ -684,7 +594,6 @@ class WorkerThread(QThread):
                         file_fov_number = file_fov_number.lower().replace('fov', '')
                     
                     if file_fov_number in fov_numbers:
-                        # 추가 필터링: org_jpg 및 fov_jpg 조건 적용
                         if file.lower().endswith('.jpg'):
                             if 'org_jpg' in formats and not file.lower().startswith('fov') and '_fov' not in file.lower():
                                 matching_files.append(file)
@@ -697,16 +606,14 @@ class WorkerThread(QThread):
                     self.log.emit(f"'{folder_name}' 폴더에 FOV Number '{', '.join(fov_numbers)}'에 매칭되는 파일이 없습니다.")
                     continue
 
-                # 병렬 복사를 위한 ThreadPoolExecutor 사용
                 with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                     futures = []
                     for image_file in matching_files:
                         if self._is_stopped:
                             self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                            self.finished.emit(f"작업이 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
                             return
                         src_file = os.path.join(source_folder, image_file)
-                        # 새로운 파일명: (Inner ID)_(원본 이미지 파일명).format
                         file_base, file_ext = os.path.splitext(image_file)
                         new_file_name = f"{folder_name}_{file_base}{file_ext}"
                         dst_file = os.path.join(target, new_file_name)
@@ -723,10 +630,8 @@ class WorkerThread(QThread):
                         else:
                             total_processed += 1
                             self.log.emit(result)
-                            # 전체 진행률을 업데이트하기 위해 계산
                             progress_percent = int((total_processed / total_tasks) * 100)
-                            self.progress.emit(min(progress_percent, 100))  # 100% 초과 방지
-
+                            self.progress.emit(min(progress_percent, 100))
                 self.log.emit(f"'{folder_name}' 폴더에서 {len(matching_files)}개의 파일을 복사했습니다.")
                 progress_percent = int((total_processed / total_tasks) * 100)
                 self.progress.emit(min(progress_percent, 100))
@@ -740,12 +645,10 @@ class WorkerThread(QThread):
     def crop_images(self, task):
         self.log.emit("------ Crop 작업 시작 ------")
         try:
-            # Crop 관련 작업 구현
-            # 이 예제에서는 단순히 파일을 복사하는 것으로 가정
             source = task['source']
             target = task['target']
             formats = task['formats']
-            crop_area = task['crop_area']  # "left, upper, right, lower" 형식의 문자열
+            crop_area = task['crop_area']
 
             if not os.path.exists(source):
                 self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
@@ -763,7 +666,6 @@ class WorkerThread(QThread):
                 self.finished.emit("Crop 중지됨.")
                 return
 
-            # 전체 이미지 수 미리 계산
             try:
                 with os.scandir(source) as it:
                     image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
@@ -801,10 +703,8 @@ class WorkerThread(QThread):
                     if result:
                         total_processed_images += 1
                         self.log.emit(result)
-                        # 전체 진행률을 업데이트하기 위해 계산
                         progress_percent = int((total_processed_images / total_images) * 100)
-                        self.progress.emit(min(progress_percent, 100))  # 100% 초과 방지
-
+                        self.progress.emit(min(progress_percent, 100))
             self.finished.emit(f"Crop 완료. 총 처리한 이미지: {total_processed_images}")
             self.log.emit("------ Crop 작업 완료 ------")
         except Exception as e:
@@ -815,12 +715,10 @@ class WorkerThread(QThread):
     def resize_images(self, task):
         self.log.emit("------ Resize 작업 시작 ------")
         try:
-            # Resize 관련 작업 구현
-            # 이 예제에서는 단순히 파일을 복사하는 것으로 가정
             source = task['source']
             target = task['target']
             formats = task['formats']
-            resize_dimensions = task['resize_dimensions']  # "widthxheight" 형식의 문자열
+            resize_dimensions = task['resize_dimensions']
 
             if not os.path.exists(source):
                 self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
@@ -836,7 +734,6 @@ class WorkerThread(QThread):
                 self.finished.emit("Resize 중지됨.")
                 return
 
-            # 전체 이미지 수 미리 계산
             try:
                 with os.scandir(source) as it:
                     image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
@@ -874,10 +771,8 @@ class WorkerThread(QThread):
                     if result:
                         total_processed_images += 1
                         self.log.emit(result)
-                        # 전체 진행률을 업데이트하기 위해 계산
                         progress_percent = int((total_processed_images / total_images) * 100)
-                        self.progress.emit(min(progress_percent, 100))  # 100% 초과 방지
-
+                        self.progress.emit(min(progress_percent, 100))
             self.finished.emit(f"Resize 완료. 총 처리한 이미지: {total_processed_images}")
             self.log.emit("------ Resize 작업 완료 ------")
         except Exception as e:
@@ -888,12 +783,10 @@ class WorkerThread(QThread):
     def flip_images(self, task):
         self.log.emit("------ Flip 작업 시작 ------")
         try:
-            # Flip 관련 작업 구현
-            # 이 예제에서는 단순히 파일을 복사하는 것으로 가정
             source = task['source']
             target = task['target']
             formats = task['formats']
-            flip_direction = task['flip_direction']  # "horizontal" 또는 "vertical"
+            flip_direction = task['flip_direction']
 
             if not os.path.exists(source):
                 self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
@@ -902,13 +795,11 @@ class WorkerThread(QThread):
             if not os.path.exists(target):
                 os.makedirs(target)
 
-            # Flip Direction 유효성 검증
             if flip_direction.lower() not in ['horizontal', 'vertical']:
                 self.log.emit(f"잘못된 Flip Direction: {flip_direction}")
                 self.finished.emit("Flip 중지됨.")
                 return
 
-            # 전체 이미지 수 미리 계산
             try:
                 with os.scandir(source) as it:
                     image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
@@ -946,10 +837,8 @@ class WorkerThread(QThread):
                     if result:
                         total_processed_images += 1
                         self.log.emit(result)
-                        # 전체 진행률을 업데이트하기 위해 계산
                         progress_percent = int((total_processed_images / total_images) * 100)
-                        self.progress.emit(min(progress_percent, 100))  # 100% 초과 방지
-
+                        self.progress.emit(min(progress_percent, 100))
             self.finished.emit(f"Flip 완료. 총 처리한 이미지: {total_processed_images}")
             self.log.emit("------ Flip 작업 완료 ------")
         except Exception as e:
@@ -960,12 +849,10 @@ class WorkerThread(QThread):
     def rotate_images(self, task):
         self.log.emit("------ Rotate 작업 시작 ------")
         try:
-            # Rotate 관련 작업 구현
-            # 이 예제에서는 단순히 파일을 복사하는 것으로 가정
             source = task['source']
             target = task['target']
             formats = task['formats']
-            rotate_angle = task['rotate_angle']  # 예: "90", "180"
+            rotate_angle = task['rotate_angle']
 
             if not os.path.exists(source):
                 self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
@@ -981,7 +868,6 @@ class WorkerThread(QThread):
                 self.finished.emit("Rotate 중지됨.")
                 return
 
-            # 전체 이미지 수 미리 계산
             try:
                 with os.scandir(source) as it:
                     image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
@@ -1019,10 +905,8 @@ class WorkerThread(QThread):
                     if result:
                         total_processed_images += 1
                         self.log.emit(result)
-                        # 전체 진행률을 업데이트하기 위해 계산
                         progress_percent = int((total_processed_images / total_images) * 100)
-                        self.progress.emit(min(progress_percent, 100))  # 100% 초과 방지
-
+                        self.progress.emit(min(progress_percent, 100))
             self.finished.emit(f"Rotate 완료. 총 처리한 이미지: {total_processed_images}")
             self.log.emit("------ Rotate 작업 완료 ------")
         except Exception as e:
@@ -1039,7 +923,6 @@ class WorkerThread(QThread):
                 self.finished.emit("NG Count 중지됨.")
                 return
 
-            # 'Cam_'으로 시작하는 폴더들 탐색
             try:
                 with os.scandir(ng_folder) as it:
                     cam_folders = [entry.name for entry in it if entry.is_dir() and entry.name.startswith('Cam_')]
@@ -1081,13 +964,10 @@ class WorkerThread(QThread):
                     except Exception as e:
                         self.log.emit(f"Defect 폴더 내 항목 수 계산 중 오류 발생: {defect_path} | 에러: {e}")
 
-                # 진행률 업데이트 (Cam 단위)
                 progress_percent = int((i / total_cams) * 100)
                 self.progress.emit(min(progress_percent, 100))
 
-            # NG Count 결과를 표 형식으로 전달
             self.ng_count_result.emit(ng_count_data)
-
             self.finished.emit(f"NG Count 완료. 총 Cam: {total_cams}, 총 Defect: {total_defects}")
             self.log.emit("------ NG Count 작업 완료 ------")
         except Exception as e:
@@ -1095,30 +975,7 @@ class WorkerThread(QThread):
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("NG Count 중 오류 발생.")
 
-    def basic_sorting_worker(self, task):
-        # 이미 basic_sorting 메서드에서 구현됨
-        pass
-
-    def crop_images_worker(self, task):
-        # 이미 crop_images 메서드에서 구현됨
-        pass
-
-    def resize_images_worker(self, task):
-        # 이미 resize_images 메서드에서 구현됨
-        pass
-
-    def flip_images_worker(self, task):
-        # 이미 flip_images 메서드에서 구현됨
-        pass
-
-    def rotate_images_worker(self, task):
-        # 이미 rotate_images 메서드에서 구현됨
-        pass
-
     def is_valid_file(self, filename, formats):
-        """
-        파일이 선택된 포맷에 맞는지 확인하는 유틸리티 함수
-        """
         if not formats:
             return False
         for fmt in formats:
@@ -1180,26 +1037,85 @@ class WorkerThread(QThread):
 
     def copy_file(self, src, dst):
         try:
-            shutil.copy2(src, dst)  # shutil.copy2로 대체하여 최적화
+            shutil.copy2(src, dst)
             return f"Copied {src} to {dst}"
         except Exception as e:
             logging.error("파일 복사 중 오류", exc_info=True)
-            # 복사 도중 오류가 발생하면 부분적으로 복사된 파일을 삭제
             if os.path.exists(dst):
                 os.remove(dst)
             return f"오류 발생: {str(e)}"
 
     def copy_folder(self, src, dst):
         try:
-            # Target Path에 이미 같은 이름의 폴더가 존재하면 삭제 (덮어쓰기)
             if os.path.exists(dst):
                 shutil.rmtree(dst)
-            shutil.copytree(src, dst, dirs_exist_ok=True)  # shutil.copytree로 대체하여 최적화
+            shutil.copytree(src, dst, dirs_exist_ok=True)
             return f"Copied folder {src} to {dst}"
         except Exception as e:
             logging.error("폴더 복사 중 오류", exc_info=True)
             return f"오류 발생: {str(e)}"
 
+    def copy_folder_filtered(self, src, dst, formats):
+        try:
+            if not os.path.exists(dst):
+                os.makedirs(dst)
+            count = 0
+            with os.scandir(src) as it:
+                for entry in it:
+                    if entry.is_file() and self.is_valid_file(entry.name, formats):
+                        src_file = os.path.join(src, entry.name)
+                        dst_file = os.path.join(dst, entry.name)
+                        result = self.copy_file(src_file, dst_file)
+                        if not result.startswith("오류 발생"):
+                            count += 1
+            return f"Copied {count} file(s) from {src} to {dst} (filtered)"
+        except Exception as e:
+            logging.error("Filtered folder copy 중 오류", exc_info=True)
+            return f"오류 발생: {str(e)}"
+
+    def collect_inner_ids(self, sources):
+        inner_ids = set()
+        for source in sources:
+            if not os.path.exists(source):
+                self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
+                continue
+            try:
+                with os.scandir(source) as it:
+                    subfolders = [entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng']]
+                inner_ids.update(subfolders)
+            except Exception as e:
+                self.log.emit(f"서브폴더 수집 중 오류: {source} | 에러: {e}")
+        return inner_ids
+
+    def collect_inner_ids_from_source2(self, source2):
+        inner_ids = set()
+        if not os.path.exists(source2):
+            self.log.emit(f"Source2 경로가 존재하지 않습니다: {source2}")
+            return inner_ids
+        try:
+            with os.scandir(source2) as it:
+                inner_ids = {entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng']}
+        except Exception as e:
+            self.log.emit(f"Source2에서 Inner ID 수집 중 오류: {str(e)}")
+        return inner_ids
+
+    def collect_images_to_copy(self, inner_ids, source, formats):
+        images_to_copy = {}
+        total_images = 0
+        for inner_id in inner_ids:
+            source_inner_id_folder = os.path.join(source, inner_id)
+            if not os.path.exists(source_inner_id_folder):
+                self.log.emit(f"Source 경로에 Inner ID 폴더가 존재하지 않습니다: {source_inner_id_folder}")
+                continue
+            try:
+                with os.scandir(source_inner_id_folder) as it:
+                    images = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                if images:
+                    images_to_copy[inner_id] = images
+                    total_images += len(images)
+            except Exception as e:
+                self.log.emit(f"이미지 수집 중 오류 발생: {source_inner_id_folder} | 에러: {e}")
+        return images_to_copy, total_images
 
 class BaseTaskDialog(QDialog):
     def __init__(self, title):
@@ -1212,14 +1128,10 @@ class BaseTaskDialog(QDialog):
     def initUI(self):
         layout = QVBoxLayout()
         form_layout = QFormLayout()
-        # Placeholder for specific input fields
         self.specific_layout = QFormLayout()
         form_layout.addRow(self.specific_layout)
-
-
         layout.addLayout(form_layout)
 
-        # Log Area and Buttons
         log_layout = QHBoxLayout()
         log_label = QLabel("<b>Logs:</b>")
         self.clear_log_button = QPushButton("Clear")
@@ -1230,7 +1142,7 @@ class BaseTaskDialog(QDialog):
         layout.addLayout(log_layout)
 
         self.log_area = QTextEdit()
-        self.log_area.setReadOnly(True)  # 수정 불가능하도록 변경
+        self.log_area.setReadOnly(True)
         self.log_area.setStyleSheet("""
             QTextEdit {
                 background-color: #F5F5F5;
@@ -1244,10 +1156,9 @@ class BaseTaskDialog(QDialog):
         """)
         layout.addWidget(self.log_area)
 
-        # Progress Bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
-        self.progress_bar.setMaximum(100)  # 0~100%으로 설정
+        self.progress_bar.setMaximum(100)
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: 2px solid grey;
@@ -1262,7 +1173,6 @@ class BaseTaskDialog(QDialog):
         """)
         layout.addWidget(self.progress_bar)
 
-        # Buttons (Start and Stop)
         button_layout = QHBoxLayout()
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self.start_task)
@@ -1296,7 +1206,6 @@ class BaseTaskDialog(QDialog):
         self.worker = WorkerThread(params)
         self.worker.progress.connect(self.update_progress)
         self.worker.log.connect(self.append_log)
-        # NG Count의 경우 별도의 시그널을 처리
         if params.get('operation') == 'ng_count':
             self.worker.ng_count_result.connect(self.update_ng_count_table)
         self.worker.finished.connect(self.task_finished)
@@ -1321,9 +1230,7 @@ class BaseTaskDialog(QDialog):
             self.append_log("------ 작업 종료 ------")
 
     def validate_parameters(self, params):
-        # 기본 유효성 검증을 수행하고, 필요 시 오버라이드
         missing_fields = []
-        # Date-Based Copy는 Inner ID와 Image Formats가 필요 없으므로 조건 수정
         operation = params.get('operation', '')
         if operation != 'ng_count':
             if not params.get('source'):
@@ -1336,29 +1243,24 @@ class BaseTaskDialog(QDialog):
             missing_fields.append("Source Path #2 (Matching Folder)")
         if operation == 'ng_count' and not params.get('ng_folder', ''):
             missing_fields.append("NG 폴더를 선택해야 합니다.")
-        if missing_fields:
-            QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
-            return False
+        if params.get('strong_random', False) and params.get('conditional_random', False):
+            missing_fields.append("Strong Random과 Conditional Random은 동시에 선택할 수 없습니다.")
 
-        # 추가: 경로 유효성 검증
         path_fields = ['source', 'target', 'inner_id_list', 'source2', 'ng_folder']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
-        if invalid_paths:
-            QMessageBox.warning(self, "입력 오류", f"다음 경로가 유효하지 않습니다:\n" + "\n".join(invalid_paths))
+        if missing_fields or invalid_paths:
+            QMessageBox.warning(self, "입력 오류", f"다음 항목을 확인하세요:\n" + "\n".join(missing_fields + invalid_paths))
             return False
         return True
 
     def get_parameters(self):
-        # 각 기능별로 오버라이드하여 파라미터를 반환
         return {}
 
     def update_ng_count_table(self, data):
-        # 기본 다이얼로그에서는 구현하지 않음
         pass
 
 class BasicSortingDialog(BaseTaskDialog):
@@ -1367,7 +1269,6 @@ class BasicSortingDialog(BaseTaskDialog):
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        # Inner ID List Path
         self.inner_id_list_button = QPushButton("Select Inner ID List Path")
         self.inner_id_list_button.clicked.connect(self.select_inner_id_list)
         self.inner_id_list_path = QLineEdit()
@@ -1375,7 +1276,6 @@ class BasicSortingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Inner ID List Path:</b>"), self.inner_id_list_button)
         self.specific_layout.addRow("", self.inner_id_list_path)
 
-        # Source Path
         self.source_button = QPushButton("Select Matching Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
@@ -1383,7 +1283,6 @@ class BasicSortingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         self.specific_layout.addRow("", self.source_path)
 
-        # Target Path
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
@@ -1391,12 +1290,10 @@ class BasicSortingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
-        # FOV Number
         self.fov_input = QLineEdit()
         self.fov_input.setPlaceholderText("Enter FOV Number(s), separated by commas (e.g., 1,2,3 or 1,2,3~5)")
         self.specific_layout.addRow(QLabel("<b>FOV Number(s):</b>"), self.fov_input)
 
-        # Inner ID (Optional)
         self.inner_id_checkbox = QCheckBox("Use Inner ID")
         self.inner_id_checkbox.stateChanged.connect(self.toggle_inner_id)
         self.specific_layout.addRow(QLabel("<b>Inner ID:</b>"), self.inner_id_checkbox)
@@ -1406,10 +1303,9 @@ class BasicSortingDialog(BaseTaskDialog):
         self.inner_id_input.setEnabled(False)
         self.specific_layout.addRow("", self.inner_id_input)
 
-        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
         self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
-        self.format_fov_jpg = QCheckBox("fov_jpg")  # 새로운 'fov_jpg' 추가
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
@@ -1419,6 +1315,7 @@ class BasicSortingDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
 
     def toggle_inner_id(self, state):
         if state == Qt.Checked:
@@ -1451,19 +1348,17 @@ class BasicSortingDialog(BaseTaskDialog):
             self.source_path.setText(source)
 
     def get_parameters(self):
-        # 이미지 포맷 필터링
         formats = []
         if self.format_bmp.isChecked():
             formats.append(".bmp")
         if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")  # 'org_jpg'로 변경
+            formats.append("org_jpg")
         if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+            formats.append("fov_jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
-
         return {
             'operation': 'basic_sorting',
             'source': self.source_path.text(),
@@ -1487,18 +1382,14 @@ class BasicSortingDialog(BaseTaskDialog):
             missing_fields.append("FOV Number(s)")
         if not params['formats'] and params['operation'] != 'ng_count':
             missing_fields.append("Image Formats")
-
         if not params['inner_id_list'] and params['use_inner_id'] and not params['inner_id']:
             missing_fields.append("Inner ID")
-
-        # 추가: 경로 유효성 검증
         path_fields = ['source', 'target', 'inner_id_list']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -1511,14 +1402,12 @@ class BasicSortingDialog(BaseTaskDialog):
             return False
         return True
 
-
 class NGSortingDialog(BaseTaskDialog):
     def __init__(self):
         super().__init__("NG Folder Sorting 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        # Source Path #1 (NG Folders)
         self.add_source_button = QPushButton("Add NG Folder")
         self.add_source_button.clicked.connect(self.add_source_folder)
         self.source1_list = QListWidget()
@@ -1526,12 +1415,10 @@ class NGSortingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Source Path #1 (NG Folders):</b>"), self.add_source_button)
         self.specific_layout.addRow("", self.source1_list)
 
-        # Remove Selected Folder Button
         self.remove_source_button = QPushButton("Remove Selected Folder")
         self.remove_source_button.clicked.connect(self.remove_selected_source_folder)
         self.specific_layout.addRow("", self.remove_source_button)
 
-        # Source Path #2 (Matching Folder)
         self.source2_button = QPushButton("Select Matching Folder")
         self.source2_button.clicked.connect(self.select_source2)
         self.source2_path = QLineEdit()
@@ -1539,7 +1426,6 @@ class NGSortingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Source Path #2 (Matching Folder):</b>"), self.source2_button)
         self.specific_layout.addRow("", self.source2_path)
 
-        # Target Path
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
@@ -1547,10 +1433,9 @@ class NGSortingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
-        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
         self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
-        self.format_fov_jpg = QCheckBox("fov_jpg")  # 'fov_jpg' 추가
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
@@ -1560,12 +1445,12 @@ class NGSortingDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
 
     def add_source_folder(self):
         parent_folder = QFileDialog.getExistingDirectory(self, "Select Parent Folder", "",
                                                          QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
         if parent_folder:
-            # 소스 폴더 내의 모든 서브 폴더(OK, NG 제외) 가져오기
             try:
                 with os.scandir(parent_folder) as it:
                     subfolders = [entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng']]
@@ -1576,8 +1461,6 @@ class NGSortingDialog(BaseTaskDialog):
                 logging.error("서브폴더 목록 가져오기 중 오류", exc_info=True)
                 QMessageBox.warning(self, "오류", f"서브폴더 목록 가져오기 중 오류가 발생했습니다:\n{str(e)}")
                 return
-
-            # 서브 폴더 선택 다이얼로그 열기
             dialog = QDialog(self)
             dialog.setWindowTitle("Select Subfolders")
             dialog.setFixedSize(600, 400)
@@ -1630,7 +1513,6 @@ class NGSortingDialog(BaseTaskDialog):
                 selected_subfolders = [table_widget.item(row.row(), 0).text() for row in selected_rows]
                 for sub in selected_subfolders:
                     full_path = os.path.join(parent_folder, sub)
-                    # 중복된 폴더는 추가하지 않음
                     existing_items = [self.source1_list.item(i).text() for i in range(self.source1_list.count())]
                     if full_path not in existing_items:
                         self.source1_list.addItem(full_path)
@@ -1661,14 +1543,13 @@ class NGSortingDialog(BaseTaskDialog):
         sources1 = [self.source1_list.item(i).text() for i in range(self.source1_list.count())]
         source2 = self.source2_path.text()
         target = self.target_path.text()
-        # Image Formats는 개별 다이얼로그에서 처리
         formats = []
         if self.format_bmp.isChecked():
             formats.append(".bmp")
         if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")  # 'org_jpg'로 변경
+            formats.append("org_jpg")
         if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+            formats.append("fov_jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
         if self.format_png.isChecked():
@@ -1696,58 +1577,56 @@ class NGSortingDialog(BaseTaskDialog):
             return False
         return True
 
-        # 추가: 경로 유효성 검증
-        path_fields = ['source', 'target']
-        for field in path_fields:
-            path = params.get(field, '')
-            if path and not os.path.isdir(path):
-                missing_fields.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
-        if missing_fields:
-            QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
-            return False
-        return True
-
-
 class DateBasedCopyDialog(BaseTaskDialog):
     def __init__(self):
         super().__init__("Date-Based Copy 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        # Mode Selection: Folder or Image
         self.mode_folder_checkbox = QCheckBox("Folder")
         self.mode_image_checkbox = QCheckBox("Image")
-        self.mode_folder_checkbox.setChecked(True)  # 기본적으로 Folder 모드 선택
+        self.mode_folder_checkbox.setChecked(True)
         self.mode_folder_checkbox.stateChanged.connect(self.toggle_mode)
         self.mode_image_checkbox.stateChanged.connect(self.toggle_mode)
-
         mode_layout = QHBoxLayout()
         mode_layout.addWidget(self.mode_folder_checkbox)
         mode_layout.addWidget(self.mode_image_checkbox)
         self.specific_layout.addRow(QLabel("<b>Mode:</b>"), mode_layout)
 
-        # Date and Time 선택을 위한 QDateTimeEdit 위젯 추가
         self.datetime_edit = QDateTimeEdit(self)
-        self.datetime_edit.setCalendarPopup(True)  # 달력 팝업 활성화
+        self.datetime_edit.setCalendarPopup(True)
         self.datetime_edit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
         self.datetime_edit.setDateTime(QDateTime.currentDateTime())
         self.specific_layout.addRow(QLabel("<b>Date and Time:</b>"), self.datetime_edit)
 
-        # Count
+        self.strong_random_checkbox = QCheckBox("Strong Random")
+        self.conditional_random_checkbox = QCheckBox("Conditional Random")
+        self.strong_random_checkbox.setChecked(False)
+        self.conditional_random_checkbox.setChecked(False)
+        self.strong_random_checkbox.stateChanged.connect(self.on_strong_random_changed)
+        self.conditional_random_checkbox.stateChanged.connect(self.on_conditional_random_changed)
+        random_layout = QHBoxLayout()
+        random_layout.addWidget(self.strong_random_checkbox)
+        random_layout.addWidget(self.conditional_random_checkbox)
+        self.specific_layout.addRow(QLabel("<b>Random Options:</b>"), random_layout)
+
+        self.random_count_spinbox = QSpinBox()
+        self.random_count_spinbox.setRange(1, 1000)
+        self.random_count_spinbox.setValue(1)
+        self.random_count_spinbox.setEnabled(False)
+        self.specific_layout.addRow(QLabel("<b>Random Count:</b>"), self.random_count_spinbox)
+
         self.count_input = QSpinBox()
         self.count_input.setRange(1, 1000)
         self.count_input.setValue(1)
         self.specific_layout.addRow(QLabel("<b>Number of Folders to Copy:</b>"), self.count_input)
 
-        # FOV Numbers (Image Mode에만 활성화)
         self.fov_numbers_label = QLabel("<b>FOV Numbers:</b>")
         self.fov_numbers_input = QLineEdit()
-        self.fov_numbers_input.setPlaceholderText("Enter FOV Number(s), separated by commas (e.g., 1,2,3~5)")
-        self.fov_numbers_input.setEnabled(False)  # 초기에는 비활성화
+        self.fov_numbers_input.setPlaceholderText("Enter FOV Number(s), separated by commas (e.g., 1,2,3/5)")
+        self.fov_numbers_input.setEnabled(False)
         self.specific_layout.addRow(self.fov_numbers_label, self.fov_numbers_input)
 
-        # Source Path
         self.source_button = QPushButton("Select Source Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
@@ -1755,7 +1634,6 @@ class DateBasedCopyDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         self.specific_layout.addRow("", self.source_path)
 
-        # Target Path
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
@@ -1763,10 +1641,9 @@ class DateBasedCopyDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
-        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
         self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
-        self.format_fov_jpg = QCheckBox("fov_jpg")  # 'fov_jpg' 추가
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
@@ -1776,6 +1653,19 @@ class DateBasedCopyDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
+
+    def on_strong_random_changed(self, state):
+        if state == Qt.Checked:
+            self.conditional_random_checkbox.setChecked(False)
+            self.random_count_spinbox.setEnabled(False)
+
+    def on_conditional_random_changed(self, state):
+        if state == Qt.Checked:
+            self.strong_random_checkbox.setChecked(False)
+            self.random_count_spinbox.setEnabled(True)
+        else:
+            self.random_count_spinbox.setEnabled(False)
 
     def toggle_mode(self, state):
         if self.sender() == self.mode_folder_checkbox and state == Qt.Checked:
@@ -1785,7 +1675,6 @@ class DateBasedCopyDialog(BaseTaskDialog):
             self.mode_folder_checkbox.setChecked(False)
             self.fov_numbers_input.setEnabled(True)
         elif self.mode_folder_checkbox.isChecked() and self.mode_image_checkbox.isChecked():
-            # 둘 다 선택된 경우, 폴더 모드를 우선으로 선택
             self.mode_image_checkbox.setChecked(False)
             self.fov_numbers_input.setEnabled(False)
 
@@ -1802,37 +1691,32 @@ class DateBasedCopyDialog(BaseTaskDialog):
             self.source_path.setText(source)
 
     def get_parameters(self):
-        # 이미지 포맷 필터링
         formats = []
         if self.format_bmp.isChecked():
             formats.append(".bmp")
         if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")  # 'org_jpg'로 변경
+            formats.append("org_jpg")
         if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+            formats.append("fov_jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
-
-        # Mode 설정
         if self.mode_folder_checkbox.isChecked():
             mode = 'folder'
         elif self.mode_image_checkbox.isChecked():
             mode = 'image'
         else:
-            mode = 'folder'  # 기본값
-
-        # FOV Numbers 처리
+            mode = 'folder'
         fov_numbers = []
         if mode == 'image':
             fov_number_input = self.fov_numbers_input.text().strip()
             if fov_number_input:
                 fov_numbers_raw = [num.strip() for num in fov_number_input.split(',') if num.strip()]
                 for part in fov_numbers_raw:
-                    if '~' in part:
+                    if '/' in part:
                         try:
-                            start, end = part.split('~')
+                            start, end = part.split('/')
                             start = int(start.strip())
                             end = int(end.strip())
                             if start > end:
@@ -1843,8 +1727,6 @@ class DateBasedCopyDialog(BaseTaskDialog):
                     else:
                         if part.isdigit():
                             fov_numbers.append(part)
-
-        # 수정된 부분: QDateTime에서 date()와 time()을 통해 연, 월, 일, 시, 분, 초를 추출
         dt = self.datetime_edit.dateTime()
         year = dt.date().year()
         month = dt.date().month()
@@ -1852,7 +1734,6 @@ class DateBasedCopyDialog(BaseTaskDialog):
         hour = dt.time().hour()
         minute = dt.time().minute()
         second = dt.time().second()
-
         return {
             'operation': 'date_copy',
             'mode': mode,
@@ -1866,7 +1747,10 @@ class DateBasedCopyDialog(BaseTaskDialog):
             'second': second,
             'count': self.count_input.value(),
             'fov_numbers': fov_numbers,
-            'formats': formats
+            'formats': formats,
+            'strong_random': self.strong_random_checkbox.isChecked(),
+            'conditional_random': self.conditional_random_checkbox.isChecked(),
+            'random_count': self.random_count_spinbox.value() if self.conditional_random_checkbox.isChecked() else 0
         }
 
     def validate_parameters(self, params):
@@ -1879,15 +1763,14 @@ class DateBasedCopyDialog(BaseTaskDialog):
             missing_fields.append("FOV Numbers")
         if not params['formats'] and params['operation'] != 'ng_count':
             missing_fields.append("Image Formats")
-
-        # 추가: 경로 유효성 검증
+        if params.get('strong_random', False) and params.get('conditional_random', False):
+            missing_fields.append("Strong Random과 Conditional Random은 동시에 선택할 수 없습니다.")
         path_fields = ['source', 'target']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -1900,14 +1783,12 @@ class DateBasedCopyDialog(BaseTaskDialog):
             return False
         return True
 
-
 class ImageFormatCopyDialog(BaseTaskDialog):
     def __init__(self):
         super().__init__("Image Format Copy 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        # Source Path
         self.source_button = QPushButton("Select Source Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
@@ -1915,7 +1796,6 @@ class ImageFormatCopyDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         self.specific_layout.addRow("", self.source_path)
 
-        # Target Path
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
@@ -1923,10 +1803,9 @@ class ImageFormatCopyDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
-        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
         self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
-        self.format_fov_jpg = QCheckBox("fov_jpg")  # 'fov_jpg' 추가
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
@@ -1936,6 +1815,7 @@ class ImageFormatCopyDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
 
     def select_source(self):
         source = QFileDialog.getExistingDirectory(self, "Select Source Folder", "",
@@ -1950,19 +1830,17 @@ class ImageFormatCopyDialog(BaseTaskDialog):
             self.target_path.setText(target)
 
     def get_parameters(self):
-        # 이미지 포맷 필터링
         formats = []
         if self.format_bmp.isChecked():
             formats.append(".bmp")
         if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")  # 'org_jpg'로 변경
+            formats.append("org_jpg")
         if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+            formats.append("fov_jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
-
         return {
             'operation': 'image_copy',
             'sources': [self.source_path.text()],
@@ -1978,15 +1856,12 @@ class ImageFormatCopyDialog(BaseTaskDialog):
             missing_fields.append("Target Path")
         if not params['formats'] and params['operation'] != 'ng_count':
             missing_fields.append("Image Formats")
-
-        # 추가: 경로 유효성 검증
         path_fields = ['source', 'target']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -1999,14 +1874,12 @@ class ImageFormatCopyDialog(BaseTaskDialog):
             return False
         return True
 
-
 class SimulationFolderingDialog(BaseTaskDialog):
     def __init__(self):
         super().__init__("Simulation Foldering 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        # Source Path
         self.source_button = QPushButton("Select Source Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
@@ -2014,7 +1887,6 @@ class SimulationFolderingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
         self.specific_layout.addRow("", self.source_path)
 
-        # Target Path
         self.target_button = QPushButton("Select Target Path")
         self.target_button.clicked.connect(self.select_target)
         self.target_path = QLineEdit()
@@ -2022,10 +1894,9 @@ class SimulationFolderingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
         self.specific_layout.addRow("", self.target_path)
 
-        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
         self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
-        self.format_fov_jpg = QCheckBox("fov_jpg")  # 'fov_jpg' 추가
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
@@ -2035,6 +1906,7 @@ class SimulationFolderingDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
 
     def select_source(self):
         source = QFileDialog.getExistingDirectory(self, "Select Source Folder", "",
@@ -2049,19 +1921,17 @@ class SimulationFolderingDialog(BaseTaskDialog):
             self.target_path.setText(target)
 
     def get_parameters(self):
-        # 이미지 포맷 필터링
         formats = []
         if self.format_bmp.isChecked():
             formats.append(".bmp")
         if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")  # 'org_jpg'로 변경
+            formats.append("org_jpg")
         if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+            formats.append("fov_jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
-
         return {
             'operation': 'simulation_foldering',
             'source': self.source_path.text(),
@@ -2077,15 +1947,12 @@ class SimulationFolderingDialog(BaseTaskDialog):
             missing_fields.append("Target Path")
         if not params['formats'] and params['operation'] != 'ng_count':
             missing_fields.append("Image Formats")
-
-        # 추가: 경로 유효성 검증
         path_fields = ['source', 'target']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -2098,7 +1965,6 @@ class SimulationFolderingDialog(BaseTaskDialog):
             return False
         return True
 
-
 class NGCountDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -2110,28 +1976,24 @@ class NGCountDialog(QDialog):
     def initUI(self):
         layout = QVBoxLayout()
         form_layout = QFormLayout()
-        # NG Folder Path
         self.ng_folder_button = QPushButton("Select NG Folder")
         self.ng_folder_button.clicked.connect(self.select_ng_folder)
         self.ng_folder_path = QLineEdit()
         self.ng_folder_path.setReadOnly(False)
         form_layout.addRow(QLabel("<b>Counting - Select NG folder:</b>"), self.ng_folder_button)
         form_layout.addRow("", self.ng_folder_path)
-
         layout.addLayout(form_layout)
 
-        # NG Count Results with Copy button
         ng_count_results_layout = QHBoxLayout()
         ng_count_label = QLabel("<b>NG Count Results:</b>")
         self.copy_button = QPushButton("Copy")
-        self.copy_button.setFixedSize(60, 25)  # 작은 크기로 설정
+        self.copy_button.setFixedSize(60, 25)
         self.copy_button.clicked.connect(self.copy_table_to_clipboard)
         ng_count_results_layout.addWidget(ng_count_label)
         ng_count_results_layout.addStretch()
         ng_count_results_layout.addWidget(self.copy_button)
         layout.addLayout(ng_count_results_layout)
 
-        # Table to display NG Count results
         self.table_widget = QTableWidget()
         self.table_widget.setColumnCount(3)
         self.table_widget.setHorizontalHeaderLabels(["CamNum", "Defect Name", "Count"])
@@ -2140,10 +2002,9 @@ class NGCountDialog(QDialog):
         self.table_widget.setEditTriggers(QTableWidget.NoEditTriggers)
         layout.addWidget(self.table_widget)
 
-        # Progress Bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
-        self.progress_bar.setMaximum(100)  # 0~100%으로 설정
+        self.progress_bar.setMaximum(100)
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: 2px solid grey;
@@ -2158,7 +2019,6 @@ class NGCountDialog(QDialog):
         """)
         layout.addWidget(self.progress_bar)
 
-        # Buttons (Start and Stop)
         button_layout = QHBoxLayout()
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self.start_task)
@@ -2183,7 +2043,7 @@ class NGCountDialog(QDialog):
         if self.worker and self.worker.isRunning():
             QMessageBox.warning(self, "작업 중", "이미 작업이 진행 중입니다.")
             return
-        self.table_widget.setRowCount(0)  # 기존 표 초기화
+        self.table_widget.setRowCount(0)
         self.progress_bar.setValue(0)
         ng_folder = self.ng_folder_path.text()
         if not ng_folder:
@@ -2206,7 +2066,6 @@ class NGCountDialog(QDialog):
             self.stop_button.setEnabled(False)
 
     def append_log(self, message):
-        # NG Count에서는 로그를 사용하지 않음
         pass
 
     def update_progress(self, value):
@@ -2247,23 +2106,20 @@ class NGCountDialog(QDialog):
         clipboard.setText('\n'.join(data))
         QMessageBox.information(self, "복사 완료", "Copy to the clipboard")
 
-
 class CropDialog(BaseTaskDialog):
     def __init__(self):
         super().__init__("Crop 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        
         self.specific_layout.addRow(QLabel("<b>Crop Area:</b>"))
         self.crop_area_input = QLineEdit()
         self.crop_area_input.setPlaceholderText("Enter crop area parameters (left, upper, right, lower)")
         self.specific_layout.addRow("", self.crop_area_input)
 
-        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
         self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
-        self.format_fov_jpg = QCheckBox("fov_jpg")  # 'fov_jpg' 추가
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
@@ -2273,20 +2129,20 @@ class CropDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
 
     def get_parameters(self):
         formats = []
         if self.format_bmp.isChecked():
             formats.append(".bmp")
         if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")  # 'org_jpg'로 변경
+            formats.append("org_jpg")
         if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+            formats.append("fov_jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
-
         return {
             'operation': 'crop',
             'source': self.source_path.text(),
@@ -2305,15 +2161,12 @@ class CropDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if not params['crop_area']:
             missing_fields.append("Crop Area Parameters")
-
-        # 추가: 경로 유효성 검증
         path_fields = ['source', 'target']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -2326,23 +2179,20 @@ class CropDialog(BaseTaskDialog):
             return False
         return True
 
-
 class ResizeDialog(BaseTaskDialog):
     def __init__(self):
         super().__init__("Resize 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        # Resize 관련 설정을 여기에 추가
         self.specific_layout.addRow(QLabel("<b>Resize Dimensions:</b>"))
         self.resize_dim_input = QLineEdit()
         self.resize_dim_input.setPlaceholderText("Enter dimensions (e.g., 800x600)")
         self.specific_layout.addRow("", self.resize_dim_input)
 
-        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
         self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
-        self.format_fov_jpg = QCheckBox("fov_jpg")  # 'fov_jpg' 추가
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
@@ -2352,20 +2202,20 @@ class ResizeDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
 
     def get_parameters(self):
         formats = []
         if self.format_bmp.isChecked():
             formats.append(".bmp")
         if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")  # 'org_jpg'로 변경
+            formats.append("org_jpg")
         if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+            formats.append("fov_jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
-
         return {
             'operation': 'resize',
             'source': self.source_path.text(),
@@ -2384,15 +2234,12 @@ class ResizeDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if not params['resize_dimensions']:
             missing_fields.append("Resize Dimensions")
-
-        # 추가: 경로 유효성 검증
         path_fields = ['source', 'target']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -2405,23 +2252,20 @@ class ResizeDialog(BaseTaskDialog):
             return False
         return True
 
-
 class FlipDialog(BaseTaskDialog):
     def __init__(self):
         super().__init__("FLIP 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        # Flip 관련 설정을 여기에 추가
         self.specific_layout.addRow(QLabel("<b>Flip Direction:</b>"))
         self.flip_direction_input = QLineEdit()
         self.flip_direction_input.setPlaceholderText("Enter flip direction (e.g., horizontal, vertical)")
         self.specific_layout.addRow("", self.flip_direction_input)
 
-        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
         self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
-        self.format_fov_jpg = QCheckBox("fov_jpg")  # 'fov_jpg' 추가
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
@@ -2431,20 +2275,20 @@ class FlipDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
 
     def get_parameters(self):
         formats = []
         if self.format_bmp.isChecked():
             formats.append(".bmp")
         if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")  # 'org_jpg'로 변경
+            formats.append("org_jpg")
         if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+            formats.append("fov_jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
-
         return {
             'operation': 'flip',
             'source': self.source_path.text(),
@@ -2463,15 +2307,12 @@ class FlipDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if not params['flip_direction']:
             missing_fields.append("Flip Direction")
-
-        # 추가: 경로 유효성 검증
         path_fields = ['source', 'target']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -2484,23 +2325,20 @@ class FlipDialog(BaseTaskDialog):
             return False
         return True
 
-
 class RotateDialog(BaseTaskDialog):
     def __init__(self):
         super().__init__("Rotate 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        # Rotate 관련 설정을 여기에 추가
         self.specific_layout.addRow(QLabel("<b>Rotate Angle:</b>"))
         self.rotate_angle_input = QLineEdit()
         self.rotate_angle_input.setPlaceholderText("Enter rotate angle (e.g., 90, 180)")
         self.specific_layout.addRow("", self.rotate_angle_input)
 
-        # Image Formats 추가 (BaseTaskDialog에서 제거됨)
         self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")  # 'jpg'를 'org_jpg'로 변경
-        self.format_fov_jpg = QCheckBox("fov_jpg")  # 'fov_jpg' 추가
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
@@ -2510,20 +2348,20 @@ class RotateDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_mim)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
 
     def get_parameters(self):
         formats = []
         if self.format_bmp.isChecked():
             formats.append(".bmp")
         if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")  # 'org_jpg'로 변경
+            formats.append("org_jpg")
         if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")  # 'fov_jpg'로 변경
+            formats.append("fov_jpg")
         if self.format_mim.isChecked():
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
-
         return {
             'operation': 'rotate',
             'source': self.source_path.text(),
@@ -2542,15 +2380,12 @@ class RotateDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if not params['rotate_angle']:
             missing_fields.append("Rotate Angle")
-
-        # 추가: 경로 유효성 검증
         path_fields = ['source', 'target']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -2563,20 +2398,17 @@ class RotateDialog(BaseTaskDialog):
             return False
         return True
 
-
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("AiV Processing Tool 🗂️📂📁")
         
         if getattr(sys, 'frozen', False):
-            # 실행 파일로 패키징된 경우 (PyInstaller)
             application_path = sys._MEIPASS
         else:
-            # 개발 중인 경우
             application_path = os.path.dirname(os.path.abspath(__file__))
 
-        icon_path = os.path.join(application_path, 'AiV_LOGO.ico')  # 'AiV.ico'로 변경
+        icon_path = os.path.join(application_path, 'AiV_LOGO.ico')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         else:
@@ -2584,16 +2416,14 @@ class MainWindow(QWidget):
 
         self.setFixedSize(1000, 200)
         self.initUI()
-        self.dialogs = {}  # 열린 Dialog를 저장할 딕셔너리 생성
+        self.dialogs = {}
 
     def initUI(self):
         main_layout = QVBoxLayout()
         self.setStyleSheet("background-color: #2E2E2E;")
-        # Buttons for each functionality in 2 rows of 5
         button_layout = QGridLayout()
-        button_layout.setSpacing(20)  # 버튼 간 간격 설정
+        button_layout.setSpacing(20)
 
-        # Button 스타일 설정 함수
         def button_style():
             return """
                 QPushButton {
@@ -2609,7 +2439,6 @@ class MainWindow(QWidget):
                 }
             """
 
-        # First Row Buttons
         self.ng_sorting_button = QPushButton("NG Folder Sorting")
         self.ng_sorting_button.clicked.connect(self.open_ng_sorting)
         self.ng_sorting_button.setFixedSize(150, 60)
@@ -2640,7 +2469,6 @@ class MainWindow(QWidget):
         self.ng_count_button.setStyleSheet(button_style())
         button_layout.addWidget(self.ng_count_button, 0, 4)
 
-        # Second Row Buttons
         self.simulation_button = QPushButton("Simulation Foldering")
         self.simulation_button.clicked.connect(self.open_simulation_foldering)
         self.simulation_button.setFixedSize(150, 60)
@@ -2672,7 +2500,6 @@ class MainWindow(QWidget):
         button_layout.addWidget(self.rotate_button, 1, 4)
 
         main_layout.addLayout(button_layout)
-
         self.setLayout(main_layout)
 
     def open_ng_sorting(self):
@@ -2735,7 +2562,6 @@ class MainWindow(QWidget):
             self.dialogs['rotate'].finished.connect(lambda: self.dialogs.pop('rotate', None))
         self.dialogs['rotate'].show()
 
-
 def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
@@ -2754,9 +2580,9 @@ def main():
 
 if __name__ == '__main__':
     main()
- 
-## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py 
-## 아래가 별도 폴더 가지고 생성하는 것
-## pyinstaller --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py
-## pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." --upx-dir "E:\Dev\DL_Tool\upx-4.2.4-win64" APT.py
-## AiV_ProTool\Scripts\activate
+
+# pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py 
+# 아래가 별도 폴더 가지고 생성하는 것
+# pyinstaller --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." APT.py
+# pyinstaller --onefile --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." --upx-dir "E:\Dev\DL_Tool\upx-4.2.4-win64" APT.py
+# AiV_ProTool\Scripts\activate
