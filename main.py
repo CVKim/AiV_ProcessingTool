@@ -1,0 +1,28 @@
+# main.py
+import sys
+import os
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt
+from ui_dialogs import MainWindow
+
+def main():
+    app = QApplication(sys.argv)
+    app.setStyle("Fusion")
+    
+    palette = app.palette()
+    palette.setColor(palette.Window, Qt.white)
+    palette.setColor(palette.Button, Qt.darkGray)
+    palette.setColor(palette.ButtonText, Qt.white)
+    palette.setColor(palette.Base, Qt.white)
+    palette.setColor(palette.Text, Qt.black)
+    app.setPalette(palette)
+
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
+
+# pyinstaller --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." main.py
+# pyinstaller --name APT --windowed --icon=AiV_LOGO.ico --add-data "AiV_LOGO.ico;." main.py
