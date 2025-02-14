@@ -1373,11 +1373,53 @@ class CropDialog(BaseTaskDialog):
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        self.specific_layout.addRow(QLabel("<b>Crop Area:</b>"))
-        self.crop_area_input = QLineEdit()
-        self.crop_area_input.setPlaceholderText("Enter crop area parameters (left, upper, right, lower)")
-        self.specific_layout.addRow("", self.crop_area_input)
+        # Source Path
+        self.source_button = QPushButton("Select Source Path")
+        self.source_button.clicked.connect(self.select_source)
+        self.source_path = QLineEdit()
+        self.source_path.setReadOnly(False)
+        self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
+        self.specific_layout.addRow("", self.source_path)
 
+        # Target Path
+        self.target_button = QPushButton("Select Target Path")
+        self.target_button.clicked.connect(self.select_target)
+        self.target_path = QLineEdit()
+        self.target_path.setReadOnly(False)
+        self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
+        self.specific_layout.addRow("", self.target_path)
+
+        # FOV Number(s)
+        self.fov_input = QLineEdit()
+        self.fov_input.setPlaceholderText("FOV Number(s), e.g., 1,2,3 or 1,2,3/5")
+        self.specific_layout.addRow(QLabel("<b>FOV Number(s):</b>"), self.fov_input)
+
+        # Crop Area (4 정수)
+        crop_layout = QHBoxLayout()
+
+        self.left_top_x_input = QLineEdit()
+        self.left_top_x_input.setPlaceholderText("LEFT_TOP_X")
+        crop_layout.addWidget(QLabel("LeftX:"))
+        crop_layout.addWidget(self.left_top_x_input)
+
+        self.left_top_y_input = QLineEdit()
+        self.left_top_y_input.setPlaceholderText("LEFT_TOP_Y")
+        crop_layout.addWidget(QLabel("TopY:"))
+        crop_layout.addWidget(self.left_top_y_input)
+
+        self.right_bottom_x_input = QLineEdit()
+        self.right_bottom_x_input.setPlaceholderText("RIGHT_BOTTOM_X")
+        crop_layout.addWidget(QLabel("RightX:"))
+        crop_layout.addWidget(self.right_bottom_x_input)
+
+        self.right_bottom_y_input = QLineEdit()
+        self.right_bottom_y_input.setPlaceholderText("RIGHT_BOTTOM_Y")
+        crop_layout.addWidget(QLabel("BotY:"))
+        crop_layout.addWidget(self.right_bottom_y_input)
+
+        self.specific_layout.addRow(QLabel("<b>Crop Area (Pixels):</b>"), crop_layout)
+
+        # Image Formats
         self.format_bmp = QCheckBox("BMP")
         self.format_org_jpg = QCheckBox("org_jpg")
         self.format_fov_jpg = QCheckBox("fov_jpg")
@@ -1392,6 +1434,18 @@ class CropDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
         self.format_bmp.setChecked(True)
 
+    def select_source(self):
+        path = QFileDialog.getExistingDirectory(self, "Select Source Folder", "",
+                                                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if path:
+            self.source_path.setText(path)
+
+    def select_target(self):
+        path = QFileDialog.getExistingDirectory(self, "Select Target Folder", "",
+                                                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if path:
+            self.target_path.setText(path)
+
     def get_parameters(self):
         formats = []
         if self.format_bmp.isChecked():
@@ -1404,12 +1458,19 @@ class CropDialog(BaseTaskDialog):
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
+
         return {
             'operation': 'crop',
             'source': self.source_path.text(),
             'target': self.target_path.text(),
             'formats': formats,
-            'crop_area': self.crop_area_input.text()
+            # 추가된 fov_number
+            'fov_number': self.fov_input.text().strip(),
+            # crop 4개 좌표
+            'left_top_x': self.left_top_x_input.text().strip(),
+            'left_top_y': self.left_top_y_input.text().strip(),
+            'right_bottom_x': self.right_bottom_x_input.text().strip(),
+            'right_bottom_y': self.right_bottom_y_input.text().strip()
         }
 
     def validate_parameters(self, params):
@@ -1420,8 +1481,23 @@ class CropDialog(BaseTaskDialog):
             missing_fields.append("Target Path")
         if not params['formats']:
             missing_fields.append("Image Formats")
-        if not params['crop_area']:
-            missing_fields.append("Crop Area Parameters")
+
+        # crop area 4개 좌표 모두 필수 정수
+        crop_fields = [
+            ('left_top_x', "Left Top X"),
+            ('left_top_y', "Left Top Y"),
+            ('right_bottom_x', "Right Bottom X"),
+            ('right_bottom_y', "Right Bottom Y")
+        ]
+        for key, desc in crop_fields:
+            val = params.get(key, '')
+            if not val:
+                missing_fields.append(desc)
+            else:
+                try:
+                    int(val)
+                except:
+                    missing_fields.append(f"{desc} (정수 필요)")
 
         path_fields = ['source', 'target']
         invalid_paths = []

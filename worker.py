@@ -666,12 +666,34 @@ class WorkerThread(QThread):
     # -------------------------------
     # Crop 작업
     def crop_images(self, task):
+        """
+        - 재귀적으로 source 하위 모든 폴더를 탐색
+        - ignore_list = {'ok','ng','ng_info','crop','thumbnail'} 폴더 무시
+        - fov_number가 있으면 해당 번호의 파일만 필터
+        - formats에 맞는 파일만 crop
+        - crop 좌표: LEFT_TOP_X, LEFT_TOP_Y, RIGHT_BOTTOM_X, RIGHT_BOTTOM_Y
+        """
         self.log.emit("------ Crop 작업 시작 ------")
         try:
             source = task['source']
             target = task['target']
             formats = task['formats']
-            crop_area = task['crop_area']
+            fov_number_input = task.get('fov_number', '').strip()
+
+            try:
+                left_top_x = int(task['left_top_x'])
+                left_top_y = int(task['left_top_y'])
+                right_bottom_x = int(task['right_bottom_x'])
+                right_bottom_y = int(task['right_bottom_y'])
+            except Exception as e:
+                self.log.emit(f"Crop 좌표 정수 변환 중 오류: {str(e)}")
+                self.finished.emit("Crop 중지됨.")
+                return
+
+            # fov_number 파싱
+            fov_numbers = None
+            if fov_number_input:
+                fov_numbers = self.parse_fov_numbers(fov_number_input)
 
             if not os.path.exists(source):
                 self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
@@ -680,42 +702,37 @@ class WorkerThread(QThread):
             if not os.path.exists(target):
                 os.makedirs(target)
 
-            try:
-                crop_coords = tuple(map(int, crop_area.split(',')))
-                if len(crop_coords) != 4:
-                    raise ValueError("Crop area must have four integers separated by commas.")
-            except Exception as e:
-                self.log.emit(f"Crop Area 형식 오류: {str(e)}")
-                self.finished.emit("Crop 중지됨.")
-                return
+            # 재귀적으로 대상 파일 수집
+            all_files = self.collect_crop_candidates(
+                root_folder=source,
+                formats=formats,
+                fov_numbers=fov_numbers
+            )
 
-            try:
-                with os.scandir(source) as it:
-                    image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
-            except Exception as e:
-                self.log.emit(f"이미지 목록 가져오기 중 오류: {source} | 에러: {e}")
-                self.finished.emit("Crop 중지됨.")
-                return
-
-            total_images = len(image_files)
+            total_images = len(all_files)
             if total_images == 0:
-                self.log.emit("선택한 이미지 포맷에 해당하는 이미지가 없습니다.")
+                self.log.emit("선택된 조건(포맷/FOV)에 해당하는 이미지가 없습니다.")
                 self.finished.emit("Crop 완료.")
                 return
-            total_processed_images = 0
+            self.log.emit(f"총 Crop 대상 이미지 수: {total_images}")
 
-            self.log.emit(f"Cropping Area: {crop_coords}")
+            total_processed_images = 0
+            crop_coords = (left_top_x, left_top_y, right_bottom_x, right_bottom_y)
+            self.log.emit(f"Crop Area = {crop_coords}")
 
             with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
                 futures = []
-                for file_name in image_files:
+                for (file_path, inner_id) in all_files:
                     if self._is_stopped:
                         self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {total_processed_images}")
                         self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {total_processed_images}")
                         return
-                    src_file = os.path.join(source, file_name)
-                    dst_file = os.path.join(target, file_name)
-                    futures.append(executor.submit(self.crop_image, src_file, dst_file, crop_coords))
+
+                    orig_filename = os.path.basename(file_path)
+                    # inner ID를 앞에 붙여서 파일명 구성
+                    new_filename = f"{inner_id}_{orig_filename}"
+                    dst_file = os.path.join(target, new_filename)
+                    futures.append(executor.submit(self.crop_image, file_path, dst_file, crop_coords))
 
                 for future in as_completed(futures):
                     if self._is_stopped:
@@ -728,12 +745,88 @@ class WorkerThread(QThread):
                         self.log.emit(result)
                         progress_percent = int((total_processed_images / total_images) * 100)
                         self.progress.emit(min(progress_percent, 100))
+
             self.finished.emit(f"Crop 완료. 총 처리한 이미지: {total_processed_images}")
             self.log.emit("------ Crop 작업 완료 ------")
         except Exception as e:
             logging.error("Crop 중 오류 발생", exc_info=True)
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("Crop 중 오류 발생.")
+
+    def parse_fov_numbers(self, fov_str):
+        """
+        예: "1,2,3/5" -> ['1','2','3','4','5']
+        """
+        results = []
+        parts = [p.strip() for p in fov_str.split(',') if p.strip()]
+        for part in parts:
+            if '/' in part:
+                try:
+                    start, end = part.split('/')
+                    start_i = int(start.strip())
+                    end_i = int(end.strip())
+                    if start_i <= end_i:
+                        for n in range(start_i, end_i+1):
+                            results.append(str(n))
+                except:
+                    pass
+            else:
+                if part.isdigit():
+                    results.append(part)
+        return set(results) if results else None
+
+    def collect_crop_candidates(self, root_folder, formats, fov_numbers=None):
+        """
+        재귀적으로 root_folder 하위 폴더를 뒤져서,
+        ignore_list에 해당하는 폴더 무시,
+        fov_numbers 지정 시 해당 fov번호만,
+        formats에 해당하는 파일만 수집.
+        결과: [(file_path, inner_id), ...]
+        """
+        ignore_list = {'ok','ng','ng_info','crop','thumbnail'}
+        collected_files = []
+        for dirpath, dirnames, filenames in os.walk(root_folder):
+            dirnames[:] = [d for d in dirnames if d.lower() not in ignore_list]
+            folder_name = os.path.basename(dirpath)
+            if folder_name.lower() in ignore_list:
+                continue
+
+            # root_folder로부터 상대 경로
+            rel_path = os.path.relpath(dirpath, root_folder)
+            parts = rel_path.split(os.sep)
+
+            if len(parts) > 0:
+                candidate_inner_id = parts[0]
+            else:
+                # root_folder 자신일 경우
+                candidate_inner_id = folder_name
+
+            for filename in filenames:
+                if self.is_valid_file(filename, formats):
+                    if fov_numbers:
+                        # fov 체크
+                        parts_filename = filename.split('_', 1)
+                        if len(parts_filename) < 2:
+                            continue
+                        fov_part = parts_filename[0]
+                        if 'fov' in fov_part.lower():
+                            fov_part = fov_part.lower().replace('fov','')
+                        extracted_fov = ''.join(filter(str.isdigit, fov_part))
+                        if extracted_fov not in fov_numbers:
+                            continue
+                    full_path = os.path.join(dirpath, filename)
+                    collected_files.append((full_path, candidate_inner_id))
+        return collected_files
+
+    # def crop_image(self, src, dst, crop_coords):
+    #     try:
+    #         with Image.open(src) as img:
+    #             cropped_img = img.crop(crop_coords)
+    #             cropped_img.save(dst)
+    #         return f"Cropped {src} to {dst}"
+    #     except Exception as e:
+    #         logging.error("이미지 크롭 중 오류", exc_info=True)
+    #         return f"오류 발생: {str(e)}"
 
     # ---------------------------------------------------------
     # 7) NG Count
