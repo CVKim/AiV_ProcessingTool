@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['APT.py'],
+    ['main.py'],
     pathex=[],
     binaries=[],
     datas=[('AiV_LOGO.ico', '.')],

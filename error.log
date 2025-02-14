@@ -243,3 +243,36 @@ Traceback (most recent call last):
     self.date_based_copy(self.task)
     ^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'WorkerThread' object has no attribute 'date_based_copy'
+2025-02-11 17:24:16,539:ERROR:NG Folder Sorting 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 100, in ng_folder_sorting
+    inner_ids_sources1 = self.collect_inner_ids_from_source2(sources1)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Dev\DL_Tool\worker.py", line 1109, in collect_inner_ids_from_source2
+    if not os.path.exists(source2):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: _path_exists: path should be string, bytes, os.PathLike or integer, not list
+2025-02-11 17:31:38,852:ERROR:NG Folder Sorting 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 102, in ng_folder_sorting
+    matched_inner_ids = inner_ids_sources1.intersection(inner_ids_source2)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'intersection'
+2025-02-11 17:36:14,395:ERROR:NG Folder Sorting 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 102, in ng_folder_sorting
+    matched_inner_ids = inner_ids_sources1.intersection(inner_ids_source2)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'intersection'
+2025-02-11 17:37:40,827:ERROR:NG Folder Sorting 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 102, in ng_folder_sorting
+    matched_inner_ids = inner_ids_sources1.intersection(inner_ids_source2)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'intersection'
+2025-02-11 17:46:47,421:ERROR:NG Folder Sorting 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 111, in ng_folder_sorting
+    self.create_target_folders(target, matched_inner_ids)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'WorkerThread' object has no attribute 'create_target_folders'

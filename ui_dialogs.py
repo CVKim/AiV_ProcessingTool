@@ -16,9 +16,8 @@ from worker import WorkerThread
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s:%(levelname)s:%(message)s')
 
-
-# ––––––––––––––––––––
-# BaseTaskDialog 클래스 (공통 대화상자)
+# ---------------------------------------------------------
+# 공통 베이스 Dialog
 class BaseTaskDialog(QDialog):
     def __init__(self, title):
         super().__init__()
@@ -165,16 +164,8 @@ class BaseTaskDialog(QDialog):
     def update_ng_count_table(self, data):
         pass
 
-
-# ––––––––––––––––––––
-# 각 작업별 대화상자들
-# (아래는 예시로 BasicSortingDialog, NGSortingDialog, DateBasedCopyDialog, ImageFormatCopyDialog,
-# SimulationFolderingDialog, NGCountDialog, CropDialog, ResizeDialog, FlipDialog, RotateDialog 및 MainWindow를 포함합니다.
-# 기존 제공된 코드를 참고하여 그대로 붙여넣으시면 됩니다.)
-
-# ui_dialogs.py 내에 DateBasedCopyDialog 클래스 추가 예시
-
-
+# ---------------------------------------------------------
+# 기존 Dialog들
 class BasicSortingDialog(BaseTaskDialog):
     def __init__(self):
         super().__init__("Basic Sorting 설정")
@@ -296,12 +287,14 @@ class BasicSortingDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if not params['inner_id_list'] and params['use_inner_id'] and not params['inner_id']:
             missing_fields.append("Inner ID")
+
         path_fields = ['source', 'target', 'inner_id_list']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -484,6 +477,7 @@ class NGSortingDialog(BaseTaskDialog):
             missing_fields.append("Target Path를 선택해야 합니다.")
         if not params['formats'] and params['operation'] != 'ng_count':
             missing_fields.append("Image Formats")
+
         if missing_fields:
             QMessageBox.warning(self, "입력 오류", f"다음 필드를 입력해야 합니다:\n" + "\n".join(missing_fields))
             return False
@@ -614,6 +608,7 @@ class DateBasedCopyDialog(BaseTaskDialog):
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
+
         if self.mode_folder_checkbox.isChecked():
             mode = 'folder'
         elif self.mode_image_checkbox.isChecked():
@@ -639,6 +634,7 @@ class DateBasedCopyDialog(BaseTaskDialog):
                     else:
                         if part.isdigit():
                             fov_numbers.append(part)
+
         dt = self.datetime_edit.dateTime()
         year = dt.date().year()
         month = dt.date().month()
@@ -646,6 +642,7 @@ class DateBasedCopyDialog(BaseTaskDialog):
         hour = dt.time().hour()
         minute = dt.time().minute()
         second = dt.time().second()
+
         return {
             'operation': 'date_copy',
             'mode': mode,
@@ -677,12 +674,14 @@ class DateBasedCopyDialog(BaseTaskDialog):
             missing_fields.append("Image Formats")
         if params.get('strong_random', False) and params.get('conditional_random', False):
             missing_fields.append("Strong Random과 Conditional Random은 동시에 선택할 수 없습니다.")
+
         path_fields = ['source', 'target']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -768,12 +767,14 @@ class ImageFormatCopyDialog(BaseTaskDialog):
             missing_fields.append("Target Path")
         if not params['formats'] and params['operation'] != 'ng_count':
             missing_fields.append("Image Formats")
-        path_fields = ['source', 'target']
+
         invalid_paths = []
-        for field in path_fields:
-            path = params.get(field, '')
-            if path and not os.path.isdir(path):
-                invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+        # sources, targets는 리스트로 들어가므로
+        if params['sources'][0] and not os.path.isdir(params['sources'][0]):
+            invalid_paths.append("Source Path이(가) 유효하지 않습니다.")
+        if params['targets'][0] and not os.path.isdir(params['targets'][0]):
+            invalid_paths.append("Target Path이(가) 유효하지 않습니다.")
+
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -859,12 +860,14 @@ class SimulationFolderingDialog(BaseTaskDialog):
             missing_fields.append("Target Path")
         if not params['formats'] and params['operation'] != 'ng_count':
             missing_fields.append("Image Formats")
+
         path_fields = ['source', 'target']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -978,6 +981,7 @@ class NGCountDialog(QDialog):
             self.stop_button.setEnabled(False)
 
     def append_log(self, message):
+        # NGCountDialog에서는 별도 log_area가 없으므로 pass
         pass
 
     def update_progress(self, value):
@@ -1018,67 +1022,85 @@ class NGCountDialog(QDialog):
         clipboard.setText('\n'.join(data))
         QMessageBox.information(self, "복사 완료", "Copy to the clipboard")
 
-class CropDialog(BaseTaskDialog):
+# ---------------------------------------------------------
+# 여기서부터 새로 추가할 Dialog들 (MIMtoBMP, AttachFOV, Temp)
+
+class AttachFOVDialog(BaseTaskDialog):
     def __init__(self):
-        super().__init__("Crop 설정")
+        super().__init__("Attach FOV 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        self.specific_layout.addRow(QLabel("<b>Crop Area:</b>"))
-        self.crop_area_input = QLineEdit()
-        self.crop_area_input.setPlaceholderText("Enter crop area parameters (left, upper, right, lower)")
-        self.specific_layout.addRow("", self.crop_area_input)
+        # Search #1
+        self.search1_button = QPushButton("Select Search Folder #1")
+        self.search1_button.clicked.connect(self.select_search1)
+        self.search1_path = QLineEdit()
+        self.search1_path.setReadOnly(False)
+        self.specific_layout.addRow(QLabel("<b>Search Folder Path #1:</b>"), self.search1_button)
+        self.specific_layout.addRow("", self.search1_path)
 
-        self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")
-        self.format_fov_jpg = QCheckBox("fov_jpg")
-        self.format_mim = QCheckBox("MIM")
-        self.format_png = QCheckBox("PNG")
-        formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
-        formats_layout.addWidget(self.format_mim)
-        formats_layout.addWidget(self.format_png)
-        self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
+        # Search #2
+        self.search2_button = QPushButton("Select Search Folder #2")
+        self.search2_button.clicked.connect(self.select_search2)
+        self.search2_path = QLineEdit()
+        self.search2_path.setReadOnly(False)
+        self.specific_layout.addRow(QLabel("<b>Search Folder Path #2:</b>"), self.search2_button)
+        self.specific_layout.addRow("", self.search2_path)
+
+        # Target
+        self.target_button = QPushButton("Select Target Path")
+        self.target_button.clicked.connect(self.select_target)
+        self.target_path = QLineEdit()
+        self.target_path.setReadOnly(False)
+        self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
+        self.specific_layout.addRow("", self.target_path)
+
+        # fov_number
+        self.fov_input = QLineEdit()
+        self.fov_input.setPlaceholderText("fov number(s) e.g., 1,2,3 or 1,2,3/5")
+        self.specific_layout.addRow(QLabel("<b>FOV Number(s):</b>"), self.fov_input)
+
+    def select_search1(self):
+        path = QFileDialog.getExistingDirectory(self, "Select Search Folder #1", "",
+                                                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if path:
+            self.search1_path.setText(path)
+
+    def select_search2(self):
+        path = QFileDialog.getExistingDirectory(self, "Select Search Folder #2", "",
+                                                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if path:
+            self.search2_path.setText(path)
+
+    def select_target(self):
+        target = QFileDialog.getExistingDirectory(self, "Select Target Folder", "",
+                                                  QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if target:
+            self.target_path.setText(target)
 
     def get_parameters(self):
-        formats = []
-        if self.format_bmp.isChecked():
-            formats.append(".bmp")
-        if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")
-        if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")
-        if self.format_mim.isChecked():
-            formats.append(".mim")
-        if self.format_png.isChecked():
-            formats.append(".png")
         return {
-            'operation': 'crop',
-            'source': self.source_path.text(),
+            'operation': 'attach_fov',
+            'search1': self.search1_path.text(),
+            'search2': self.search2_path.text(),
             'target': self.target_path.text(),
-            'formats': formats,
-            'crop_area': self.crop_area_input.text()
+            'fov_number': self.fov_input.text()
         }
 
     def validate_parameters(self, params):
         missing_fields = []
-        if not params['source']:
-            missing_fields.append("Source Path")
+        if not params['search1']:
+            missing_fields.append("Search Folder Path #1")
+        if not params['search2']:
+            missing_fields.append("Search Folder Path #2")
         if not params['target']:
             missing_fields.append("Target Path")
-        if not params['formats']:
-            missing_fields.append("Image Formats")
-        if not params['crop_area']:
-            missing_fields.append("Crop Area Parameters")
-        path_fields = ['source', 'target']
+
         invalid_paths = []
-        for field in path_fields:
-            path = params.get(field, '')
-            if path and not os.path.isdir(path):
-                invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+        for key in ['search1', 'search2', 'target']:
+            if params[key] and not os.path.isdir(params[key]):
+                invalid_paths.append(f"{key} 경로가 유효하지 않습니다.")
+
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -1091,49 +1113,44 @@ class CropDialog(BaseTaskDialog):
             return False
         return True
 
-class ResizeDialog(BaseTaskDialog):
+class MIMtoBMPDialog(BaseTaskDialog):
     def __init__(self):
-        super().__init__("Resize 설정")
+        super().__init__("MIM to BMP 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        self.specific_layout.addRow(QLabel("<b>Resize Dimensions:</b>"))
-        self.resize_dim_input = QLineEdit()
-        self.resize_dim_input.setPlaceholderText("Enter dimensions (e.g., 800x600)")
-        self.specific_layout.addRow("", self.resize_dim_input)
+        # (기능 상세 요구사항이 미정이므로 간단히 Source/Target만)
+        self.source_button = QPushButton("Select Source Path (MIM files)")
+        self.source_button.clicked.connect(self.select_source)
+        self.source_path = QLineEdit()
+        self.source_path.setReadOnly(False)
+        self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
+        self.specific_layout.addRow("", self.source_path)
 
-        self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")
-        self.format_fov_jpg = QCheckBox("fov_jpg")
-        self.format_mim = QCheckBox("MIM")
-        self.format_png = QCheckBox("PNG")
-        formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
-        formats_layout.addWidget(self.format_mim)
-        formats_layout.addWidget(self.format_png)
-        self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
+        self.target_button = QPushButton("Select Target Path (BMP out)")
+        self.target_button.clicked.connect(self.select_target)
+        self.target_path = QLineEdit()
+        self.target_path.setReadOnly(False)
+        self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
+        self.specific_layout.addRow("", self.target_path)
+
+    def select_source(self):
+        source = QFileDialog.getExistingDirectory(self, "Select Source Folder (MIM files)", "",
+                                                 QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if source:
+            self.source_path.setText(source)
+
+    def select_target(self):
+        target = QFileDialog.getExistingDirectory(self, "Select Target Folder (BMP out)", "",
+                                                 QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if target:
+            self.target_path.setText(target)
 
     def get_parameters(self):
-        formats = []
-        if self.format_bmp.isChecked():
-            formats.append(".bmp")
-        if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")
-        if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")
-        if self.format_mim.isChecked():
-            formats.append(".mim")
-        if self.format_png.isChecked():
-            formats.append(".png")
         return {
-            'operation': 'resize',
+            'operation': 'mim_to_bmp',
             'source': self.source_path.text(),
-            'target': self.target_path.text(),
-            'formats': formats,
-            'resize_dimensions': self.resize_dim_input.text()
+            'target': self.target_path.text()
         }
 
     def validate_parameters(self, params):
@@ -1142,16 +1159,11 @@ class ResizeDialog(BaseTaskDialog):
             missing_fields.append("Source Path")
         if not params['target']:
             missing_fields.append("Target Path")
-        if not params['formats']:
-            missing_fields.append("Image Formats")
-        if not params['resize_dimensions']:
-            missing_fields.append("Resize Dimensions")
-        path_fields = ['source', 'target']
         invalid_paths = []
-        for field in path_fields:
-            path = params.get(field, '')
-            if path and not os.path.isdir(path):
+        for field in ['source', 'target']:
+            if params[field] and not os.path.isdir(params[field]):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -1164,156 +1176,28 @@ class ResizeDialog(BaseTaskDialog):
             return False
         return True
 
-class FlipDialog(BaseTaskDialog):
+class TempDialog(BaseTaskDialog):
+    """
+    임시(미정) 기능으로, 아무런 동작을 하지 않는 Dialog
+    """
     def __init__(self):
-        super().__init__("FLIP 설정")
+        super().__init__("TEMP 설정")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        self.specific_layout.addRow(QLabel("<b>Flip Direction:</b>"))
-        self.flip_direction_input = QLineEdit()
-        self.flip_direction_input.setPlaceholderText("Enter flip direction (e.g., horizontal, vertical)")
-        self.specific_layout.addRow("", self.flip_direction_input)
-
-        self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")
-        self.format_fov_jpg = QCheckBox("fov_jpg")
-        self.format_mim = QCheckBox("MIM")
-        self.format_png = QCheckBox("PNG")
-        formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
-        formats_layout.addWidget(self.format_mim)
-        formats_layout.addWidget(self.format_png)
-        self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
+        self.specific_layout.addRow(QLabel("TEMP 기능은 현재 별도의 파라미터가 없습니다."))
 
     def get_parameters(self):
-        formats = []
-        if self.format_bmp.isChecked():
-            formats.append(".bmp")
-        if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")
-        if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")
-        if self.format_mim.isChecked():
-            formats.append(".mim")
-        if self.format_png.isChecked():
-            formats.append(".png")
         return {
-            'operation': 'flip',
-            'source': self.source_path.text(),
-            'target': self.target_path.text(),
-            'formats': formats,
-            'flip_direction': self.flip_direction_input.text()
+            'operation': 'temp'
         }
 
     def validate_parameters(self, params):
-        missing_fields = []
-        if not params['source']:
-            missing_fields.append("Source Path")
-        if not params['target']:
-            missing_fields.append("Target Path")
-        if not params['formats']:
-            missing_fields.append("Image Formats")
-        if not params['flip_direction']:
-            missing_fields.append("Flip Direction")
-        path_fields = ['source', 'target']
-        invalid_paths = []
-        for field in path_fields:
-            path = params.get(field, '')
-            if path and not os.path.isdir(path):
-                invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-        if missing_fields or invalid_paths:
-            warning_messages = []
-            if missing_fields:
-                warning_messages.append("다음 필드를 입력해야 합니다:")
-                warning_messages.extend(missing_fields)
-            if invalid_paths:
-                warning_messages.append("다음 경로가 유효하지 않습니다:")
-                warning_messages.extend(invalid_paths)
-            QMessageBox.warning(self, "입력 오류", "\n".join(warning_messages))
-            return False
+        # 항상 True
         return True
 
-class RotateDialog(BaseTaskDialog):
-    def __init__(self):
-        super().__init__("Rotate 설정")
-        self.init_specific_ui()
-
-    def init_specific_ui(self):
-        self.specific_layout.addRow(QLabel("<b>Rotate Angle:</b>"))
-        self.rotate_angle_input = QLineEdit()
-        self.rotate_angle_input.setPlaceholderText("Enter rotate angle (e.g., 90, 180)")
-        self.specific_layout.addRow("", self.rotate_angle_input)
-
-        self.format_bmp = QCheckBox("BMP")
-        self.format_org_jpg = QCheckBox("org_jpg")
-        self.format_fov_jpg = QCheckBox("fov_jpg")
-        self.format_mim = QCheckBox("MIM")
-        self.format_png = QCheckBox("PNG")
-        formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
-        formats_layout.addWidget(self.format_mim)
-        formats_layout.addWidget(self.format_png)
-        self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
-
-    def get_parameters(self):
-        formats = []
-        if self.format_bmp.isChecked():
-            formats.append(".bmp")
-        if self.format_org_jpg.isChecked():
-            formats.append("org_jpg")
-        if self.format_fov_jpg.isChecked():
-            formats.append("fov_jpg")
-        if self.format_mim.isChecked():
-            formats.append(".mim")
-        if self.format_png.isChecked():
-            formats.append(".png")
-        return {
-            'operation': 'rotate',
-            'source': self.source_path.text(),
-            'target': self.target_path.text(),
-            'formats': formats,
-            'rotate_angle': self.rotate_angle_input.text()
-        }
-
-    def validate_parameters(self, params):
-        missing_fields = []
-        if not params['source']:
-            missing_fields.append("Source Path")
-        if not params['target']:
-            missing_fields.append("Target Path")
-        if not params['formats']:
-            missing_fields.append("Image Formats")
-        if not params['rotate_angle']:
-            missing_fields.append("Rotate Angle")
-        path_fields = ['source', 'target']
-        invalid_paths = []
-        for field in path_fields:
-            path = params.get(field, '')
-            if path and not os.path.isdir(path):
-                invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-        if missing_fields or invalid_paths:
-            warning_messages = []
-            if missing_fields:
-                warning_messages.append("다음 필드를 입력해야 합니다:")
-                warning_messages.extend(missing_fields)
-            if invalid_paths:
-                warning_messages.append("다음 경로가 유효하지 않습니다:")
-                warning_messages.extend(invalid_paths)
-            QMessageBox.warning(self, "입력 오류", "\n".join(warning_messages))
-            return False
-        return True
-# –––––––––––––––
-# (NGSortingDialog, DateBasedCopyDialog, ImageFormatCopyDialog, SimulationFolderingDialog,
-# NGCountDialog, CropDialog, ResizeDialog, FlipDialog, RotateDialog 등은 기존 코드를 그대로 복사하여 추가하십시오.)
-# 여기서는 각 클래스의 전체 코드를 제공할 수 있지만, 분량이 길어지는 관계로 아래에 대표적으로 하나의 예시 클래스와 MainWindow를 보여드립니다.
-
+# ---------------------------------------------------------
+# MainWindow
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -1327,6 +1211,7 @@ class MainWindow(QWidget):
         icon_path = os.path.join(application_path, 'AiV_LOGO.ico')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
+
         self.setFixedSize(1000, 200)
         self.initUI()
         self.dialogs = {}
@@ -1394,66 +1279,61 @@ class MainWindow(QWidget):
         self.crop_button.setStyleSheet(button_style())
         button_layout.addWidget(self.crop_button, 1, 1)
 
-        self.resize_button = QPushButton("Resize")
-        self.resize_button.clicked.connect(self.open_resize)
-        self.resize_button.setFixedSize(150, 60)
-        self.resize_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.resize_button, 1, 2)
+        # --------------- 새로 추가: MIM to BMP, Attach FOV, TEMP ----------------
+        self.mim_to_bmp_button = QPushButton("MIM to BMP")
+        self.mim_to_bmp_button.clicked.connect(self.open_mim_to_bmp)
+        self.mim_to_bmp_button.setFixedSize(150, 60)
+        self.mim_to_bmp_button.setStyleSheet(button_style())
+        button_layout.addWidget(self.mim_to_bmp_button, 1, 2)
 
-        self.flip_button = QPushButton("FLIP")
-        self.flip_button.clicked.connect(self.open_flip)
-        self.flip_button.setFixedSize(150, 60)
-        self.flip_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.flip_button, 1, 3)
+        self.attach_fov_button = QPushButton("Attach FOV")
+        self.attach_fov_button.clicked.connect(self.open_attach_fov)
+        self.attach_fov_button.setFixedSize(150, 60)
+        self.attach_fov_button.setStyleSheet(button_style())
+        button_layout.addWidget(self.attach_fov_button, 1, 3)
 
-        self.rotate_button = QPushButton("Rotate")
-        self.rotate_button.clicked.connect(self.open_rotate)
-        self.rotate_button.setFixedSize(150, 60)
-        self.rotate_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.rotate_button, 1, 4)
+        self.temp_button = QPushButton("TEMP")
+        self.temp_button.clicked.connect(self.open_temp)
+        self.temp_button.setFixedSize(150, 60)
+        self.temp_button.setStyleSheet(button_style())
+        button_layout.addWidget(self.temp_button, 1, 4)
+        # -------------------------------------------------------------------------
 
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
 
     def open_ng_sorting(self):
         if 'ng_sorting' not in self.dialogs:
-            # 실제 NGSortingDialog 클래스(아래와 같이 정의된)를 생성합니다.
-            from ui_dialogs import NGSortingDialog  # 필요 시 모듈 내부에서 import
             self.dialogs['ng_sorting'] = NGSortingDialog()
             self.dialogs['ng_sorting'].finished.connect(lambda: self.dialogs.pop('ng_sorting', None))
         self.dialogs['ng_sorting'].show()
 
     def open_ng_count(self):
         if 'ng_count' not in self.dialogs:
-            from ui_dialogs import NGCountDialog
             self.dialogs['ng_count'] = NGCountDialog()
             self.dialogs['ng_count'].finished.connect(lambda: self.dialogs.pop('ng_count', None))
         self.dialogs['ng_count'].show()
 
     def open_date_copy(self):
         if 'date_copy' not in self.dialogs:
-            from ui_dialogs import DateBasedCopyDialog
             self.dialogs['date_copy'] = DateBasedCopyDialog()
             self.dialogs['date_copy'].finished.connect(lambda: self.dialogs.pop('date_copy', None))
         self.dialogs['date_copy'].show()
 
     def open_image_copy(self):
         if 'image_copy' not in self.dialogs:
-            from ui_dialogs import ImageFormatCopyDialog
             self.dialogs['image_copy'] = ImageFormatCopyDialog()
             self.dialogs['image_copy'].finished.connect(lambda: self.dialogs.pop('image_copy', None))
         self.dialogs['image_copy'].show()
 
     def open_simulation_foldering(self):
         if 'simulation_foldering' not in self.dialogs:
-            from ui_dialogs import SimulationFolderingDialog
             self.dialogs['simulation_foldering'] = SimulationFolderingDialog()
             self.dialogs['simulation_foldering'].finished.connect(lambda: self.dialogs.pop('simulation_foldering', None))
         self.dialogs['simulation_foldering'].show()
 
     def open_basic_sorting(self):
         if 'basic_sorting' not in self.dialogs:
-            from ui_dialogs import BasicSortingDialog
             self.dialogs['basic_sorting'] = BasicSortingDialog()
             self.dialogs['basic_sorting'].finished.connect(lambda: self.dialogs.pop('basic_sorting', None))
         self.dialogs['basic_sorting'].show()
@@ -1465,23 +1345,99 @@ class MainWindow(QWidget):
             self.dialogs['crop'].finished.connect(lambda: self.dialogs.pop('crop', None))
         self.dialogs['crop'].show()
 
-    def open_resize(self):
-        if 'resize' not in self.dialogs:
-            from ui_dialogs import ResizeDialog
-            self.dialogs['resize'] = ResizeDialog()
-            self.dialogs['resize'].finished.connect(lambda: self.dialogs.pop('resize', None))
-        self.dialogs['resize'].show()
+    # ---------------------- 새로 추가된 버튼/다이얼로그 연결 ----------------------
+    def open_mim_to_bmp(self):
+        if 'mim_to_bmp' not in self.dialogs:
+            self.dialogs['mim_to_bmp'] = MIMtoBMPDialog()
+            self.dialogs['mim_to_bmp'].finished.connect(lambda: self.dialogs.pop('mim_to_bmp', None))
+        self.dialogs['mim_to_bmp'].show()
 
-    def open_flip(self):
-        if 'flip' not in self.dialogs:
-            from ui_dialogs import FlipDialog
-            self.dialogs['flip'] = FlipDialog()
-            self.dialogs['flip'].finished.connect(lambda: self.dialogs.pop('flip', None))
-        self.dialogs['flip'].show()
+    def open_attach_fov(self):
+        if 'attach_fov' not in self.dialogs:
+            self.dialogs['attach_fov'] = AttachFOVDialog()
+            self.dialogs['attach_fov'].finished.connect(lambda: self.dialogs.pop('attach_fov', None))
+        self.dialogs['attach_fov'].show()
 
-    def open_rotate(self):
-        if 'rotate' not in self.dialogs:
-            from ui_dialogs import RotateDialog
-            self.dialogs['rotate'] = RotateDialog()
-            self.dialogs['rotate'].finished.connect(lambda: self.dialogs.pop('rotate', None))
-        self.dialogs['rotate'].show()
+    def open_temp(self):
+        if 'temp' not in self.dialogs:
+            self.dialogs['temp'] = TempDialog()
+            self.dialogs['temp'].finished.connect(lambda: self.dialogs.pop('temp', None))
+        self.dialogs['temp'].show()
+
+
+# ---------------------------------------------------------
+# 아래 CropDialog 는 기존에 존재하는 것이므로 그대로 둡니다.
+class CropDialog(BaseTaskDialog):
+    def __init__(self):
+        super().__init__("Crop 설정")
+        self.init_specific_ui()
+
+    def init_specific_ui(self):
+        self.specific_layout.addRow(QLabel("<b>Crop Area:</b>"))
+        self.crop_area_input = QLineEdit()
+        self.crop_area_input.setPlaceholderText("Enter crop area parameters (left, upper, right, lower)")
+        self.specific_layout.addRow("", self.crop_area_input)
+
+        self.format_bmp = QCheckBox("BMP")
+        self.format_org_jpg = QCheckBox("org_jpg")
+        self.format_fov_jpg = QCheckBox("fov_jpg")
+        self.format_mim = QCheckBox("MIM")
+        self.format_png = QCheckBox("PNG")
+        formats_layout = QHBoxLayout()
+        formats_layout.addWidget(self.format_bmp)
+        formats_layout.addWidget(self.format_org_jpg)
+        formats_layout.addWidget(self.format_fov_jpg)
+        formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_png)
+        self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+        self.format_bmp.setChecked(True)
+
+    def get_parameters(self):
+        formats = []
+        if self.format_bmp.isChecked():
+            formats.append(".bmp")
+        if self.format_org_jpg.isChecked():
+            formats.append("org_jpg")
+        if self.format_fov_jpg.isChecked():
+            formats.append("fov_jpg")
+        if self.format_mim.isChecked():
+            formats.append(".mim")
+        if self.format_png.isChecked():
+            formats.append(".png")
+        return {
+            'operation': 'crop',
+            'source': self.source_path.text(),
+            'target': self.target_path.text(),
+            'formats': formats,
+            'crop_area': self.crop_area_input.text()
+        }
+
+    def validate_parameters(self, params):
+        missing_fields = []
+        if not params['source']:
+            missing_fields.append("Source Path")
+        if not params['target']:
+            missing_fields.append("Target Path")
+        if not params['formats']:
+            missing_fields.append("Image Formats")
+        if not params['crop_area']:
+            missing_fields.append("Crop Area Parameters")
+
+        path_fields = ['source', 'target']
+        invalid_paths = []
+        for field in path_fields:
+            path = params.get(field, '')
+            if path and not os.path.isdir(path):
+                invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
+
+        if missing_fields or invalid_paths:
+            warning_messages = []
+            if missing_fields:
+                warning_messages.append("다음 필드를 입력해야 합니다:")
+                warning_messages.extend(missing_fields)
+            if invalid_paths:
+                warning_messages.append("다음 경로가 유효하지 않습니다:")
+                warning_messages.extend(invalid_paths)
+            QMessageBox.warning(self, "입력 오류", "\n".join(warning_messages))
+            return False
+        return True
