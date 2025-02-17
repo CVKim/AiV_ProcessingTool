@@ -281,8 +281,8 @@ class BasicSortingDialog(BaseTaskDialog):
             missing_fields.append("Source Path")
         if not params['target']:
             missing_fields.append("Target Path")
-        if not params['fov_number']:
-            missing_fields.append("FOV Number(s)")
+        # if not params['fov_number']:
+        #     missing_fields.append("FOV Number(s)")
         if not params['formats'] and params['operation'] != 'ng_count':
             missing_fields.append("Image Formats")
         if not params['inner_id_list'] and params['use_inner_id'] and not params['inner_id']:

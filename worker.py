@@ -467,41 +467,6 @@ class WorkerThread(QThread):
             inner_id = task.get('inner_id', '').strip()
             formats = task['formats']
 
-            # FOV Numbers 파싱
-            if fov_number_input:
-                fov_numbers_raw = [num.strip() for num in fov_number_input.split(',') if num.strip()]
-                fov_numbers = set()
-                invalid_fov = []
-                for part in fov_numbers_raw:
-                    if '/' in part:
-                        try:
-                            start, end = part.split('/')
-                            start = int(start.strip())
-                            end = int(end.strip())
-                            if start > end:
-                                invalid_fov.append(part)
-                            else:
-                                for n in range(start, end + 1):
-                                    fov_numbers.add(str(n))
-                        except:
-                            invalid_fov.append(part)
-                    else:
-                        if part.isdigit():
-                            fov_numbers.add(part)
-                        else:
-                            invalid_fov.append(part)
-                if invalid_fov:
-                    self.log.emit(f"다음 FOV Number가 유효하지 않습니다: {', '.join(invalid_fov)}")
-                    self.finished.emit("Basic Sorting 중지됨.")
-                    return
-            else:
-                fov_numbers = set()
-
-            if not fov_numbers:
-                self.log.emit("FOV Number가 입력되지 않았습니다.")
-                self.finished.emit("Basic Sorting 중지됨.")
-                return
-
             # Inner ID 추출
             inner_ids = []
             if inner_id_list_path and os.path.exists(inner_id_list_path):
@@ -535,7 +500,72 @@ class WorkerThread(QThread):
                 self.finished.emit("Basic Sorting 완료.")
                 return
 
-            # 1) 실제 복사 대상 파일들 먼저 모두 수집 -> total_images
+            # (1) FOV Numbers 파싱
+            fov_numbers = set()
+            if fov_number_input:
+                # 사용자가 입력한 fov_number를 해석
+                fov_numbers_raw = [num.strip() for num in fov_number_input.split(',') if num.strip()]
+                invalid_fov = []
+                for part in fov_numbers_raw:
+                    if '/' in part:
+                        try:
+                            start, end = part.split('/')
+                            start = int(start.strip())
+                            end = int(end.strip())
+                            if start > end:
+                                invalid_fov.append(part)
+                            else:
+                                for n in range(start, end + 1):
+                                    fov_numbers.add(str(n))
+                        except:
+                            invalid_fov.append(part)
+                    else:
+                        if part.isdigit():
+                            fov_numbers.add(part)
+                        else:
+                            invalid_fov.append(part)
+                if invalid_fov:
+                    self.log.emit(f"다음 FOV Number가 유효하지 않습니다: {', '.join(invalid_fov)}")
+                    self.finished.emit("Basic Sorting 중지됨.")
+                    return
+
+            # (2) fov_number_input이 비어 있으면, 실제 폴더에서 가능한 모든 FOV 번호를 자동으로 추출
+            if not fov_number_input:
+                self.log.emit("FOV Number 입력이 비어있습니다. 모든 FOV 번호를 자동으로 수집합니다.")
+                all_possible_fovs = set()
+                for folder_name in inner_ids:
+                    if self._is_stopped:
+                        break
+                    source_folder = os.path.join(source, folder_name)
+                    if not os.path.isdir(source_folder):
+                        continue
+                    try:
+                        with os.scandir(source_folder) as it:
+                            image_files = [
+                                entry.name for entry in it
+                                if entry.is_file() and self.is_valid_file(entry.name, formats)
+                            ]
+                    except Exception as e:
+                        self.log.emit(f"이미지 목록 가져오기 중 오류: {source_folder} | 에러: {e}")
+                        continue
+
+                    for fname in image_files:
+                        parts = fname.split('_', 1)
+                        if len(parts) < 1:
+                            continue
+                        prefix = parts[0].lower()
+                        numeric_part = re.sub(r'[^0-9]', '', prefix)
+                        if numeric_part:
+                            all_possible_fovs.add(numeric_part)
+                fov_numbers = all_possible_fovs
+
+            # 만약 최종적으로 fov_numbers가 비어 있다면 중단
+            if not fov_numbers:
+                self.log.emit("FOV Number가 비어 있거나, 폴더 내에서 자동 추출된 FOV 번호가 없습니다.")
+                self.finished.emit("Basic Sorting 중지됨.")
+                return
+
+            # 3) 실제 복사 대상 파일들 먼저 모두 수집 -> total_images
             folder_to_files = {}
             total_images = 0
 
