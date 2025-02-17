@@ -3,6 +3,7 @@ import os
 import shutil
 import logging
 import random
+import re
 from PIL import Image, ImageDraw, ImageFont
 from PyQt5.QtCore import QThread, pyqtSignal
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -20,10 +21,10 @@ def set_worker_priority():
         win32process.SetThreadPriority(thread_handle, win32process.THREAD_PRIORITY_BELOW_NORMAL)
     except ImportError:
         try:
-            os.nice(10) # default 0, range -20 ~ 19
+            os.nice(10)  # default 0, range -20 ~ 19
         except Exception:
             pass
-        
+
 class WorkerThread(QThread):
     progress = pyqtSignal(int)
     log = pyqtSignal(str)
@@ -75,19 +76,16 @@ class WorkerThread(QThread):
     def ng_folder_sorting(self, task):
         self.log.emit("------ NG Folder Sorting 작업 시작 ------")
         try:
-            # Task 딕셔너리에서 필요한 정보 추출
-            sources1 = task.get('inputs', [])  # List of NG folder paths
-            source2 = task.get('source2', '')   # Matching Inner ID folder path
-            target = task.get('target', '')     # Target directory
-            formats = task.get('formats', [])   # List of selected image formats
+            sources1 = task.get('inputs', [])
+            source2 = task.get('source2', '')
+            target = task.get('target', '')
+            formats = task.get('formats', [])
 
-            # 입력 값 로그 출력
             self.log.emit(f"Sources1: {sources1}")
             self.log.emit(f"Source2: {source2}")
             self.log.emit(f"Target: {target}")
             self.log.emit(f"Formats: {formats}")
 
-            # Target 디렉토리 존재 여부 확인 및 생성 (최상위 target 폴더는 미리 생성)
             if not os.path.exists(target):
                 try:
                     os.makedirs(target)
@@ -99,7 +97,6 @@ class WorkerThread(QThread):
             else:
                 self.log.emit(f"Target 디렉토리 존재: {target}")
 
-            # sources1에서 inner ID(폴더 이름)만 추출하고, source2 내의 inner ID 폴더와 교집합 계산
             inner_ids_sources1 = self.collect_inner_ids(sources1)
             inner_ids_source2 = self.collect_inner_ids_from_source2(source2)
             matched_inner_ids = inner_ids_sources1.intersection(inner_ids_source2)
@@ -110,8 +107,6 @@ class WorkerThread(QThread):
                 self.finished.emit("NG Folder Sorting 완료.")
                 return
             self.log.emit(f"총 매칭된 Inner ID 수: {total_matched_inner_ids}")
-
-            # (기존에는 미리 target 폴더를 생성했으나, 아래에서 복사 시점에 폴더 생성)
 
             images_to_copy, total_images = self.collect_images_to_copy(matched_inner_ids, source2, formats)
 
@@ -134,7 +129,6 @@ class WorkerThread(QThread):
                     source_inner_id_folder = os.path.join(source2, inner_id)
                     target_inner_id_folder = os.path.join(target, inner_id)
 
-                    # 복사 시점에 target 폴더가 없으면 생성
                     if not os.path.exists(target_inner_id_folder):
                         try:
                             os.makedirs(target_inner_id_folder)
@@ -202,7 +196,6 @@ class WorkerThread(QThread):
             if not os.path.exists(target):
                 os.makedirs(target)
 
-            # 모든 폴더 수집 및 날짜 필터 적용
             all_folders = [os.path.join(source, f) for f in os.listdir(source) if os.path.isdir(os.path.join(source, f))]
             eligible_folders = []
             for folder in all_folders:
@@ -217,7 +210,6 @@ class WorkerThread(QThread):
                 self.finished.emit("Date-Based Copy 완료.")
                 return
 
-            # 날짜 기준 정렬 (오름차순)
             sorted_folders = sorted(eligible_folders, key=lambda x: os.path.getmtime(x))
 
             if mode == 'folder':
@@ -273,7 +265,6 @@ class WorkerThread(QThread):
                     self.finished.emit("Date-Based Copy 중지됨.")
                     return
 
-                # 폴더 선택 (랜덤 옵션 적용)
                 if strong_random:
                     self.log.emit("Strong Random 옵션 선택됨 (Image Mode)")
                     if len(sorted_folders) < count:
@@ -284,7 +275,6 @@ class WorkerThread(QThread):
                     self.log.emit(f"Conditional Random 옵션 선택됨 (Image Mode, Random Count: {random_count})")
                     selected_folders = []
                     index = 0
-                    # 수정: 각 폴더를 선택할 때, random_count 만큼 건너뛰도록 (기존 random_count+1 대신 random_count 사용)
                     while index < len(sorted_folders) and len(selected_folders) < count:
                         selected_folders.append(sorted_folders[index])
                         index += random_count
@@ -296,7 +286,6 @@ class WorkerThread(QThread):
                 total_processed_folders = 0
                 total_processed_images = 0
 
-                # 각 폴더별로 fov number에 해당하는 이미지들을 복사
                 for i, folder_path in enumerate(selected_folders, start=1):
                     if self._is_stopped:
                         self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {total_processed_folders}")
@@ -317,33 +306,30 @@ class WorkerThread(QThread):
                         if len(parts) < 2:
                             self.log.emit(f"파일 이름 형식 오류: {image}")
                             continue
-                        fov_part = parts[0]
-                        if 'fov' in fov_part.lower():
-                            fov_part = fov_part.lower().replace('fov', '')
-                        fov_number = ''.join(filter(str.isdigit, fov_part))
-                        if fov_number in fov_numbers:
+                        # 'fov7_defect.jpg' -> split('_',1) -> ['fov7','defect.jpg']
+                        # fov_part = 'fov7' => 숫자만 뽑아서 fov_numbers와 비교
+                        fov_part = re.sub(r'[^0-9]', '', parts[0].lower())
+                        if fov_part in fov_numbers:
                             matching_images.append(image)
 
                     if not matching_images:
                         self.log.emit(f"폴더 {source_inner_id_folder}에 FOV Number와 매칭되는 이미지가 없습니다.")
                     else:
                         self.log.emit(f"폴더 {source_inner_id_folder}에서 {len(matching_images)}개의 이미지 복사 시작")
-                        with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
+                        with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as ex:
                             futures = []
                             for image in matching_images:
                                 src_file = os.path.join(source_inner_id_folder, image)
-                                parts = image.split('_', 1)
-                                fov_part = parts[0]
-                                if 'fov' in fov_part.lower():
-                                    fov_part = fov_part.lower().replace('fov', '')
-                                fov_number = ''.join(filter(str.isdigit, fov_part))
                                 file_base, file_ext = os.path.splitext(image)
-                                new_file_name = f"{inner_id}_{fov_number}{file_ext}"
+                                # fov_part 다시 추출
+                                prefix = file_base.split('_',1)[0].lower()
+                                prefix_digits = re.sub(r'[^0-9]', '', prefix)
+                                new_file_name = f"{inner_id}_{prefix_digits}{file_ext}"
                                 dst_file = os.path.join(target, new_file_name)
                                 if os.path.exists(dst_file):
                                     self.log.emit(f"파일이 이미 존재하여 건너뜁니다: {dst_file}")
                                     continue
-                                futures.append(executor.submit(self.copy_file, src_file, dst_file))
+                                futures.append(ex.submit(self.copy_file, src_file, dst_file))
                             for future in as_completed(futures):
                                 if self._is_stopped:
                                     self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {total_processed_images}")
@@ -377,33 +363,20 @@ class WorkerThread(QThread):
                 self.finished.emit("Image Format Copy 중지됨.")
                 return
 
-            total_tasks = len(sources)
-            total_processed_folders = 0
             total_processed_images = 0
-
             total_images = 0
+
+            # 전체 복사할 이미지 수 먼저 계산
             for source, target in zip(sources, targets):
                 if os.path.exists(source):
                     try:
                         with os.scandir(source) as it:
-                            image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                            image_files = [entry.name for entry in it
+                                           if entry.is_file() and self.is_valid_file(entry.name, formats)]
                     except Exception as e:
                         self.log.emit(f"이미지 목록 가져오기 중 오류 발생: {source} | 에러: {e}")
                         continue
-                    filtered_images = []
-                    for img in image_files:
-                        if img.lower().endswith('.jpg'):
-                            if 'org_jpg' in formats and not img.lower().startswith('fov') and '_fov' not in img.lower():
-                                filtered_images.append(img)
-                            elif 'fov_jpg' in formats and img.lower().startswith('fov'):
-                                filtered_images.append(img)
-                        elif img.lower().endswith('.bmp') and '.bmp' in formats:
-                            filtered_images.append(img)
-                        elif img.lower().endswith('.mim') and '.mim' in formats:
-                            filtered_images.append(img)
-                        elif img.lower().endswith('.png') and '.png' in formats:
-                            filtered_images.append(img)
-                    total_images += len(filtered_images)
+                    total_images += len(image_files)
 
             if total_images == 0:
                 self.log.emit("선택한 이미지 포맷에 해당하는 이미지가 없습니다.")
@@ -412,12 +385,13 @@ class WorkerThread(QThread):
 
             self.log.emit(f"총 복사할 이미지 수: {total_images}")
 
+            processed_count = 0
             with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
                 futures = []
                 for source, target in zip(sources, targets):
                     if self._is_stopped:
-                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 경로: {total_processed_folders}, 이미지: {total_processed_images}")
-                        self.finished.emit(f"작업 중지됨. 총 처리한 경로: {total_processed_folders}, 이미지: {total_processed_images}")
+                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {processed_count}")
+                        self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {processed_count}")
                         return
 
                     if not os.path.exists(source):
@@ -433,28 +407,16 @@ class WorkerThread(QThread):
 
                     try:
                         with os.scandir(source) as it:
-                            image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                            image_files = [entry.name for entry in it
+                                           if entry.is_file() and self.is_valid_file(entry.name, formats)]
                     except Exception as e:
                         self.log.emit(f"이미지 목록 가져오기 중 오류 발생: {source} | 에러: {e}")
                         continue
-                    filtered_images = []
-                    for img in image_files:
-                        if img.lower().endswith('.jpg'):
-                            if 'org_jpg' in formats and not img.lower().startswith('fov') and '_fov' not in img.lower():
-                                filtered_images.append(img)
-                            elif 'fov_jpg' in formats and img.lower().startswith('fov'):
-                                filtered_images.append(img)
-                        elif img.lower().endswith('.bmp') and '.bmp' in formats:
-                            filtered_images.append(img)
-                        elif img.lower().endswith('.mim') and '.mim' in formats:
-                            filtered_images.append(img)
-                        elif img.lower().endswith('.png') and '.png' in formats:
-                            filtered_images.append(img)
 
-                    for file_name in filtered_images:
+                    for file_name in image_files:
                         if self._is_stopped:
-                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 경로: {total_processed_folders}, 이미지: {total_processed_images}")
-                            self.finished.emit(f"작업 중지됨. 총 처리한 경로: {total_processed_folders}, 이미지: {total_processed_images}")
+                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {processed_count}")
+                            self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {processed_count}")
                             return
                         src_file = os.path.join(source, file_name)
                         dst_file = os.path.join(target, file_name)
@@ -462,19 +424,19 @@ class WorkerThread(QThread):
 
                 for future in as_completed(futures):
                     if self._is_stopped:
-                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 경로: {total_processed_folders}, 이미지: {total_processed_images}")
-                        self.finished.emit(f"작업 중지됨. 총 처리한 경로: {total_processed_folders}, 이미지: {total_processed_images}")
+                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 이미지: {processed_count}")
+                        self.finished.emit(f"작업 중지됨. 총 처리한 이미지: {processed_count}")
                         return
                     result = future.result()
                     if result.startswith("오류 발생"):
                         self.log.emit(result)
                     else:
-                        total_processed_images += 1
+                        processed_count += 1
                         self.log.emit(result)
-                        progress_percent = int((total_processed_images / total_images) * 100)
+                        progress_percent = int((processed_count / total_images) * 100)
                         self.progress.emit(min(progress_percent, 100))
 
-            self.finished.emit(f"Image Format Copy 완료. 총 처리한 경로: {total_processed_folders}, 이미지: {total_processed_images}")
+            self.finished.emit(f"Image Format Copy 완료. 총 복사한 이미지: {processed_count}")
             self.log.emit("------ Image Format Copy 작업 완료 ------")
         except Exception as e:
             logging.error("Image Format Copy 중 오류 발생", exc_info=True)
@@ -483,10 +445,18 @@ class WorkerThread(QThread):
 
     def simulation_foldering(self, task):
         self.log.emit("------ Simulation Foldering 작업 시작 ------")
-        # 기능 구현 필요
         self.finished.emit("Simulation Foldering 작업 완료.")
 
+    ########################################################################
+    # ------------------------- BASIC SORTING 수정본 ------------------------#
+    ########################################################################
     def basic_sorting(self, task):
+        """
+        'fov7_defect.jpg' 같은 파일도
+         - fov_jpg 만 골랐을 때
+         - FOV Number = 7 을 입력받았다면
+         -> 정상적으로 matching 파일로 잡히도록 수정.
+        """
         self.log.emit("------ Basic Sorting 작업 시작 ------")
         try:
             source = task['source']
@@ -497,9 +467,10 @@ class WorkerThread(QThread):
             inner_id = task.get('inner_id', '').strip()
             formats = task['formats']
 
+            # FOV Numbers 파싱
             if fov_number_input:
                 fov_numbers_raw = [num.strip() for num in fov_number_input.split(',') if num.strip()]
-                fov_numbers = []
+                fov_numbers = set()
                 invalid_fov = []
                 for part in fov_numbers_raw:
                     if '/' in part:
@@ -510,12 +481,13 @@ class WorkerThread(QThread):
                             if start > end:
                                 invalid_fov.append(part)
                             else:
-                                fov_numbers.extend([str(n) for n in range(start, end+1)])
-                        except Exception as e:
+                                for n in range(start, end + 1):
+                                    fov_numbers.add(str(n))
+                        except:
                             invalid_fov.append(part)
                     else:
                         if part.isdigit():
-                            fov_numbers.append(part)
+                            fov_numbers.add(part)
                         else:
                             invalid_fov.append(part)
                 if invalid_fov:
@@ -523,14 +495,23 @@ class WorkerThread(QThread):
                     self.finished.emit("Basic Sorting 중지됨.")
                     return
             else:
-                fov_numbers = []
+                fov_numbers = set()
 
+            if not fov_numbers:
+                self.log.emit("FOV Number가 입력되지 않았습니다.")
+                self.finished.emit("Basic Sorting 중지됨.")
+                return
+
+            # Inner ID 추출
             inner_ids = []
-
             if inner_id_list_path and os.path.exists(inner_id_list_path):
                 try:
                     with os.scandir(inner_id_list_path) as it:
-                        inner_ids = [entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng', 'ng_info', 'crop', 'thumbnail']]
+                        inner_ids = [
+                            entry.name for entry in it
+                            if entry.is_dir()
+                            and entry.name.lower() not in ['ok','ng','ng_info','crop','thumbnail']
+                        ]
                 except Exception as e:
                     self.log.emit(f"Inner ID List Path에서 폴더 목록 가져오기 중 오류: {str(e)}")
                     self.finished.emit("Basic Sorting 중지됨.")
@@ -538,17 +519,7 @@ class WorkerThread(QThread):
             elif use_inner_id and inner_id:
                 inner_ids = [inner_id]
             else:
-                self.log.emit("Inner ID List Path도 Inner ID도 설정되지 않았습니다.")
-                self.finished.emit("Basic Sorting 중지됨.")
-                return
-
-            if not inner_ids:
-                self.log.emit("유효한 Inner ID가 없습니다.")
-                self.finished.emit("Basic Sorting 완료.")
-                return
-
-            if not fov_numbers:
-                self.log.emit("FOV Number가 입력되지 않았습니다.")
+                self.log.emit("Inner ID List Path도 없고, 직접 입력한 Inner ID도 없습니다.")
                 self.finished.emit("Basic Sorting 중지됨.")
                 return
 
@@ -559,120 +530,110 @@ class WorkerThread(QThread):
             if not os.path.exists(target):
                 os.makedirs(target)
 
-            total_folders = len(inner_ids)
+            if not inner_ids:
+                self.log.emit("유효한 Inner ID가 없습니다.")
+                self.finished.emit("Basic Sorting 완료.")
+                return
+
+            # 1) 실제 복사 대상 파일들 먼저 모두 수집 -> total_images
+            folder_to_files = {}
             total_images = 0
+
             for folder_name in inner_ids:
+                if self._is_stopped:
+                    break
+
                 source_folder = os.path.join(source, folder_name)
-                if os.path.exists(source_folder):
-                    try:
-                        with os.scandir(source_folder) as it:
-                            image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
-                        matching_files = [f for f in image_files
-                                        if any(f.split('_', 1)[0] == num for num in fov_numbers)]
-                        total_images += len(matching_files)
-                    except Exception as e:
-                        self.log.emit(f"이미지 목록 가져오기 중 오류: {source_folder} | 에러: {e}")
+                if not os.path.isdir(source_folder):
+                    self.log.emit(f"'{folder_name}' 폴더가 Source 경로에 없습니다: {source_folder}")
+                    continue
+
+                try:
+                    with os.scandir(source_folder) as it:
+                        image_files = [
+                            entry.name for entry in it
+                            if entry.is_file() and self.is_valid_file(entry.name, formats)
+                        ]
+                except Exception as e:
+                    self.log.emit(f"이미지 목록 가져오기 중 오류: {source_folder} | 에러: {e}")
+                    continue
+
+                matching_files = []
+                for fname in image_files:
+                    # fname 예: "fov7_defect.jpg"
+                    # 1) "fov7_defect" vs 2) "fov7"
+                    #    '_' 기준 앞부분을 추출 -> 'fov7'
+                    #    re.sub로 숫자만 추출 -> '7'
+                    parts = fname.split('_', 1)
+                    if len(parts) < 1:
+                        continue
+                    prefix = parts[0].lower()   # "fov7"
+                    # 여기서 'fov' 단어 제거 후, 숫자만 남긴다.
+                    numeric_part = re.sub(r'[^0-9]', '', prefix)
+                    if numeric_part in fov_numbers:
+                        matching_files.append(fname)
+
+                if matching_files:
+                    folder_to_files[folder_name] = matching_files
+                    total_images += len(matching_files)
+
             if total_images == 0:
                 self.log.emit("선택한 FOV Number에 해당하는 이미지가 없습니다.")
                 self.finished.emit("Basic Sorting 완료.")
                 return
 
-            total_tasks = total_images
+            self.log.emit(f"총 복사 대상 이미지 수: {total_images}")
+
+            # 2) 스레드풀로 복사 실행
             total_processed = 0
+            all_futures = []
+            executor = ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority)
 
-            for i, folder_name in enumerate(inner_ids, start=1):
-                if self._is_stopped:
-                    self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                    self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                    return
-
-                source_folder = os.path.join(source, folder_name)
-                if not os.path.exists(source_folder):
-                    self.log.emit(f"Source Path 내에 '{folder_name}' 폴더가 존재하지 않습니다.")
-                    continue
-
-                try:
-                    with os.scandir(source_folder) as it:
-                        image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
-                except Exception as e:
-                    self.log.emit(f"이미지 목록 가져오기 중 오류: {source_folder} | 에러: {e}")
-                    continue
-
-                if not image_files:
-                    self.log.emit(f"'{folder_name}' 폴더에 지정된 이미지 포맷의 파일이 없습니다.")
-                    continue
-
-                matching_files = []
-                for file in image_files:
+            try:
+                for folder_name, matching_files in folder_to_files.items():
                     if self._is_stopped:
-                        self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                        self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                        return
-                    parts = file.split('_', 1)
-                    if len(parts) < 2:
-                        self.log.emit(f"파일 이름 형식 오류: {file}")
-                        continue
-                    file_fov_number = parts[0].lower().replace('fov', '') if 'fov' in parts[0].lower() else parts[0]
+                        break
 
-                    if file_fov_number in fov_numbers:
-                        if file.lower().endswith('.jpg'):
-                            if 'org_jpg' in formats and not file.lower().startswith('fov') and '_fov' not in file.lower():
-                                matching_files.append(file)
-                            if 'fov_jpg' in formats and file.lower().startswith('fov'):
-                                matching_files.append(file)
-                        else:
-                            matching_files.append(file)
-
-                if not matching_files:
-                    self.log.emit(f"'{folder_name}' 폴더에 FOV Number '{', '.join(fov_numbers)}'에 매칭되는 파일이 없습니다.")
-                    continue
-
-                with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
-                    futures = []
+                    source_folder = os.path.join(source, folder_name)
                     for image_file in matching_files:
                         if self._is_stopped:
-                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                            self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                            return
+                            break
                         src_file = os.path.join(source_folder, image_file)
                         file_base, file_ext = os.path.splitext(image_file)
                         new_file_name = f"{folder_name}_{file_base}{file_ext}"
                         dst_file = os.path.join(target, new_file_name)
-                        futures.append(executor.submit(self.copy_file, src_file, dst_file))
-                    
-                    for future in as_completed(futures):
-                        if self._is_stopped:
-                            self.log.emit(f"작업이 중지되었습니다. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                            self.finished.emit(f"작업 중지됨. 총 처리한 폴더: {i-1}, 이미지: {total_processed}")
-                            return
-                        result = future.result()
-                        if result.startswith("오류 발생"):
-                            self.log.emit(result)
-                        else:
-                            total_processed += 1
-                            self.log.emit(result)
-                            progress_percent = int((total_processed / total_tasks) * 100)
-                            self.progress.emit(min(progress_percent, 100))
-                self.log.emit(f"'{folder_name}' 폴더에서 {len(matching_files)}개의 파일을 복사했습니다.")
-                progress_percent = int((total_processed / total_tasks) * 100)
-                self.progress.emit(min(progress_percent, 100))
-            self.finished.emit(f"Basic Sorting 완료. 총 처리한 폴더: {total_folders}, 이미지: {total_processed}")
-            self.log.emit("------ Basic Sorting 작업 완료 ------")
+                        all_futures.append(executor.submit(self.copy_file, src_file, dst_file))
+
+                for future in as_completed(all_futures):
+                    if self._is_stopped:
+                        break
+                    result = future.result()
+                    if result.startswith("오류 발생"):
+                        self.log.emit(result)
+                    else:
+                        total_processed += 1
+                        self.log.emit(result)
+                        progress_percent = int((total_processed / total_images) * 100)
+                        self.progress.emit(min(progress_percent, 100))
+            finally:
+                executor.shutdown(wait=True)
+
+            if self._is_stopped:
+                self.log.emit(f"작업이 중지되었습니다. 처리 완료: {total_processed} / {total_images}")
+                self.finished.emit(f"Basic Sorting 작업 중지됨. ({total_processed}/{total_images})")
+            else:
+                self.finished.emit(f"Basic Sorting 완료. 총 복사한 파일: {total_processed}")
+                self.log.emit("------ Basic Sorting 작업 완료 ------")
+
         except Exception as e:
             logging.error("Basic Sorting 중 오류", exc_info=True)
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("작업 중지됨.")
 
-    # -------------------------------
-    # Crop 작업
+    ########################################################################
+    # ----------------------------- CROP -----------------------------------#
+    ########################################################################
     def crop_images(self, task):
-        """
-        - 재귀적으로 source 하위 모든 폴더를 탐색
-        - ignore_list = {'ok','ng','ng_info','crop','thumbnail'} 폴더 무시
-        - fov_number가 있으면 해당 번호의 파일만 필터
-        - formats에 맞는 파일만 crop
-        - crop 좌표: LEFT_TOP_X, LEFT_TOP_Y, RIGHT_BOTTOM_X, RIGHT_BOTTOM_Y
-        """
         self.log.emit("------ Crop 작업 시작 ------")
         try:
             source = task['source']
@@ -690,7 +651,6 @@ class WorkerThread(QThread):
                 self.finished.emit("Crop 중지됨.")
                 return
 
-            # fov_number 파싱
             fov_numbers = None
             if fov_number_input:
                 fov_numbers = self.parse_fov_numbers(fov_number_input)
@@ -702,7 +662,6 @@ class WorkerThread(QThread):
             if not os.path.exists(target):
                 os.makedirs(target)
 
-            # 재귀적으로 대상 파일 수집
             all_files = self.collect_crop_candidates(
                 root_folder=source,
                 formats=formats,
@@ -729,7 +688,6 @@ class WorkerThread(QThread):
                         return
 
                     orig_filename = os.path.basename(file_path)
-                    # inner ID를 앞에 붙여서 파일명 구성
                     new_filename = f"{inner_id}_{orig_filename}"
                     dst_file = os.path.join(target, new_filename)
                     futures.append(executor.submit(self.crop_image, file_path, dst_file, crop_coords))
@@ -754,10 +712,7 @@ class WorkerThread(QThread):
             self.finished.emit("Crop 중 오류 발생.")
 
     def parse_fov_numbers(self, fov_str):
-        """
-        예: "1,2,3/5" -> ['1','2','3','4','5']
-        """
-        results = []
+        results = set()
         parts = [p.strip() for p in fov_str.split(',') if p.strip()]
         for part in parts:
             if '/' in part:
@@ -767,22 +722,15 @@ class WorkerThread(QThread):
                     end_i = int(end.strip())
                     if start_i <= end_i:
                         for n in range(start_i, end_i+1):
-                            results.append(str(n))
+                            results.add(str(n))
                 except:
                     pass
             else:
                 if part.isdigit():
-                    results.append(part)
-        return set(results) if results else None
+                    results.add(part)
+        return results if results else None
 
     def collect_crop_candidates(self, root_folder, formats, fov_numbers=None):
-        """
-        재귀적으로 root_folder 하위 폴더를 뒤져서,
-        ignore_list에 해당하는 폴더 무시,
-        fov_numbers 지정 시 해당 fov번호만,
-        formats에 해당하는 파일만 수집.
-        결과: [(file_path, inner_id), ...]
-        """
         ignore_list = {'ok','ng','ng_info','crop','thumbnail'}
         collected_files = []
         for dirpath, dirnames, filenames in os.walk(root_folder):
@@ -791,44 +739,24 @@ class WorkerThread(QThread):
             if folder_name.lower() in ignore_list:
                 continue
 
-            # root_folder로부터 상대 경로
             rel_path = os.path.relpath(dirpath, root_folder)
             parts = rel_path.split(os.sep)
-
             if len(parts) > 0:
                 candidate_inner_id = parts[0]
             else:
-                # root_folder 자신일 경우
                 candidate_inner_id = folder_name
 
             for filename in filenames:
                 if self.is_valid_file(filename, formats):
                     if fov_numbers:
-                        # fov 체크
-                        parts_filename = filename.split('_', 1)
-                        if len(parts_filename) < 2:
-                            continue
-                        fov_part = parts_filename[0]
-                        if 'fov' in fov_part.lower():
-                            fov_part = fov_part.lower().replace('fov','')
-                        extracted_fov = ''.join(filter(str.isdigit, fov_part))
-                        if extracted_fov not in fov_numbers:
+                        prefix = filename.split('_', 1)[0].lower()
+                        digits = re.sub(r'[^0-9]', '', prefix)
+                        if digits not in fov_numbers:
                             continue
                     full_path = os.path.join(dirpath, filename)
                     collected_files.append((full_path, candidate_inner_id))
         return collected_files
 
-    # def crop_image(self, src, dst, crop_coords):
-    #     try:
-    #         with Image.open(src) as img:
-    #             cropped_img = img.crop(crop_coords)
-    #             cropped_img.save(dst)
-    #         return f"Cropped {src} to {dst}"
-    #     except Exception as e:
-    #         logging.error("이미지 크롭 중 오류", exc_info=True)
-    #         return f"오류 발생: {str(e)}"
-
-    # ---------------------------------------------------------
     # 7) NG Count
     def ng_count(self, task):
         self.log.emit("------ NG Count 작업 시작 ------")
@@ -891,18 +819,10 @@ class WorkerThread(QThread):
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("NG Count 중 오류 발생.")
 
-    # ---------------------------------------------------------
     # --------------------- 새로 추가된 기능들 -----------------
-    # ---------------------------------------------------------
     # A) ATTACH FOV
     def attach_fov(self, task):
-        """
-        search folder path #1, #2 하위(재귀)에서 fov*.jpg 수집.
-        끝에서 15자리 폴더명이 일치하면 같은 시료라 판단.
-        동일 fov num이면 좌우로 이미지 붙임 + 주석(좌상단에 파일 경로, fov number).
-        """
         self.log.emit("------ Attach FOV 작업 시작 ------")
-
         try:
             search1 = task.get('search1', '')
             search2 = task.get('search2', '')
@@ -916,7 +836,6 @@ class WorkerThread(QThread):
             if not os.path.exists(target):
                 os.makedirs(target)
 
-            # fov_number 파싱
             if fov_number_input:
                 fov_numbers_raw = [num.strip() for num in fov_number_input.split(',') if num.strip()]
                 fov_numbers = []
@@ -933,56 +852,38 @@ class WorkerThread(QThread):
                     else:
                         if part.isdigit():
                             fov_numbers.append(part)
+                fov_numbers = set(fov_numbers)
             else:
-                # fov_number 입력이 아예 없으면 None 처리
                 fov_numbers = None
 
-            # 검색 (재귀적으로 fov*.jpg 찾기)
             dict1 = self.recursive_find_fov_images(search1)
             dict2 = self.recursive_find_fov_images(search2)
 
-            # dict 구조:
-            # dict1[(last15, fovX)] = [ (이미지파일경로), ... ] (리스트 가능)
-            # dict2[(last15, fovX)] = [ (이미지파일경로), ... ]
-
-            # 교집합 key 추출
             intersection_keys = set(dict1.keys()).intersection(set(dict2.keys()))
-
-            # (fov_numbers가 주어졌다면 필터링)
             if fov_numbers is not None:
-                intersection_keys = {
-                    k for k in intersection_keys
-                    if k[1] in fov_numbers
-                }
+                intersection_keys = {k for k in intersection_keys if k[1] in fov_numbers}
 
             if not intersection_keys:
                 self.log.emit("교집합 fov 이미지가 없습니다.")
                 self.finished.emit("Attach FOV 완료.")
                 return
 
-            # 총 작업 건수 계산
             total_jobs = 0
             for k in intersection_keys:
-                total_jobs += min(len(dict1[k]), len(dict2[k]))  # 두 쪽 다 존재하는 pair 수만큼
-
+                total_jobs += min(len(dict1[k]), len(dict2[k]))
             self.log.emit(f"총 attach할 건수: {total_jobs}")
 
             total_processed = 0
             with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
                 futures = []
                 for key in intersection_keys:
-                    # key = (last15, fovNum)
                     images_list_1 = dict1[key]
                     images_list_2 = dict2[key]
-                    # 실제로는 1:1 대응일 가능성이 높으나, 혹시 여러 개 있을 수 있음
                     pair_count = min(len(images_list_1), len(images_list_2))
                     for i in range(pair_count):
                         src_file_1 = images_list_1[i]
                         src_file_2 = images_list_2[i]
-                        # 작업 등록
-                        futures.append(
-                            executor.submit(self.attach_two_images, src_file_1, src_file_2, key, target)
-                        )
+                        futures.append(executor.submit(self.attach_two_images, src_file_1, src_file_2, key, target))
 
                 for future in as_completed(futures):
                     if self._is_stopped:
@@ -1007,43 +908,29 @@ class WorkerThread(QThread):
             self.finished.emit("Attach FOV 중 오류 발생.")
 
     def recursive_find_fov_images(self, root_folder):
-        """
-        root_folder 하위 모든 폴더를 재귀로 돌며 fov*.jpg 파일을 찾는다.
-        (끝에서 15자리 폴더명을 key, fov번호를 subkey로 해서 dict에 저장)
-        반환: dict[(last15, fovNum)] = [img_path1, img_path2, ...]
-        """
         ignore_list = {'ok', 'ng', 'ng_info', 'crop', 'thumbnail'}
         result_dict = {}
         for dirpath, dirnames, filenames in os.walk(root_folder):
-            # 1) 하위 폴더 목록(dirnames)에서 ignore_list에 해당하는 폴더는 제거(재귀 탐색 방지)
             dirnames[:] = [d for d in dirnames if d.lower() not in ignore_list]
 
-            # 2) 현재 폴더 자체가 ignore_list에 해당하면, 파일 수집 스킵
             folder_name = os.path.basename(dirpath)
             if folder_name.lower() in ignore_list:
                 continue
 
-            # 이후 fov*.jpg 수집 로직
             last15 = folder_name[-15:] if len(folder_name) >= 15 else folder_name
             for filename in filenames:
                 if filename.lower().startswith('fov') and filename.lower().endswith('.jpg'):
                     fovnum = ''.join(filter(str.isdigit, filename.lower().replace('fov', '')))
                     if not fovnum:
-                        # 숫자 추출 실패 시 건너뜀
                         continue
                     key = (last15, fovnum)
                     full_path = os.path.join(dirpath, filename)
                     if key not in result_dict:
                         result_dict[key] = []
                     result_dict[key].append(full_path)
-
         return result_dict
 
     def attach_two_images(self, src1, src2, key, target):
-        """
-        두 이미지를 좌우로 붙이고,
-        좌상단에 주석(파일경로, fov)을 찍은 뒤 target 폴더에 저장.
-        """
         try:
             last15, fovnum = key
             im1 = Image.open(src1)
@@ -1055,40 +942,27 @@ class WorkerThread(QThread):
             new_img.paste(im2, (im1.width, 0))
 
             draw = ImageDraw.Draw(new_img)
-
-            # 폰트가 필요하다면, OS 상의 폰트 경로를 직접 지정해야 합니다.
-            # 여기서는 기본 PIL 폰트 사용 예시
-            # (원하시면 ImageFont.truetype("arial.ttf", 20) 처럼 수정 가능)
             font = ImageFont.load_default()
-
-            # 왼쪽 이미지 상단 주석
             draw.text((10, 10), f"{os.path.basename(src1)}\nfov:{fovnum}", fill=(0, 0, 0), font=font)
-
-            # 오른쪽 이미지 상단 주석 (오른쪽 이미지는 x좌표를 im1.width 기준으로 조금 오른쪽에)
             draw.text((im1.width + 10, 10), f"{os.path.basename(src2)}\nfov:{fovnum}", fill=(0, 0, 0), font=font)
 
-            # 저장 파일명
             out_filename = f"attached_{last15}_{fovnum}.jpg"
             dst_file = os.path.join(target, out_filename)
-
             new_img.save(dst_file)
             return f"Attached: {src1} + {src2} => {dst_file}"
         except Exception as e:
             logging.error("attach_two_images 중 오류 발생", exc_info=True)
             return f"오류 발생: {str(e)}"
 
-    # B) MIM to BMP (Placeholder)
+    # B) MIM to BMP
     def mim_to_bmp(self, task):
         self.log.emit("------ MIM to BMP 작업 시작 ------")
-        # 여기서 MIM -> BMP 변환 로직을 추가 구현할 수 있습니다.
-        # 현재는 예시 placeholder만 제공
         self.log.emit("아직 구현되지 않은 Placeholder 기능입니다.")
         self.finished.emit("MIM to BMP 작업 완료(Placeholder).")
 
-    # C) TEMP (아무 기능 X)
+    # C) TEMP
     def temp_operation(self, task):
         self.log.emit("------ TEMP 작업(미정) 시작 ------")
-        # 실제 동작 없음
         self.log.emit("TEMP 기능은 현재 미정 상태라 동작하지 않습니다.")
         self.finished.emit("TEMP 작업 완료 (실제 동작 없음).")
 
@@ -1096,18 +970,32 @@ class WorkerThread(QThread):
     # --------------------- 유틸 함수들 ------------------------
     # ---------------------------------------------------------
     def is_valid_file(self, filename, formats):
+        """
+        fov_jpg만 골랐을 때도 'fov7_defect.jpg'처럼
+        파일명 어딘가에 'fov'가 포함되고 확장자가 .jpg면 True 처리.
+        """
         if not formats:
             return False
+
+        fname_lower = filename.lower()
+        base, ext = os.path.splitext(fname_lower)
+
         for fmt in formats:
-            if fmt.lower() == 'org_jpg':
-                if filename.lower().endswith('.jpg') and not filename.lower().startswith('fov') and '_fov' not in filename.lower():
+            fmt_lower = fmt.lower()
+
+            if fmt_lower == 'org_jpg':
+                if ext == '.jpg' and 'fov' not in base:
                     return True
-            elif fmt.lower() == 'fov_jpg':
-                if filename.lower().endswith('.jpg') and filename.lower().startswith('fov'):
+
+            elif fmt_lower == 'fov_jpg':
+                if ext == '.jpg' and 'fov' in base:
                     return True
+
             else:
-                if filename.lower().endswith(fmt.lower()):
+                # .bmp, .png, .mim 등
+                if fname_lower.endswith(fmt_lower):
                     return True
+
         return False
 
     def crop_image(self, src, dst, crop_coords):
@@ -1158,8 +1046,6 @@ class WorkerThread(QThread):
             logging.error("Filtered folder copy 중 오류", exc_info=True)
             return f"오류 발생: {str(e)}"
 
-    # --- 수정된 collect_inner_ids 함수 ---
-    # sources가 리스트인 경우 각 경로의 basename(Inner ID)만 추출
     def collect_inner_ids(self, sources):
         inner_ids = set()
         if isinstance(sources, list):
@@ -1167,19 +1053,17 @@ class WorkerThread(QThread):
                 if not os.path.exists(source):
                     self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
                     continue
-                inner_id = os.path.basename(source.rstrip(os.sep))
-                if inner_id.lower() in ['ok', 'ng', 'ng_info', 'crop', 'thumbnail']:
-                    continue
-                inner_ids.add(inner_id)
+                folder_name = os.path.basename(source.rstrip(os.sep))
+                if folder_name.lower() not in ['ok','ng','ng_info','crop','thumbnail']:
+                    inner_ids.add(folder_name)
         else:
             if not os.path.exists(sources):
                 self.log.emit(f"Source 경로가 존재하지 않습니다: {sources}")
             else:
-                inner_id = os.path.basename(sources.rstrip(os.sep))
-                if inner_id.lower() not in ['ok', 'ng', 'ng_info', 'crop', 'thumbnail']:
-                    inner_ids.add(inner_id)
+                folder_name = os.path.basename(sources.rstrip(os.sep))
+                if folder_name.lower() not in ['ok','ng','ng_info','crop','thumbnail']:
+                    inner_ids.add(folder_name)
         return inner_ids
-
 
     def collect_inner_ids_from_source2(self, source2):
         inner_ids = set()
@@ -1188,7 +1072,11 @@ class WorkerThread(QThread):
             return inner_ids
         try:
             with os.scandir(source2) as it:
-                inner_ids = {entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok', 'ng', 'ng_info', 'crop', 'thumbnail']}
+                inner_ids = {
+                    entry.name for entry in it
+                    if entry.is_dir()
+                    and entry.name.lower() not in ['ok','ng','ng_info','crop','thumbnail']
+                }
         except Exception as e:
             self.log.emit(f"Source2에서 Inner ID 수집 중 오류: {str(e)}")
         return inner_ids
