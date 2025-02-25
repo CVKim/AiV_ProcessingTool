@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QDateTime
 from PyQt5.QtGui import QIcon
 from worker import WorkerThread
-
+from PyQt5.QtCore import QThreadPool
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s:%(levelname)s:%(message)s')
 
@@ -136,8 +136,8 @@ class BaseTaskDialog(QDialog):
         if operation != 'ng_count':
             if not params.get('source'):
                 missing_fields.append("Source Path")
-            if not params.get('target'):
-                missing_fields.append("Target Path")
+            # if not params.get('target'):
+            #     missing_fields.append("Target Path")
         if operation != 'ng_count' and not params.get('formats', []):
             missing_fields.append("Image Formats")
         if operation == 'ng_sorting' and not params.get('source2'):
@@ -277,8 +277,8 @@ class BasicSortingDialog(BaseTaskDialog):
         missing_fields = []
         if not params['inner_id_list'] and not params['use_inner_id']:
             missing_fields.append("Inner ID List Path 또는 Inner ID")
-        if not params['source']:
-            missing_fields.append("Source Path")
+        # if not params['source']:
+        #     missing_fields.append("Source Path")
         if not params['target']:
             missing_fields.append("Target Path")
         # if not params['fov_number']:
@@ -288,13 +288,20 @@ class BasicSortingDialog(BaseTaskDialog):
         if not params['inner_id_list'] and params['use_inner_id'] and not params['inner_id']:
             missing_fields.append("Inner ID")
 
-        path_fields = ['source', 'target', 'inner_id_list']
+        path_fields = ['source', 'inner_id_list']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
             if path and not os.path.isdir(path):
                 invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
+        target_path = params.get('target', '')
+        if target_path:
+            if not os.path.isdir(target_path):
+                try:
+                    os.makedirs(target_path)
+                except Exception as e:
+                    invalid_paths.append(f"Target Path 생성 실패: {target_path} | 에러: {e}")
+                    
         if missing_fields or invalid_paths:
             warning_messages = []
             if missing_fields:
@@ -675,7 +682,9 @@ class DateBasedCopyDialog(BaseTaskDialog):
         if params.get('strong_random', False) and params.get('conditional_random', False):
             missing_fields.append("Strong Random과 Conditional Random은 동시에 선택할 수 없습니다.")
 
-        path_fields = ['source', 'target']
+        # path_fields = ['source', 'target']
+        # target 경로는 자동으로 만질어 지게 하기 위함
+        path_fields = ['source']
         invalid_paths = []
         for field in path_fields:
             path = params.get(field, '')
@@ -772,8 +781,8 @@ class ImageFormatCopyDialog(BaseTaskDialog):
         # sources, targets는 리스트로 들어가므로
         if params['sources'][0] and not os.path.isdir(params['sources'][0]):
             invalid_paths.append("Source Path이(가) 유효하지 않습니다.")
-        if params['targets'][0] and not os.path.isdir(params['targets'][0]):
-            invalid_paths.append("Target Path이(가) 유효하지 않습니다.")
+        # if params['targets'][0] and not os.path.isdir(params['targets'][0]):
+        #     invalid_paths.append("Target Path이(가) 유효하지 않습니다.")
 
         if missing_fields or invalid_paths:
             warning_messages = []
@@ -1215,6 +1224,7 @@ class MainWindow(QWidget):
         self.setFixedSize(1000, 200)
         self.initUI()
         self.dialogs = {}
+        self.thread_pool = QThreadPool.globalInstance() 
 
     def initUI(self):
         main_layout = QVBoxLayout()
@@ -1236,71 +1246,103 @@ class MainWindow(QWidget):
                     background-color: #A52A2A;
                 }
             """
+        buttons = [
+            ("NG Folder Sorting", self.open_ng_sorting),
+            ("Date-Based Copy", self.open_date_copy),
+            ("Image Format Copy", self.open_image_copy),
+            ("Basic Sorting", self.open_basic_sorting),
+            ("NG Count", self.open_ng_count),
+            ("Simulation Foldering", self.open_simulation_foldering),
+            ("Crop", self.open_crop),
+            ("MIM to BMP", self.open_mim_to_bmp),
+            ("Attach FOV", self.open_attach_fov),
+            ("TEMP", self.open_temp),
+        ]
 
-        self.ng_sorting_button = QPushButton("NG Folder Sorting")
-        self.ng_sorting_button.clicked.connect(self.open_ng_sorting)
-        self.ng_sorting_button.setFixedSize(150, 60)
-        self.ng_sorting_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.ng_sorting_button, 0, 0)
-
-        self.date_copy_button = QPushButton("Date-Based Copy")
-        self.date_copy_button.clicked.connect(self.open_date_copy)
-        self.date_copy_button.setFixedSize(150, 60)
-        self.date_copy_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.date_copy_button, 0, 1)
-
-        self.image_copy_button = QPushButton("Image Format Copy")
-        self.image_copy_button.clicked.connect(self.open_image_copy)
-        self.image_copy_button.setFixedSize(150, 60)
-        self.image_copy_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.image_copy_button, 0, 2)
-
-        self.basic_sorting_button = QPushButton("Basic Sorting")
-        self.basic_sorting_button.clicked.connect(self.open_basic_sorting)
-        self.basic_sorting_button.setFixedSize(150, 60)
-        self.basic_sorting_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.basic_sorting_button, 0, 3)
-
-        self.ng_count_button = QPushButton("NG Count")
-        self.ng_count_button.clicked.connect(self.open_ng_count)
-        self.ng_count_button.setFixedSize(150, 60)
-        self.ng_count_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.ng_count_button, 0, 4)
-
-        self.simulation_button = QPushButton("Simulation Foldering")
-        self.simulation_button.clicked.connect(self.open_simulation_foldering)
-        self.simulation_button.setFixedSize(150, 60)
-        self.simulation_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.simulation_button, 1, 0)
-
-        self.crop_button = QPushButton("Crop")
-        self.crop_button.clicked.connect(self.open_crop)
-        self.crop_button.setFixedSize(150, 60)
-        self.crop_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.crop_button, 1, 1)
-
-        # --------------- 새로 추가: MIM to BMP, Attach FOV, TEMP ----------------
-        self.mim_to_bmp_button = QPushButton("MIM to BMP")
-        self.mim_to_bmp_button.clicked.connect(self.open_mim_to_bmp)
-        self.mim_to_bmp_button.setFixedSize(150, 60)
-        self.mim_to_bmp_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.mim_to_bmp_button, 1, 2)
-
-        self.attach_fov_button = QPushButton("Attach FOV")
-        self.attach_fov_button.clicked.connect(self.open_attach_fov)
-        self.attach_fov_button.setFixedSize(150, 60)
-        self.attach_fov_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.attach_fov_button, 1, 3)
-
-        self.temp_button = QPushButton("TEMP")
-        self.temp_button.clicked.connect(self.open_temp)
-        self.temp_button.setFixedSize(150, 60)
-        self.temp_button.setStyleSheet(button_style())
-        button_layout.addWidget(self.temp_button, 1, 4)
-        # -------------------------------------------------------------------------
+        for i, (label, func) in enumerate(buttons):
+            button = QPushButton(label)
+            button.clicked.connect(func)
+            button.setFixedSize(150, 60)
+            button.setStyleSheet(button_style())
+            button_layout.addWidget(button, i // 5, i % 5)
+            
+            
 
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
+        
+    def closeEvent(self, event):
+        
+        print("프로그램 종료 중... 실행 중인 작업 정리")
+        self.thread_pool.clear()  
+        self.thread_pool.waitForDone(1000)  # 최대 3초 동안 종료 시도
+
+        sys.exit(0)  
+        
+        # self.ng_sorting_button = QPushButton("NG Folder Sorting")
+        # self.ng_sorting_button.clicked.connect(self.open_ng_sorting)
+        # self.ng_sorting_button.setFixedSize(150, 60)
+        # self.ng_sorting_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.ng_sorting_button, 0, 0)
+
+        # self.date_copy_button = QPushButton("Date-Based Copy")
+        # self.date_copy_button.clicked.connect(self.open_date_copy)
+        # self.date_copy_button.setFixedSize(150, 60)
+        # self.date_copy_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.date_copy_button, 0, 1)
+
+        # self.image_copy_button = QPushButton("Image Format Copy")
+        # self.image_copy_button.clicked.connect(self.open_image_copy)
+        # self.image_copy_button.setFixedSize(150, 60)
+        # self.image_copy_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.image_copy_button, 0, 2)
+
+        # self.basic_sorting_button = QPushButton("Basic Sorting")
+        # self.basic_sorting_button.clicked.connect(self.open_basic_sorting)
+        # self.basic_sorting_button.setFixedSize(150, 60)
+        # self.basic_sorting_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.basic_sorting_button, 0, 3)
+
+        # self.ng_count_button = QPushButton("NG Count")
+        # self.ng_count_button.clicked.connect(self.open_ng_count)
+        # self.ng_count_button.setFixedSize(150, 60)
+        # self.ng_count_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.ng_count_button, 0, 4)
+
+        # self.simulation_button = QPushButton("Simulation Foldering")
+        # self.simulation_button.clicked.connect(self.open_simulation_foldering)
+        # self.simulation_button.setFixedSize(150, 60)
+        # self.simulation_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.simulation_button, 1, 0)
+
+        # self.crop_button = QPushButton("Crop")
+        # self.crop_button.clicked.connect(self.open_crop)
+        # self.crop_button.setFixedSize(150, 60)
+        # self.crop_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.crop_button, 1, 1)
+
+        # # --------------- 새로 추가: MIM to BMP, Attach FOV, TEMP ----------------
+        # self.mim_to_bmp_button = QPushButton("MIM to BMP")
+        # self.mim_to_bmp_button.clicked.connect(self.open_mim_to_bmp)
+        # self.mim_to_bmp_button.setFixedSize(150, 60)
+        # self.mim_to_bmp_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.mim_to_bmp_button, 1, 2)
+
+        # self.attach_fov_button = QPushButton("Attach FOV")
+        # self.attach_fov_button.clicked.connect(self.open_attach_fov)
+        # self.attach_fov_button.setFixedSize(150, 60)
+        # self.attach_fov_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.attach_fov_button, 1, 3)
+
+        # self.temp_button = QPushButton("TEMP")
+        # self.temp_button.clicked.connect(self.open_temp)
+        # self.temp_button.setFixedSize(150, 60)
+        # self.temp_button.setStyleSheet(button_style())
+        # button_layout.addWidget(self.temp_button, 1, 4)
+        # # -------------------------------------------------------------------------
+
+        # main_layout.addLayout(button_layout)
+        # self.setLayout(main_layout)
 
     def open_ng_sorting(self):
         if 'ng_sorting' not in self.dialogs:

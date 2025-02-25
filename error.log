@@ -322,3 +322,33 @@ Traceback (most recent call last):
   File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 1296, in crop
     raise ValueError(msg)
 ValueError: Coordinate 'right' is less than 'left'
+2025-02-25 12:48:14,992:ERROR:Image Format Copy 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 362, in image_format_copy
+    if not os.path.exists(targets):
+           ^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: _path_exists: path should be string, bytes, os.PathLike or integer, not list
+2025-02-25 15:19:53,890:ERROR:Date-Based Copy 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 333, in date_based_copy
+    futures.append(executor.submit(self.copy_file_chunked, src_file, dst_file))
+                   ^^^^^^^^
+UnboundLocalError: cannot access local variable 'executor' where it is not associated with a value
+2025-02-25 15:20:27,904:ERROR:Date-Based Copy 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 333, in date_based_copy
+    futures.append(executor.submit(self.copy_file_chunked, src_file, dst_file))
+                   ^^^^^^^^
+UnboundLocalError: cannot access local variable 'executor' where it is not associated with a value
+2025-02-25 15:21:16,128:ERROR:Date-Based Copy 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 333, in date_based_copy
+    futures.append(executor.submit(self.copy_file_chunked, src_file, dst_file))
+                   ^^^^^^^^
+UnboundLocalError: cannot access local variable 'executor' where it is not associated with a value
+2025-02-25 15:21:57,422:ERROR:Date-Based Copy 중 오류 발생
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 333, in date_based_copy
+    futures.append(executor.submit(self.copy_file_chunked, src_file, dst_file))
+                   ^^^^^^^^
+UnboundLocalError: cannot access local variable 'executor' where it is not associated with a value
