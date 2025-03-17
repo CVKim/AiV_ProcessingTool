@@ -23,9 +23,9 @@ def main():
 
     def cleanup():
         print("프로그램 종료 중... 실행 중인 작업 정리")
-        os._exit(0)  # 강제 종료
+        os._exit(0)
 
-    app.aboutToQuit.connect(cleanup)  # 앱 종료 시 cleanup 함수 실행
+    app.aboutToQuit.connect(cleanup)
 
     sys.exit(app.exec_())
 

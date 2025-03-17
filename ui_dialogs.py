@@ -138,7 +138,7 @@ class BaseTaskDialog(QDialog):
                 missing_fields.append("Source Path")
             # if not params.get('target'):
             #     missing_fields.append("Target Path")
-        if operation != 'ng_count' and not params.get('formats', []):
+        if operation not in ['ng_count', 'btj'] and not params.get('formats', []):
             missing_fields.append("Image Formats")
         if operation == 'ng_sorting' and not params.get('source2'):
             missing_fields.append("Source Path #2 (Matching Folder)")
@@ -1185,25 +1185,83 @@ class MIMtoBMPDialog(BaseTaskDialog):
             return False
         return True
 
-class TempDialog(BaseTaskDialog):
+class bmptojpgDialog(BaseTaskDialog):
     """
-    임시(미정) 기능으로, 아무런 동작을 하지 않는 Dialog
+    BMP TO JPG 기능: BMP->JPG 변환용 Dialog
     """
     def __init__(self):
-        super().__init__("TEMP 설정")
+        super().__init__("BMP TO JPG 설정 (BMP->JPG 변환)")
         self.init_specific_ui()
 
     def init_specific_ui(self):
-        self.specific_layout.addRow(QLabel("TEMP 기능은 현재 별도의 파라미터가 없습니다."))
+        # Source Pathd
+        self.source_button = QPushButton("Select Source Path (BMP files)")
+        self.source_button.clicked.connect(self.select_source)
+        self.source_path = QLineEdit()
+        self.source_path.setReadOnly(False)
+        self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
+        self.specific_layout.addRow("", self.source_path)
+
+        # Target Path (선택사항: 비워두면 worker에서 자동 지정)
+        self.target_button = QPushButton("Select Target Path (Optional)")
+        self.target_button.clicked.connect(self.select_target)
+        self.target_path = QLineEdit()
+        self.target_path.setReadOnly(False)
+        self.specific_layout.addRow(QLabel("<b>Target Path (optional):</b>"), self.target_button)
+        self.specific_layout.addRow("", self.target_path)
+
+        # 안내 라벨
+        note_label = QLabel("※ Target 미입력 시, Source 뒤에 '_JPG' 폴더가 자동 생성됩니다.")
+        note_label.setStyleSheet("color: #555; font-size: 11px;")
+        self.specific_layout.addRow(note_label)
+
+    def select_source(self):
+        path = QFileDialog.getExistingDirectory(self, "Select Source Folder (BMP files)", "",
+                                                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if path:
+            self.source_path.setText(path)
+
+    def select_target(self):
+        path = QFileDialog.getExistingDirectory(self, "Select Target Folder (Optional)", "",
+                                                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        if path:
+            self.target_path.setText(path)
 
     def get_parameters(self):
         return {
-            'operation': 'temp'
+            'operation': 'btj',  # BMP->JPG 변환용
+            'source': self.source_path.text().strip(),
+            'target': self.target_path.text().strip(),
         }
 
     def validate_parameters(self, params):
-        # 항상 True
+        """
+        - Source는 반드시 있어야 함
+        - Target은 없어도 OK (없으면 worker에서 source+'_JPG' 폴더 생성)
+        """
+        missing_fields = []
+        # Source 필요
+        if not params['source']:
+            missing_fields.append("Source Path (BMP 폴더)")
+
+        # 경로 유효성 체크
+        invalid_paths = []
+        # Source는 꼭 존재해야 함
+        if params['source'] and not os.path.isdir(params['source']):
+            invalid_paths.append("Source Path이(가) 유효하지 않습니다.")
+
+        if missing_fields or invalid_paths:
+            warning_messages = []
+            if missing_fields:
+                warning_messages.append("다음 필드를 입력해야 합니다:")
+                warning_messages.extend(missing_fields)
+            if invalid_paths:
+                warning_messages.append("다음 경로가 유효하지 않습니다:")
+                warning_messages.extend(invalid_paths)
+            QMessageBox.warning(self, "입력 오류", "\n".join(warning_messages))
+            return False
         return True
+
 
 # ---------------------------------------------------------
 # MainWindow
@@ -1256,7 +1314,7 @@ class MainWindow(QWidget):
             ("Crop", self.open_crop),
             ("MIM to BMP", self.open_mim_to_bmp),
             ("Attach FOV", self.open_attach_fov),
-            ("TEMP", self.open_temp),
+            ("BMP TO JPG (BTJ)", self.open_btj),
         ]
 
         for i, (label, func) in enumerate(buttons):
@@ -1400,11 +1458,11 @@ class MainWindow(QWidget):
             self.dialogs['attach_fov'].finished.connect(lambda: self.dialogs.pop('attach_fov', None))
         self.dialogs['attach_fov'].show()
 
-    def open_temp(self):
-        if 'temp' not in self.dialogs:
-            self.dialogs['temp'] = TempDialog()
-            self.dialogs['temp'].finished.connect(lambda: self.dialogs.pop('temp', None))
-        self.dialogs['temp'].show()
+    def open_btj(self):
+        if 'btj' not in self.dialogs:
+            self.dialogs['btj'] = bmptojpgDialog()
+            self.dialogs['btj'].finished.connect(lambda: self.dialogs.pop('btj', None))
+        self.dialogs['btj'].show()
 
 
 # ---------------------------------------------------------
