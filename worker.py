@@ -27,7 +27,7 @@ def set_worker_priority():
 class WorkerThread(QThread):
     progress = pyqtSignal(int)
     log = pyqtSignal(str)
-    ng_count_result = pyqtSignal(list)
+    ng_count_result = pyqtSignal(object)
     finished = pyqtSignal(str)
 
     def __init__(self, task):
@@ -439,7 +439,8 @@ class WorkerThread(QThread):
     def simulation_foldering(self, task):
         self.log.emit("------ Simulation Foldering 작업 시작 ------")
         self.finished.emit("Simulation Foldering 작업 완료.")
-
+        
+    
     ########################################################################
     # 5) NG Count
     ########################################################################
@@ -488,13 +489,29 @@ class WorkerThread(QThread):
                         self.log.emit(f"Defect {defect_path} 항목 계산 오류: {e}")
                 progress_percent = int((i / total_cams) * 100)
                 self.progress.emit(min(progress_percent, 100))
-            self.ng_count_result.emit(ng_count_data)
-            self.finished.emit(f"NG Count 완료. Cam: {total_cams}, Defect: {total_defects}")
+            
+            # 추가: NG 폴더의 부모 폴더에서 "ng", "ok", "ng_info"를 제외한 폴더 수를 계산
+            parent_folder = os.path.dirname(ng_folder)
+            exclude = {'ng', 'ok', 'ng_info'}
+            total_top_folders = 0
+            if os.path.isdir(parent_folder):
+                try:
+                    with os.scandir(parent_folder) as it:
+                        top_folders = [entry.name for entry in it 
+                                       if entry.is_dir() and entry.name.lower() not in exclude]
+                    total_top_folders = len(top_folders)
+                except Exception as e:
+                    self.log.emit(f"상위 폴더 탐색 오류: {e}")
+            
+            # 결과를 tuple로 emit : (ng_count_data, total_top_folders, total_cams, total_defects)
+            self.ng_count_result.emit((ng_count_data, total_top_folders, total_cams, total_defects))
+            # self.finished.emit(f"NG Count 완료. Cam Count: {total_cams}, Defect: {total_defects}")
             self.log.emit("------ NG Count 작업 완료 ------")
         except Exception as e:
             logging.error("NG Count 오류", exc_info=True)
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("NG Count 중 오류 발생.")
+
             
     ########################################################################
     # 6) Basic Sorting

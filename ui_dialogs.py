@@ -899,25 +899,35 @@ class NGCountDialog(QDialog):
 
     def initUI(self):
         layout = QVBoxLayout()
+
+        # 폴더 선택 영역
         form_layout = QFormLayout()
         self.ng_folder_button = QPushButton("Select NG Folder")
         self.ng_folder_button.clicked.connect(self.select_ng_folder)
         self.ng_folder_path = QLineEdit()
-        self.ng_folder_path.setReadOnly(False)
+        self.ng_folder_path.setReadOnly(True)
         form_layout.addRow(QLabel("<b>Counting - Select NG folder:</b>"), self.ng_folder_button)
         form_layout.addRow("", self.ng_folder_path)
         layout.addLayout(form_layout)
 
-        ng_count_results_layout = QHBoxLayout()
+        # 결과 표시 영역 : NG Count Results, summary_label, 그리고 Copy 버튼을 한 줄에 배치
+        results_layout = QHBoxLayout()
+        # NG Count Results 라벨
         ng_count_label = QLabel("<b>NG Count Results:</b>")
+        results_layout.addWidget(ng_count_label)
+        # summary_label: 확장 배분(stretch factor 1)을 주어 남은 공간을 채우도록 함
+        self.summary_label = QLabel("<div style='text-align:left;'><b>----- :</b></div>")
+        self.summary_label.setTextFormat(Qt.RichText)
+        self.summary_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        results_layout.addWidget(self.summary_label, 1)
+        # Copy 버튼
         self.copy_button = QPushButton("Copy")
         self.copy_button.setFixedSize(60, 25)
         self.copy_button.clicked.connect(self.copy_table_to_clipboard)
-        ng_count_results_layout.addWidget(ng_count_label)
-        ng_count_results_layout.addStretch()
-        ng_count_results_layout.addWidget(self.copy_button)
-        layout.addLayout(ng_count_results_layout)
+        results_layout.addWidget(self.copy_button)
+        layout.addLayout(results_layout)
 
+        # 결과 테이블 영역
         self.table_widget = QTableWidget()
         self.table_widget.setColumnCount(3)
         self.table_widget.setHorizontalHeaderLabels(["CamNum", "Defect Name", "Count"])
@@ -926,6 +936,7 @@ class NGCountDialog(QDialog):
         self.table_widget.setEditTriggers(QTableWidget.NoEditTriggers)
         layout.addWidget(self.table_widget)
 
+        # 진행률 바
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
         self.progress_bar.setMaximum(100)
@@ -943,6 +954,7 @@ class NGCountDialog(QDialog):
         """)
         layout.addWidget(self.progress_bar)
 
+        # 시작/중지 버튼 영역
         button_layout = QHBoxLayout()
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self.start_task)
@@ -969,6 +981,7 @@ class NGCountDialog(QDialog):
             return
         self.table_widget.setRowCount(0)
         self.progress_bar.setValue(0)
+        self.summary_label.setText("<div style='text-align:left;'><b>----- :</b></div>")
         ng_folder = self.ng_folder_path.text()
         if not ng_folder:
             QMessageBox.warning(self, "입력 오류", "NG 폴더를 선택해야 합니다.")
@@ -977,7 +990,6 @@ class NGCountDialog(QDialog):
         self.worker = WorkerThread(task)
         self.worker.progress.connect(self.update_progress)
         self.worker.ng_count_result.connect(self.update_ng_count_table)
-        self.worker.log.connect(self.append_log)
         self.worker.finished.connect(self.task_finished)
         self.worker.start()
         self.start_button.setEnabled(False)
@@ -986,30 +998,39 @@ class NGCountDialog(QDialog):
     def stop_task(self):
         if self.worker and self.worker.isRunning():
             self.worker.stop()
-            self.append_log("Stop 신호를 보냈습니다.")
+            self.summary_label.setText("Stop 신호를 보냈습니다.")
             self.stop_button.setEnabled(False)
-
-    def append_log(self, message):
-        # NGCountDialog에서는 별도 log_area가 없으므로 pass
-        pass
 
     def update_progress(self, value):
         self.progress_bar.setValue(value)
 
-    def update_ng_count_table(self, data):
-        self.table_widget.setRowCount(len(data))
-        for row, (cam, defect, count) in enumerate(data):
+    def update_ng_count_table(self, data_tuple):
+        """
+        data_tuple: (ng_count_data, total_top_folders, total_cams, total_defects)
+        """
+        ng_count_data, total_top_folders, total_cams, total_defects = data_tuple
+        self.table_widget.setRowCount(len(ng_count_data))
+        for row, (cam, defect, count) in enumerate(ng_count_data):
             cam_item = QTableWidgetItem(cam)
             defect_item = QTableWidgetItem(defect)
             count_item = QTableWidgetItem(str(count))
             self.table_widget.setItem(row, 0, cam_item)
             self.table_widget.setItem(row, 1, defect_item)
             self.table_widget.setItem(row, 2, count_item)
+        summary_text = (f"Total Folder - {total_top_folders}, "
+                        f"Search Cam Count : {total_cams}, "
+                        f"Defect Count : {total_defects}")
+        # HTML로 좌측 정렬, 굵게 표시
+        html_text = f"<div style='text-align:left;'><b>{summary_text}</b></div>"
+        self.summary_label.setText(html_text)
 
     def task_finished(self, message):
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
-        QMessageBox.information(self, "작업 완료", message)
+        # 완료 메시지는 summary_label의 기존 HTML 텍스트에 이어서 추가
+        current_text = self.summary_label.text()
+        # 간단하게 HTML 태그 제거 없이 추가
+        self.summary_label.setText(current_text + f" | {message}")
 
     def copy_table_to_clipboard(self):
         if self.table_widget.rowCount() == 0:
@@ -1023,10 +1044,7 @@ class NGCountDialog(QDialog):
             row_data = []
             for column in range(self.table_widget.columnCount()):
                 item = self.table_widget.item(row, column)
-                if item is not None:
-                    row_data.append(item.text())
-                else:
-                    row_data.append('')
+                row_data.append(item.text() if item is not None else '')
             data.append('\t'.join(row_data))
         clipboard.setText('\n'.join(data))
         QMessageBox.information(self, "복사 완료", "Copy to the clipboard")
@@ -1333,7 +1351,7 @@ class MainWindow(QWidget):
         
         print("프로그램 종료 중... 실행 중인 작업 정리")
         self.thread_pool.clear()  
-        self.thread_pool.waitForDone(1000)  # 최대 3초 동안 종료 시도
+        self.thread_pool.waitForDone(1000)  # 최대 1초 동안 종료 시도
 
         sys.exit(0)  
         
