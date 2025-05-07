@@ -1140,68 +1140,147 @@ class AttachFOVDialog(BaseTaskDialog):
             return False
         return True
 
+# ---------------------- 새로 정의: MIMtoBMPDialog ----------------------
 class MIMtoBMPDialog(BaseTaskDialog):
+    """
+    · INI 파일 하나를 골라 내용을 열람/수정/저장/되돌리기
+    · INI 로드 시 모든 [PATH*] 섹션의 Source/Target 항목을 자동으로 비움
+    · [Start] → WorkerThread 로   {'operation':'mim_to_bmp', 'ini_path': <path>}  전달
+    """
     def __init__(self):
         super().__init__("MIM to BMP 설정")
+        self._ini_path   = ""
+        self._orig_text  = ""
         self.init_specific_ui()
 
+    # ---------- UI ----------
     def init_specific_ui(self):
-        # (기능 상세 요구사항이 미정이므로 간단히 Source/Target만)
-        self.source_button = QPushButton("Select Source Path (MIM files)")
-        self.source_button.clicked.connect(self.select_source)
-        self.source_path = QLineEdit()
-        self.source_path.setReadOnly(False)
-        self.specific_layout.addRow(QLabel("<b>Source Path:</b>"), self.source_button)
-        self.specific_layout.addRow("", self.source_path)
+        # ─ INI 선택 --------------------------------------------------------------
+        self.ini_btn = QPushButton("Select INI file")
+        self.ini_btn.clicked.connect(self.select_ini)
+        self.ini_path_edit = QLineEdit(); self.ini_path_edit.setReadOnly(True)
 
-        self.target_button = QPushButton("Select Target Path (BMP out)")
-        self.target_button.clicked.connect(self.select_target)
-        self.target_path = QLineEdit()
-        self.target_path.setReadOnly(False)
-        self.specific_layout.addRow(QLabel("<b>Target Path:</b>"), self.target_button)
-        self.specific_layout.addRow("", self.target_path)
+        self.specific_layout.addRow(QLabel("<b>INI Path:</b>"), self.ini_btn)
+        self.specific_layout.addRow("", self.ini_path_edit)
 
-    def select_source(self):
-        source = QFileDialog.getExistingDirectory(self, "Select Source Folder (MIM files)", "",
-                                                 QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
-        if source:
-            self.source_path.setText(source)
+        # ─ INI 내용 편집 ---------------------------------------------------------
+        self.ini_editor = QTextEdit(); self.ini_editor.setEnabled(False)
+        self.ini_editor.setFontFamily("Consolas")
+        self.ini_editor.setLineWrapMode(QTextEdit.NoWrap)
+        self.specific_layout.addRow(QLabel("<b>INI Contents:</b>"), self.ini_editor)
 
-    def select_target(self):
-        target = QFileDialog.getExistingDirectory(self, "Select Target Folder (BMP out)", "",
-                                                 QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
-        if target:
-            self.target_path.setText(target)
+        # ─ Save / Reload --------------------------------------------------------
+        hl = QHBoxLayout()
+        self.save_btn   = QPushButton("Save");   self.save_btn.setEnabled(False)
+        self.reload_btn = QPushButton("Reload"); self.reload_btn.setEnabled(False)
+        self.save_btn.clicked.connect(self.save_ini)
+        self.reload_btn.clicked.connect(self.reload_ini)
+        hl.addWidget(self.save_btn); hl.addWidget(self.reload_btn)
+        self.specific_layout.addRow("", hl)
 
+    # ---------- 내부 유틸 ----------
+    def _clear_path_fields(self, ini_path: str) -> bool:
+        """
+        INI 의 모든 [PATH*] 섹션에서
+            Source mim path=
+            Target img path=
+        값을 '' 로 덮어쓰고 저장.
+        변경이 실제 발생했을 때만 True 반환.
+        """
+        import configparser, os
+        cfg = configparser.ConfigParser()
+        cfg.optionxform = str          # 대/소문자 보존
+        cfg.read(ini_path, encoding='utf-8')
+
+        changed = False
+        for sec in cfg.sections():
+            if sec.upper().startswith("PATH"):
+                if cfg[sec].get('Source mim path', ''):
+                    cfg[sec]['Source mim path'] = ''
+                    changed = True
+                if cfg[sec].get('Target img path', ''):
+                    cfg[sec]['Target img path'] = ''
+                    changed = True
+
+        if changed:
+            with open(ini_path, 'w', encoding='utf-8') as fw:
+                cfg.write(fw)
+        return changed
+
+    # ---------- 슬롯 ----------
+    def select_ini(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Select mim_converter_config.ini", "", "INI files (*.ini)"
+        )
+        if not path:
+            return
+
+        # ① 경로 클리어 + 저장 ---------------------------------------------------
+        cleared = False
+        try:
+            cleared = self._clear_path_fields(path)
+            if cleared:
+                self.append_log(f"[INI] PATH 섹션의 Source/Target 값을 초기화하여 저장했습니다 → {path}")
+            else:
+                self.append_log(f"[INI] 이미 경로가 비어있거나 PATH 섹션이 없습니다 → {path}")
+        except Exception as e:
+            QMessageBox.critical(self, "INI 처리 오류", str(e))
+            return
+
+        # ② 에디터에 로드 --------------------------------------------------------
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                text = f.read()
+        except Exception as e:
+            QMessageBox.critical(self, "INI 열기 오류", str(e))
+            return
+
+        self._ini_path  = path
+        self._orig_text = text
+        self.ini_path_edit.setText(path)
+        self.ini_editor.setPlainText(text)
+        self.ini_editor.setEnabled(True)
+        self.save_btn.setEnabled(True)
+        self.reload_btn.setEnabled(True)
+        self.append_log(f"INI 로드 완료: {path}")
+
+    def save_ini(self):
+        if not self._ini_path:
+            return
+        try:
+            with open(self._ini_path, 'w', encoding='utf-8') as f:
+                f.write(self.ini_editor.toPlainText())
+            self._orig_text = self.ini_editor.toPlainText()
+            self.append_log(f"INI 저장 완료: {self._ini_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "저장 오류", str(e))
+
+    def reload_ini(self):
+        if not self._ini_path:
+            return
+        try:
+            with open(self._ini_path, 'r', encoding='utf-8') as f:
+                text = f.read()
+            self.ini_editor.setPlainText(text)
+            self._orig_text = text
+            self.append_log(f"INI 되돌리기: {self._ini_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "로드 오류", str(e))
+
+    # ---------- BaseTaskDialog override ----------
     def get_parameters(self):
         return {
             'operation': 'mim_to_bmp',
-            'source': self.source_path.text(),
-            'target': self.target_path.text()
+            'ini_path' : self._ini_path.strip()
         }
 
     def validate_parameters(self, params):
-        missing_fields = []
-        if not params['source']:
-            missing_fields.append("Source Path")
-        if not params['target']:
-            missing_fields.append("Target Path")
-        invalid_paths = []
-        for field in ['source', 'target']:
-            if params[field] and not os.path.isdir(params[field]):
-                invalid_paths.append(f"{field.capitalize()} Path이(가) 유효하지 않습니다.")
-
-        if missing_fields or invalid_paths:
-            warning_messages = []
-            if missing_fields:
-                warning_messages.append("다음 필드를 입력해야 합니다:")
-                warning_messages.extend(missing_fields)
-            if invalid_paths:
-                warning_messages.append("다음 경로가 유효하지 않습니다:")
-                warning_messages.extend(invalid_paths)
-            QMessageBox.warning(self, "입력 오류", "\n".join(warning_messages))
+        ini_path = params.get('ini_path', '')
+        if not ini_path or not os.path.isfile(ini_path):
+            QMessageBox.warning(self, "입력 오류", "INI 파일을 선택해야 합니다.")
             return False
         return True
+
 
 class bmptojpgDialog(BaseTaskDialog):
     """

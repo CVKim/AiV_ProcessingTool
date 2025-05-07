@@ -4,3 +4,5 @@ AiV_ProTool/
 *.spec
 *.log
 *.pyc
+*.ini
+*.exe

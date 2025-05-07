@@ -909,13 +909,62 @@ class WorkerThread(QThread):
             logging.error("attach_two_images 오류", exc_info=True)
             return f"오류 발생: {str(e)}"
 
-    ########################################################################
-    # B) MIM to BMP
-    ########################################################################
     def mim_to_bmp(self, task):
+        """
+        ▸ task['ini_path'] 하나만 받아 해당 ini 로 mim2color.exe 실행
+        ▸ 현재 작업 폴더(os.getcwd())에서 mim2color.exe 를 찾아 새 콘솔로 띄운다.
+        """
         self.log.emit("------ MIM to BMP 작업 시작 ------")
-        self.log.emit("Placeholder 기능")
-        self.finished.emit("MIM to BMP 작업 완료(Placeholder).")
+        try:
+            import sys, subprocess, os, logging
+
+            # ────────────────────────────────────────────────────────────
+            # 1) 실행 파일 위치 결정
+            #    ‣ ① CWD 에 mim2color.exe 있음 → OK
+            #    ‣ ② 없으면  스크립트(.py) 가 있는 폴더에서 재시도
+            # ────────────────────────────────────────────────────────────
+            cwd_dir   = os.getcwd()
+            exe_path  = os.path.join(cwd_dir, 'mim2color.exe')
+
+            if not os.path.isfile(exe_path):
+                script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+                exe_path   = os.path.join(script_dir, 'mim2color.exe')
+
+            if not os.path.isfile(exe_path):
+                self.log.emit(f"mim2color.exe 를 찾을 수 없습니다:\n  {cwd_dir}\n  {exe_path}")
+                self.finished.emit("MIM to BMP 중지됨.")
+                return
+
+            ini_path = task.get('ini_path', '').strip()
+            if not ini_path or not os.path.isfile(ini_path):
+                self.log.emit("INI 경로가 유효하지 않습니다.")
+                self.finished.emit("MIM to BMP 중지됨.")
+                return
+
+            self.log.emit(f"INI 사용: {ini_path}")
+            self.log.emit(f"실행 파일: {exe_path}")
+
+            # ─ 새 콘솔 창 플래그 (Windows) ────────────────────────────
+            creation_flags = 0
+            if os.name == 'nt':
+                creation_flags = getattr(subprocess,
+                                         'CREATE_NEW_CONSOLE', 0x00000010)
+
+            # ─ 콘솔 창을 열고 실행 (stdout/stderr 는 새 콘솔로) ──────
+            subprocess.Popen(
+                [exe_path, ini_path],
+                cwd=os.path.dirname(exe_path),      # exe 와 같은 폴더
+                creationflags=creation_flags
+            )
+
+            self.progress.emit(100)
+            self.finished.emit("mim2color.exe 실행 지시 완료 (새 콘솔 창).")
+            self.log.emit("------ 작업 지시 후 종료 ------")
+
+        except Exception as e:
+            logging.error("MIM to BMP 오류", exc_info=True)
+            self.log.emit(f"오류 발생: {e}")
+            self.finished.emit("MIM to BMP 중 오류 발생.")
 
     ########################################################################
     # C) TEMP
