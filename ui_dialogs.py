@@ -212,13 +212,13 @@ class BasicSortingDialog(BaseTaskDialog):
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
         formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_fov_jpg)
+        formats_layout.addWidget(self.format_org_jpg)
+        formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
+        # self.format_bmp.setChecked(True)
 
     def toggle_inner_id(self, state):
         if state == Qt.Checked:
@@ -351,13 +351,13 @@ class NGSortingDialog(BaseTaskDialog):
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
         formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_fov_jpg)
+        formats_layout.addWidget(self.format_org_jpg)
+        formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
+        # self.format_bmp.setChecked(True)
 
     def add_source_folder(self):
         parent_folder = QFileDialog.getExistingDirectory(self, "Select Parent Folder", "",
@@ -560,13 +560,13 @@ class DateBasedCopyDialog(BaseTaskDialog):
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
         formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_fov_jpg)
+        formats_layout.addWidget(self.format_org_jpg)
+        formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
+        # self.format_bmp.setChecked(True)
 
     def on_strong_random_changed(self, state):
         if state == Qt.Checked:
@@ -729,13 +729,13 @@ class ImageFormatCopyDialog(BaseTaskDialog):
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
         formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_fov_jpg)
+        formats_layout.addWidget(self.format_org_jpg)
+        formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
+        # self.format_bmp.setChecked(True)
 
     def select_source(self):
         source = QFileDialog.getExistingDirectory(self, "Select Source Folder", "",
@@ -822,13 +822,13 @@ class SimulationFolderingDialog(BaseTaskDialog):
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
         formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_fov_jpg)
+        formats_layout.addWidget(self.format_org_jpg)
+        formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
+        # self.format_bmp.setChecked(True)
 
     def select_source(self):
         source = QFileDialog.getExistingDirectory(self, "Select Source Folder", "",
@@ -1623,13 +1623,13 @@ class CropDialog(BaseTaskDialog):
         self.format_mim = QCheckBox("MIM")
         self.format_png = QCheckBox("PNG")
         formats_layout = QHBoxLayout()
-        formats_layout.addWidget(self.format_bmp)
-        formats_layout.addWidget(self.format_org_jpg)
-        formats_layout.addWidget(self.format_fov_jpg)
         formats_layout.addWidget(self.format_mim)
+        formats_layout.addWidget(self.format_fov_jpg)
+        formats_layout.addWidget(self.format_org_jpg)
+        formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        self.format_bmp.setChecked(True)
+        # self.format_bmp.setChecked(True)
 
     def select_source(self):
         path = QFileDialog.getExistingDirectory(self, "Select Source Folder", "",
