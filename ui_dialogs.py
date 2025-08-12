@@ -7,8 +7,9 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout,
     QFormLayout, QLineEdit, QProgressBar, QFileDialog, QMessageBox, QLabel,
     QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QDateTimeEdit,
-    QTextEdit, QDialog, QSpinBox, QCheckBox
+    QTextEdit, QDialog, QSpinBox, QCheckBox, QComboBox   # ← 추가
 )
+
 from PyQt5.QtCore import Qt, QDateTime
 from PyQt5.QtGui import QIcon
 from worker import WorkerThread
@@ -1569,6 +1570,21 @@ class CropDialog(BaseTaskDialog):
         super().__init__("Crop 설정")
         self.init_specific_ui()
 
+    def toggle_xywh_labels(self, state):
+        if state == Qt.Checked:
+            # xywh 모드
+            self.left_top_x_input.setPlaceholderText("START_X")
+            self.left_top_y_input.setPlaceholderText("START_Y")
+            self.right_bottom_x_input.setPlaceholderText("WIDTH")
+            self.right_bottom_y_input.setPlaceholderText("HEIGHT")
+        else:
+            # 기존 ltrb 모드
+            self.left_top_x_input.setPlaceholderText("LEFT_TOP_X")
+            self.left_top_y_input.setPlaceholderText("LEFT_TOP_Y")
+            self.right_bottom_x_input.setPlaceholderText("RIGHT_BOTTOM_X")
+            self.right_bottom_y_input.setPlaceholderText("RIGHT_BOTTOM_Y")
+
+
     def init_specific_ui(self):
         # Source Path
         self.source_button = QPushButton("Select Source Path")
@@ -1591,26 +1607,35 @@ class CropDialog(BaseTaskDialog):
         self.fov_input.setPlaceholderText("FOV Number(s), e.g., 1,2,3 or 1,2,3/5")
         self.specific_layout.addRow(QLabel("<b>FOV Number(s):</b>"), self.fov_input)
 
-        # Crop Area (4 정수)
-        crop_layout = QHBoxLayout()
+        # 좌표 모드 콤보박스 (ltrb / xywh)
+        self.coords_mode_combo = QComboBox()
+        self.coords_mode_combo.addItems([
+            "ltrb (Left/Top/Right/Bottom)",
+            "xywh (StartX/StartY/Width/Height)"
+        ])
+        self.coords_mode_combo.setCurrentIndex(0)  # 기본 ltrb
+        self.coords_mode_combo.currentIndexChanged.connect(self._on_coords_mode_changed)
+        self.specific_layout.addRow(QLabel("<b>Coords Mode:</b>"), self.coords_mode_combo)
 
+        # Crop Area (4 정수) — ★ 먼저 생성
+        crop_layout = QHBoxLayout()
         self.left_top_x_input = QLineEdit()
+        self.left_top_y_input = QLineEdit()
+        self.right_bottom_x_input = QLineEdit()
+        self.right_bottom_y_input = QLineEdit()
+
+        # 기본 placeholder (ltrb)
         self.left_top_x_input.setPlaceholderText("LEFT_TOP_X")
+        self.left_top_y_input.setPlaceholderText("LEFT_TOP_Y")
+        self.right_bottom_x_input.setPlaceholderText("RIGHT_BOTTOM_X")
+        self.right_bottom_y_input.setPlaceholderText("RIGHT_BOTTOM_Y")
+
         crop_layout.addWidget(QLabel("LeftX:"))
         crop_layout.addWidget(self.left_top_x_input)
-
-        self.left_top_y_input = QLineEdit()
-        self.left_top_y_input.setPlaceholderText("LEFT_TOP_Y")
         crop_layout.addWidget(QLabel("TopY:"))
         crop_layout.addWidget(self.left_top_y_input)
-
-        self.right_bottom_x_input = QLineEdit()
-        self.right_bottom_x_input.setPlaceholderText("RIGHT_BOTTOM_X")
         crop_layout.addWidget(QLabel("RightX:"))
         crop_layout.addWidget(self.right_bottom_x_input)
-
-        self.right_bottom_y_input = QLineEdit()
-        self.right_bottom_y_input.setPlaceholderText("RIGHT_BOTTOM_Y")
         crop_layout.addWidget(QLabel("BotY:"))
         crop_layout.addWidget(self.right_bottom_y_input)
 
@@ -1629,6 +1654,7 @@ class CropDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+
         # self.format_bmp.setChecked(True)
 
     def select_source(self):
@@ -1655,20 +1681,37 @@ class CropDialog(BaseTaskDialog):
             formats.append(".mim")
         if self.format_png.isChecked():
             formats.append(".png")
-
+            
         return {
-            'operation': 'crop',
-            'source': self.source_path.text(),
-            'target': self.target_path.text(),
-            'formats': formats,
-            # 추가된 fov_number
-            'fov_number': self.fov_input.text().strip(),
-            # crop 4개 좌표
-            'left_top_x': self.left_top_x_input.text().strip(),
-            'left_top_y': self.left_top_y_input.text().strip(),
-            'right_bottom_x': self.right_bottom_x_input.text().strip(),
-            'right_bottom_y': self.right_bottom_y_input.text().strip()
-        }
+                'operation': 'crop',
+                'source': self.source_path.text(),
+                'target': self.target_path.text(),
+                'formats': formats,
+                'fov_number': self.fov_input.text().strip(),
+                'left_top_x': self.left_top_x_input.text().strip(),
+                'left_top_y': self.left_top_y_input.text().strip(),
+                'right_bottom_x': self.right_bottom_x_input.text().strip(),
+                'right_bottom_y': self.right_bottom_y_input.text().strip(),
+                'coords_mode': 'xywh' if getattr(self, 'coords_mode_combo', None) and self.coords_mode_combo.currentIndex() == 1 else 'ltrb'
+            }
+            
+            
+    def _on_coords_mode_changed(self, idx):
+        if idx == 0:  # ltrb
+            self.left_top_x_input.setPlaceholderText("LEFT_TOP_X")
+            self.left_top_y_input.setPlaceholderText("LEFT_TOP_Y")
+            self.right_bottom_x_input.setPlaceholderText("RIGHT_BOTTOM_X")
+            self.right_bottom_y_input.setPlaceholderText("RIGHT_BOTTOM_Y")
+        else:  # xywh
+            self.left_top_x_input.setPlaceholderText("START_X")
+            self.left_top_y_input.setPlaceholderText("START_Y")
+            self.right_bottom_x_input.setPlaceholderText("WIDTH")
+            self.right_bottom_y_input.setPlaceholderText("HEIGHT")
+
+
+
+
+
 
     def validate_parameters(self, params):
         missing_fields = []

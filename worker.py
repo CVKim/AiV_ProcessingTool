@@ -10,6 +10,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
 from datetime import datetime
 
+import json
+
+from PIL import Image, ImageOps, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True  
+
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s:%(levelname)s:%(message)s')
 
@@ -716,7 +721,7 @@ class WorkerThread(QThread):
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("작업 중지됨.")
 
-    ########################################################################
+        ########################################################################
     # 7) Crop
     ########################################################################
     def crop_images(self, task):
@@ -726,18 +731,37 @@ class WorkerThread(QThread):
             target = task['target']
             formats = task['formats']
             fov_number_input = task.get('fov_number', '').strip()
+
+            # 1) 좌표 파싱 + 모드(ltrb / xywh) 처리
             try:
-                left_top_x = int(task['left_top_x'])
-                left_top_y = int(task['left_top_y'])
-                right_bottom_x = int(task['right_bottom_x'])
-                right_bottom_y = int(task['right_bottom_y'])
+                x1 = int(task['left_top_x'])
+                y1 = int(task['left_top_y'])
+                x2 = int(task['right_bottom_x'])
+                y2 = int(task['right_bottom_y'])
+
+                coords_mode = task.get('coords_mode', 'ltrb')  # 'xywh' or 'ltrb'
+                if coords_mode == 'xywh':
+                    # x1,y1: start; x2,y2: width,height 로 들어온다고 가정
+                    start_x, start_y, width, height = x1, y1, x2, y2
+                    if width < 0 or height < 0:
+                        self.log.emit(f"경고: width/height가 음수입니다. 절대값으로 보정합니다 (w={width}, h={height})")
+                        width, height = abs(width), abs(height)
+                    if width == 0 or height == 0:
+                        self.log.emit("경고: width/height가 0입니다. 크롭을 중지합니다.")
+                        self.finished.emit("Crop 중지됨.")
+                        return
+                    x1, y1 = start_x, start_y
+                    x2, y2 = start_x + width, start_y + height
             except Exception as e:
                 self.log.emit(f"Crop 좌표 오류: {str(e)}")
                 self.finished.emit("Crop 중지됨.")
                 return
+
+            # 2) 준비
             fov_numbers = None
             if fov_number_input:
                 fov_numbers = self.parse_fov_numbers(fov_number_input)
+
             if not os.path.exists(source):
                 self.log.emit(f"Source 경로 없음: {source}")
                 self.finished.emit("Crop 중지됨.")
@@ -745,16 +769,23 @@ class WorkerThread(QThread):
             if not self.ensure_target_folder(target):
                 self.finished.emit("Crop 중지됨.")
                 return
-            all_files = self.collect_crop_candidates(root_folder=source, formats=formats, fov_numbers=fov_numbers)
+
+            all_files = self.collect_crop_candidates(
+                root_folder=source, formats=formats, fov_numbers=fov_numbers
+            )
             total_images = len(all_files)
             if total_images == 0:
                 self.log.emit("조건에 맞는 이미지 없음")
                 self.finished.emit("Crop 완료.")
                 return
+
             self.log.emit(f"총 Crop 대상 이미지 수: {total_images}")
             total_processed_images = 0
-            crop_coords = (left_top_x, left_top_y, right_bottom_x, right_bottom_y)
-            self.log.emit(f"Crop 영역: {crop_coords}")
+            crop_coords = (x1, y1, x2, y2)
+            self.log.emit(f"Crop 영역(LTRB): {crop_coords}")
+
+            # 3) 실행
+            from concurrent.futures import ThreadPoolExecutor, as_completed
             with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
                 futures = []
                 for (file_path, inner_id) in all_files:
@@ -762,10 +793,33 @@ class WorkerThread(QThread):
                         self.log.emit(f"작업 중지: 처리 이미지 {total_processed_images}")
                         self.finished.emit(f"작업 중지됨. 처리 이미지: {total_processed_images}")
                         return
+
                     orig_filename = os.path.basename(file_path)
-                    new_filename = f"{inner_id}_{orig_filename}"
+                    file_base, file_ext = os.path.splitext(orig_filename)
+
+                    # 루트(=source) 바로 아래 있는 파일이면 원본 이름 그대로 유지
+                    # 하위 폴더(폴더 기반 작업)에서 올라온 파일이면 inner_id 프리픽스 사용
+                    use_prefix = (os.path.dirname(file_path) != source)
+                    new_filename = f"{inner_id}_{orig_filename}" if use_prefix else orig_filename
                     dst_file = os.path.join(target, new_filename)
-                    futures.append(executor.submit(self.crop_image, file_path, dst_file, crop_coords))
+
+                    # BMP+JSON 페어 처리
+                    src_dir = os.path.dirname(file_path)
+                    json_path = os.path.join(src_dir, f"{file_base}.json")
+
+                    if file_ext.lower() == ".bmp" and os.path.isfile(json_path):
+                        new_base = os.path.splitext(new_filename)[0]
+                        dst_json = os.path.join(target, f"{new_base}.json")
+                        debug_draw_path = os.path.join(target, f"{new_base}_draw.bmp")
+                        futures.append(
+                            executor.submit(
+                                self.crop_image_and_json_pair,
+                                file_path, dst_file, json_path, dst_json, crop_coords, debug_draw_path
+                            )
+                        )
+                    else:
+                        futures.append(executor.submit(self.crop_image, file_path, dst_file, crop_coords))
+
                 for future in as_completed(futures):
                     if self._is_stopped:
                         self.log.emit(f"작업 중지: 처리 이미지 {total_processed_images}")
@@ -777,12 +831,15 @@ class WorkerThread(QThread):
                         self.log.emit(result)
                         progress_percent = int((total_processed_images / total_images) * 100)
                         self.progress.emit(min(progress_percent, 100))
+
             self.finished.emit(f"Crop 완료. 처리 이미지: {total_processed_images}")
             self.log.emit("------ Crop 작업 완료 ------")
+
         except Exception as e:
             logging.error("Crop 중 오류 발생", exc_info=True)
             self.log.emit(f"오류 발생: {str(e)}")
             self.finished.emit("Crop 중 오류 발생.")
+
 
     ########################################################################
     # A) Attach FOV
@@ -1165,16 +1222,268 @@ class WorkerThread(QThread):
             logging.error("Filtered folder copy 오류", exc_info=True)
             return f"오류 발생: {str(e)}"
 
+## ============================
+    def crop_image_and_json_pair(self, src_img, dst_img, src_json, dst_json, crop_coords, debug_draw_path):
+        """
+        BMP를 크롭 저장하고, 동명이본 JSON을 같은 크롭 오프셋만큼 보정하여 저장.
+        디버그용으로 라벨/박스를 그린 _draw 이미지를 추가 저장.
+        """
+        try:
+            # 1) 이미지 크롭
+            with Image.open(src_img) as img:
+                img = ImageOps.exif_transpose(img)
+                img.load()
+
+                x1, y1, x2, y2 = crop_coords
+                # 정규화/클램프 (기존 crop_image와 동일 규칙)
+                if x1 > x2: x1, x2 = x2, x1
+                if y1 > y2: y1, y2 = y2, y1
+                w, h = img.size
+                x1 = max(0, min(x1, w))
+                y1 = max(0, min(y1, h))
+                x2 = max(0, min(x2, w))
+                y2 = max(0, min(y2, h))
+                if x2 <= x1 or y2 <= y1:
+                    return f"SKIP: 크롭 영역이 유효하지 않음 (img={w}x{h}, box=({x1},{y1},{x2},{y2}))"
+
+                cropped = img.crop((x1, y1, x2, y2))
+                try:
+                    cropped.save(dst_img)
+                except OSError:
+                    cropped = cropped.convert("RGB")
+                    cropped.save(dst_img)
+
+                new_w, new_h = cropped.size
+
+            # 2) JSON 보정 & 저장
+            self._adjust_and_save_json(
+                src_json_path=src_json,
+                dst_json_path=dst_json,
+                crop_box=(x1, y1, x2, y2),
+                new_size=(new_w, new_h),
+                new_image_filename=os.path.basename(dst_img),
+                debug_draw_path=debug_draw_path,   # 디버그 드로잉도 여기서 처리
+                debug_base_image_path=dst_img
+            )
+
+            return f"Cropped+JSON {src_img} -> {dst_img}, JSON -> {dst_json}"
+
+        except Exception as e:
+            logging.error("crop_image_and_json_pair 오류", exc_info=True)
+            # 실패 시 생성물 정리(부분 파일 삭제)
+            try:
+                if os.path.exists(dst_img): os.remove(dst_img)
+                if os.path.exists(dst_json): os.remove(dst_json)
+                if os.path.exists(debug_draw_path): os.remove(debug_draw_path)
+            except:
+                pass
+            return f"오류 발생: {str(e)}"
+
+
+    def _adjust_and_save_json(self, src_json_path, dst_json_path, crop_box, new_size, new_image_filename,
+                            debug_draw_path=None, debug_base_image_path=None):
+        """
+        Labelme 유사 JSON을 크롭 오프셋만큼 보정하여 저장.
+        - shapes[*].points: (x-x1, y-y1) 보정 + 경계 클램프
+        - bbox: points로 재계산하여 반영
+        - rois: [x1,y1,x2,y2] 보정 + 경계 클램프
+        - imagePath, imageWidth, imageHeight 갱신
+        - debug_draw_path가 주어지면, 크롭된 이미지를 불러 라벨/박스를 그려 저장
+        """
+        with open(src_json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        x1, y1, x2, y2 = crop_box
+        new_w, new_h = new_size
+
+        shapes = data.get("shapes", [])
+        for shp in shapes:
+            pts = shp.get("points", [])
+            shape_type = (shp.get("shape_type") or "").lower()
+            adj_pts = []
+            for p in pts:
+                if not isinstance(p, (list, tuple)) or len(p) < 2:
+                    continue
+                px, py = p[0], p[1]
+                nx = max(0.0, min(float(px) - float(x1), float(new_w)))
+                ny = max(0.0, min(float(py) - float(y1), float(new_h)))
+                adj_pts.append([nx, ny])
+
+            if adj_pts:
+                shp["points"] = adj_pts
+
+            bbox = shp.get("bbox") if isinstance(shp.get("bbox"), dict) else None
+
+            if shape_type == "point":
+                # point는 좌표만 평행이동하고, bbox의 width/height는 원래 값을 보존
+                if bbox is not None:
+                    old_x = float(bbox.get("x", adj_pts[0][0]))
+                    old_y = float(bbox.get("y", adj_pts[0][1]))
+                    old_w = float(bbox.get("width", 0) or 0.0)
+                    old_h = float(bbox.get("height", 0) or 0.0)
+
+                    # bbox의 좌상단(x,y)을 크롭 오프셋만큼 이동 + 경계 클램프
+                    nx = max(0.0, min(old_x - float(x1), float(new_w)))
+                    ny = max(0.0, min(old_y - float(y1), float(new_h)))
+
+                    # 크기 유지(원래 0이면 그대로 0, 이미지 경계를 넘으면 내부로 클램프)
+                    if old_w > 0 and old_h > 0:
+                        nx2 = min(nx + old_w, float(new_w))
+                        ny2 = min(ny + old_h, float(new_h))
+                        old_w = max(0.0, nx2 - nx)
+                        old_h = max(0.0, ny2 - ny)
+
+                    bbox["x"] = nx
+                    bbox["y"] = ny
+                    bbox["width"] = old_w
+                    bbox["height"] = old_h
+                    shp["bbox"] = bbox
+                # point는 여기서 처리 종료(아래의 공통 bbox 재계산 로직 타면 안 됨)
+
+            elif bbox and float(bbox.get("width", 0)) == 0.0 and float(bbox.get("height", 0)) == 0.0 and len(adj_pts) == 1:
+                # 폭/높이가 0인 point 유사 도형: 위치만 이동, 0x0 유지
+                bbox["x"] = float(adj_pts[0][0])
+                bbox["y"] = float(adj_pts[0][1])
+                bbox["width"] = 0.0
+                bbox["height"] = 0.0
+
+            else:
+                # 일반 도형: points로 bbox 재계산
+                xs = [p[0] for p in adj_pts]
+                ys = [p[1] for p in adj_pts]
+                minx, maxx = max(0.0, min(xs)), min(float(new_w), max(xs))
+                miny, maxy = max(0.0, min(ys)), min(float(new_h), max(ys))
+                width = max(0.0, maxx - minx)
+                height = max(0.0, maxy - miny)
+                if bbox is not None:
+                    bbox["x"] = float(minx)
+                    bbox["y"] = float(miny)
+                    bbox["width"] = float(width)
+                    bbox["height"] = float(height)
+
+
+        # 2) rois 보정 (리스트 안에 [x1,y1,x2,y2] 형태로 있다고 가정)
+        rois = data.get("rois", None)
+        if isinstance(rois, list):
+            new_rois = []
+            for item in rois:
+                if isinstance(item, (list, tuple)) and len(item) >= 4:
+                    rx1 = max(0, min(int(item[0]) - int(x1), new_w))
+                    ry1 = max(0, min(int(item[1]) - int(y1), new_h))
+                    rx2 = max(0, min(int(item[2]) - int(x1), new_w))
+                    ry2 = max(0, min(int(item[3]) - int(y1), new_h))
+                    # 좌표 역전 방지
+                    if rx2 < rx1: rx1, rx2 = rx2, rx1
+                    if ry2 < ry1: ry1, ry2 = ry2, ry1
+                    new_rois.append([rx1, ry1, rx2, ry2])
+                else:
+                    new_rois.append(item)  # 형식이 다르면 그대로 보존
+            data["rois"] = new_rois
+
+        # 3) 이미지 메타 갱신
+        data["imagePath"] = new_image_filename
+        data["imageWidth"] = int(new_w)
+        data["imageHeight"] = int(new_h)
+
+        # 저장
+        with open(dst_json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
+        # 4) 디버그 드로잉
+        if debug_draw_path and debug_base_image_path:
+            try:
+                self._draw_debug_labels(debug_base_image_path, data, debug_draw_path)
+            except Exception as e:
+                logging.error("디버그 드로잉 오류", exc_info=True)
+
+
+    def _draw_debug_labels(self, image_path, data, save_path):
+        with Image.open(image_path) as im:
+            draw = ImageDraw.Draw(im)
+
+            for shp in data.get("shapes", []):
+                pts = shp.get("points", [])
+                shape_type = (shp.get("shape_type") or "").lower()
+
+                # 점
+                if shape_type == "point" and isinstance(pts, list) and len(pts) == 1:
+                    cx, cy = float(pts[0][0]), float(pts[0][1])
+                    r = 4  # 표시 반지름(디버그용)
+                    try:
+                        draw.ellipse([cx - r, cy - r, cx + r, cy + r], width=2)
+                    except:
+                        pass
+                # 폴리곤/선 등
+                elif isinstance(pts, list) and len(pts) >= 2:
+                    try:
+                        draw.line([tuple(p) for p in pts] + [tuple(pts[0])], width=2)
+                    except:
+                        pass
+
+                # bbox
+                bbox = shp.get("bbox")
+                if isinstance(bbox, dict):
+                    x = float(bbox.get("x", 0))
+                    y = float(bbox.get("y", 0))
+                    w = float(bbox.get("width", 0))
+                    h = float(bbox.get("height", 0))
+                    x2, y2 = x + w, y + h
+                    try:
+                        # 점 bbox(0,0)는 작게 표시(선택)
+                        if w == 0.0 and h == 0.0:
+                            rr = 5
+                            draw.ellipse([x - rr, y - rr, x + rr, y + rr], width=1)
+                        else:
+                            draw.rectangle([x, y, x2, y2], width=2)
+                    except:
+                        pass
+
+            try:
+                im.save(save_path)
+            except OSError:
+                im.convert("RGB").save(save_path)
+
+
+
+
     def crop_image(self, src, dst, crop_coords):
         if self._is_stopped:
             return "오류 발생: 사용자 중지 요청"
         try:
             with Image.open(src) as img:
-                cropped_img = img.crop(crop_coords)
-                cropped_img.save(dst)
-            return f"Cropped {src} to {dst}"
+                # 1) EXIF 회전 보정 + 실제 로드
+                img = ImageOps.exif_transpose(img)
+                img.load()
+
+                w, h = img.size
+                x1, y1, x2, y2 = crop_coords
+
+                # 2) 좌표 정규화(뒤집힘 방지)
+                if x1 > x2: x1, x2 = x2, x1
+                if y1 > y2: y1, y2 = y2, y1
+
+                # 3) 경계 클램핑(이미지 밖 방지)
+                x1 = max(0, min(x1, w))
+                y1 = max(0, min(y1, h))
+                x2 = max(0, min(x2, w))
+                y2 = max(0, min(y2, h))
+
+                # 4) 유효성 검사
+                if x2 <= x1 or y2 <= y1:
+                    return f"SKIP: 크롭 영역이 유효하지 않음 (img={w}x{h}, box={crop_coords})"
+
+                cropped = img.crop((x1, y1, x2, y2))
+
+                try:
+                    cropped.save(dst)
+                except OSError:
+                    cropped = cropped.convert("RGB")
+                    cropped.save(dst)
+
+                return f"Cropped {src} -> {dst} (img={w}x{h}, box=({x1},{y1},{x2},{y2}))"
+
         except Exception as e:
-            logging.error("이미지 크롭 오류", exc_info=True)
+            logging.error(f"이미지 크롭 오류: {src}", exc_info=True)
             return f"오류 발생: {str(e)}"
 
     def parse_fov_numbers(self, fov_str):
