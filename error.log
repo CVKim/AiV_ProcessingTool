@@ -352,3 +352,2533 @@ Traceback (most recent call last):
     futures.append(executor.submit(self.copy_file_chunked, src_file, dst_file))
                    ^^^^^^^^
 UnboundLocalError: cannot access local variable 'executor' where it is not associated with a value
+2025-08-12 14:44:45,261:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:46,040:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:46,507:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:46,982:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:47,147:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:48,034:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:48,035:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:48,042:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:48,071:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:48,582:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:49,050:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:51,299:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:52,923:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:53,158:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:53,298:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:54,042:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:54,592:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:54,945:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:55,023:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:55,809:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:56,086:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:56,103:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:56,628:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:56,759:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:57,473:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:57,583:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:57,938:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:58,052:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:58,452:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:58,523:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:58,617:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:59,024:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:44:59,430:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:00,179:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:00,253:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:00,271:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:01,493:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:02,160:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:02,709:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:02,990:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:03,353:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:03,432:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:04,310:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:04,338:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:04,353:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:04,551:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:04,698:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:04,733:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:04,784:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:04,803:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,248:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,250:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,252:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,253:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,254:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,257:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,259:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,263:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,264:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,268:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,269:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,272:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,403:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,409:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,413:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,413:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,418:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,423:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,426:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,427:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,436:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,443:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,446:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,453:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,549:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,553:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,557:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,563:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,564:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,565:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,567:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,579:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,587:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,595:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,596:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,599:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,690:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,702:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,702:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,706:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,711:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,717:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,722:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,727:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,732:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,739:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,748:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,748:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,775:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:06,780:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:08,189:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:12,486:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:12,807:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:13,329:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:13,464:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:14,089:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:14,107:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:14,298:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:14,327:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:14,402:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:14,407:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:14,419:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:45:14,466:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:27,420:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:31,516:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:33,431:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:35,912:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,218:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,231:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,232:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,232:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,232:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,233:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,233:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,282:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,337:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,338:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,340:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,345:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,354:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,354:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,383:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,417:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,425:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:40,950:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,068:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,068:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,068:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,069:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,071:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,073:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,073:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,073:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,073:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,078:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,968:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:41,988:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,008:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,027:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,043:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,050:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,065:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,066:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,067:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,075:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,075:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,075:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,075:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,075:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,076:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,080:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:42,144:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,277:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,298:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,319:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,463:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,475:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,479:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,479:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,480:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,480:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,863:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,917:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,918:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,920:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,920:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,922:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:54,923:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:57,419:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:57,473:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:57,487:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:57,509:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:57,526:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:57,549:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:57,552:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:57,566:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:46:57,594:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:47:17,741:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:47:17,768:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:47:17,814:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:47:17,814:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:47:17,843:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:47:17,903:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 14:47:17,934:ERROR:이미지 크롭 오류
+Traceback (most recent call last):
+  File "E:\Dev\DL_Tool\worker.py", line 1174, in crop_image
+    cropped_img.save(dst)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 2596, in save
+    save_handler(self, fp, filename)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\BmpImagePlugin.py", line 487, in _save
+    ImageFile._save(
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 556, in _save
+    _encode_tile(im, fp, tile, bufsize, fh)
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\ImageFile.py", line 576, in _encode_tile
+    encoder.setimage(im.im, extents)
+SystemError: tile cannot extend outside image
+2025-08-12 17:07:04,070:ERROR:이미지 크롭 오류: E:\RESULT_IMG\202508\05\S125080511434136_125053012324709\2_RIGHT_SIX.bmp
+Traceback (most recent call last):
+  File "e:\Dev\DL_Tool\worker.py", line 1453, in crop_image
+    with Image.open(src) as img:
+         ^^^^^^^^^^^^^^^
+  File "e:\Dev\DL_Tool\AiV_ProTool\Lib\site-packages\PIL\Image.py", line 3532, in open
+    raise UnidentifiedImageError(msg)
+PIL.UnidentifiedImageError: cannot identify image file 'E:\\RESULT_IMG\\202508\\05\\S125080511434136_125053012324709\\2_RIGHT_SIX.bmp'
