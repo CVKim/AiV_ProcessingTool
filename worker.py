@@ -91,30 +91,29 @@ class WorkerThread(QThread):
     ########################################################################
     # 헬퍼 함수: 특정 폴더에서 FOV 매칭 파일 목록 반환
     ########################################################################
-    def _get_matching_files_for_folder(self, folder_name, source, formats, fov_numbers):
-        """ 
-        source 내의 folder_name 폴더를 스캔하여, 
-        파일명의 앞부분에서 숫자만 추출한 값이 fov_numbers에 포함되면 반환.
-        """
-        source_folder = os.path.join(source, folder_name)
-        if not os.path.exists(source_folder):
-            return []
-        try:
-            with os.scandir(source_folder) as it:
-                image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
-            matching_files = []
-            for fname in image_files:
-                parts = fname.split('_', 1)
-                if len(parts) < 1:
-                    continue
-                prefix = parts[0].lower()  # 예: "fov7" 또는 "13"
-                numeric_part = re.sub(r'[^0-9]', '', prefix)
-                if numeric_part in fov_numbers:
-                    matching_files.append(fname)
-            return matching_files
-        except Exception as e:
-            self.log.emit(f"이미지 목록 오류: {source_folder} | 에러: {e}")
-            return []
+    def _get_matching_files_for_folder(self, folder_path, formats, fov_numbers):
+            """
+            주어진 folder_path를 스캔하여, fov_numbers에 포함되는 파일을 반환.
+            """
+            if not os.path.isdir(folder_path):
+                return []
+            try:
+                with os.scandir(folder_path) as it:
+                    image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                
+                matching_files = []
+                for fname in image_files:
+                    parts = fname.split('_', 1)
+                    if len(parts) < 1:
+                        continue
+                    prefix = parts[0].lower()
+                    numeric_part = re.sub(r'[^0-9]', '', prefix)
+                    if numeric_part in fov_numbers:
+                        matching_files.append(fname)
+                return matching_files
+            except Exception as e:
+                self.log.emit(f"이미지 목록 오류: {folder_path} | 에러: {e}")
+                return []
 
     ########################################################################
     # 1) NG Folder Sorting
@@ -522,204 +521,182 @@ class WorkerThread(QThread):
     # 6) Basic Sorting
     ########################################################################
     def basic_sorting(self, task):
-        self.log.emit("------ Basic Sorting 작업 시작 ------")
-        try:
-            source = task['source']
-            target = task['target']
-            inner_id_list_path = task.get('inner_id_list', '')
-            use_inner_id = task.get('use_inner_id', False)
-            fov_number_input = task.get('fov_number', '').strip()
-            inner_id = task.get('inner_id', '').strip()
-            formats = task['formats']
+            self.log.emit("------ Basic Sorting 작업 시작 ------")
+            try:
+                source = task['source']
+                target = task['target']
+                inner_id_list_path = task.get('inner_id_list', '')
+                use_inner_id = task.get('use_inner_id', False)
+                fov_number_input = task.get('fov_number', '').strip()
+                inner_id = task.get('inner_id', '').strip()
+                formats = task['formats']
+                is_double_path = task.get('double_path_folder', False)
 
-            # FOV Number 입력 여부에 따라 Inner ID 추출 경로 분기
-            if fov_number_input:
-                # [FOV 입력 시] → inner_id_list_path에서 Inner ID 목록 추출
-                # (매칭 대상 폴더 목록으로 사용)
-                if inner_id_list_path and os.path.exists(inner_id_list_path):
+                # Inner ID 목록 수집
+                inner_id_info = [] # {'path': 'Code/InnerID', 'name': 'InnerID'} 형태의 딕셔너리 리스트
+                ignore_list = {'ok', 'ng', 'ng_info', 'crop', 'thumbnail'}
+
+                if use_inner_id and inner_id:
+                    inner_id_info.append({'path': inner_id, 'name': inner_id})
+                    if is_double_path:
+                        self.log.emit("경고: 'Use Inner ID' 직접 입력 시 'Double Path Folder' 옵션은 무시됩니다.")
+                elif inner_id_list_path and os.path.isdir(inner_id_list_path):
                     try:
                         with os.scandir(inner_id_list_path) as it:
-                            inner_ids = [entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok','ng','ng_info','crop','thumbnail']]
+                            for entry in it:
+                                if not entry.is_dir() or entry.name.lower() in ignore_list:
+                                    continue
+                                
+                                if is_double_path:
+                                    # Double Path: entry는 Code 폴더, 그 안을 한번 더 탐색
+                                    code_folder_path = os.path.join(inner_id_list_path, entry.name)
+                                    with os.scandir(code_folder_path) as sub_it:
+                                        for sub_entry in sub_it:
+                                            if sub_entry.is_dir() and sub_entry.name.lower() not in ignore_list:
+                                                rel_path = os.path.join(entry.name, sub_entry.name)
+                                                inner_id_info.append({'path': rel_path, 'name': sub_entry.name})
+                                else:
+                                    # Single Path: entry가 바로 Inner ID 폴더
+                                    inner_id_info.append({'path': entry.name, 'name': entry.name})
                     except Exception as e:
                         self.log.emit(f"Inner ID List Path 오류: {str(e)}")
                         self.finished.emit("Basic Sorting 중지됨.")
                         return
-                elif use_inner_id and inner_id:
-                    inner_ids = [inner_id]
                 else:
-                    self.log.emit("Inner ID List Path 및 직접 입력된 Inner ID 없음.")
-                    self.finished.emit("Basic Sorting 중지됨.")
-                    return
-            else:
-                # FOV 미입력 시 → inner_id_list_path에서 Inner ID 목록 추출
-                if inner_id_list_path and os.path.exists(inner_id_list_path):
-                    try:
-                        with os.scandir(inner_id_list_path) as it:
-                            inner_ids = [entry.name for entry in it if entry.is_dir() and entry.name.lower() not in ['ok','ng','ng_info','crop','thumbnail']]
-                    except Exception as e:
-                        self.log.emit(f"Inner ID List Path 오류: {str(e)}")
-                        self.finished.emit("Basic Sorting 중지됨.")
-                        return
-                elif use_inner_id and inner_id:
-                    inner_ids = [inner_id]
-                else:
-                    self.log.emit("Inner ID List Path 및 직접 입력된 Inner ID 없음.")
+                    self.log.emit("Inner ID List Path가 유효하지 않거나, 직접 입력된 Inner ID가 없습니다.")
                     self.finished.emit("Basic Sorting 중지됨.")
                     return
 
-            if not inner_ids:
-                self.log.emit("유효한 Inner ID가 없습니다.")
-                self.finished.emit("Basic Sorting 완료.")
-                return
-
-            if fov_number_input:
-                # [FOV 입력 시] → inner_id_list_path에서 얻은 Inner ID 목록을 기반으로,
-                # source 경로에서 해당 폴더가 존재할 경우에만 매칭된 파일(앞부분 숫자 추출 후 FOV Number와 비교)을 복사
-                fov_numbers_raw = [num.strip() for num in fov_number_input.split(',') if num.strip()]
-                fov_numbers = []
-                invalid_fov = []
-                for part in fov_numbers_raw:
-                    if '/' in part:
-                        try:
-                            start, end = part.split('/')
-                            start = int(start.strip())
-                            end = int(end.strip())
-                            if start > end:
-                                invalid_fov.append(part)
-                            else:
-                                fov_numbers.extend([str(n) for n in range(start, end+1)])
-                        except Exception as e:
-                            invalid_fov.append(part)
-                    else:
-                        if part.isdigit():
-                            fov_numbers.append(part)
-                        else:
-                            invalid_fov.append(part)
-                if invalid_fov:
-                    self.log.emit(f"다음 FOV Number가 유효하지 않습니다: {', '.join(invalid_fov)}")
-                    self.finished.emit("Basic Sorting 중지됨.")
-                    return
-                if not fov_numbers:
-                    self.log.emit("FOV Number가 입력되지 않았습니다.")
-                    self.finished.emit("Basic Sorting 중지됨.")
-                    return
-
-                if not os.path.exists(source):
-                    self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
-                    self.finished.emit("Basic Sorting 중지됨.")
-                    return
-                if not os.path.exists(target):
-                    os.makedirs(target)
-
-                # inner_id_list_path에서 얻은 inner_ids를 기준으로,
-                # source 내에 해당 이름의 폴더가 존재할 때만 매칭 파일을 찾습니다.
-                folder_to_files = {}
-                with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as scan_executor:
-                    future_to_folder = {}
-                    for folder in inner_ids:
-                        src_folder = os.path.join(source, folder)
-                        if os.path.exists(src_folder):
-                            future = scan_executor.submit(self._get_matching_files_for_folder, folder, source, formats, set(fov_numbers))
-                            future_to_folder[future] = folder
-                    for future in as_completed(future_to_folder):
-                        folder = future_to_folder[future]
-                        matching_files = future.result()
-                        if matching_files:
-                            folder_to_files[folder] = matching_files
-                total_images = sum(len(files) for files in folder_to_files.values())
-                if total_images == 0:
-                    self.log.emit("선택한 FOV Number에 해당하는 이미지가 없습니다.")
+                if not inner_id_info:
+                    self.log.emit("유효한 Inner ID가 없습니다.")
                     self.finished.emit("Basic Sorting 완료.")
                     return
 
-                total_tasks = total_images
-                total_processed = 0
-                with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as copy_executor:
-                    futures = []
-                    for folder, matching_files in folder_to_files.items():
-                        source_folder = os.path.join(source, folder)
-                        for image_file in matching_files:
-                            if self._is_stopped:
-                                self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_tasks})")
-                                return
-                            src_file = os.path.join(source_folder, image_file)
-                            file_base, file_ext = os.path.splitext(image_file)
-                            new_file_name = f"{folder}_{file_base}{file_ext}"
-                            dst_file = os.path.join(target, new_file_name)
-                            futures.append(copy_executor.submit(self.copy_file_chunked, src_file, dst_file))
-                    for future in as_completed(futures):
-                        if self._is_stopped:
-                            self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_tasks})")
-                            return
-                        result = future.result()
-                        if not result.startswith("오류 발생"):
-                            total_processed += 1
-                            self.log.emit(result)
-                            progress_percent = int((total_processed / total_tasks) * 100)
-                            self.progress.emit(min(progress_percent, 100))
-                self.finished.emit(f"Basic Sorting 완료. 총 처리 파일: {total_processed}")
-                self.log.emit("------ Basic Sorting 작업 완료 ------")
-            else:
-                # [FOV 미입력 시] → inner_id_list_path에서 파일 복사 (기존 로직)
-                self.log.emit("FOV 미입력: inner_id_list_path 폴더의 파일 복사 진행")
-                total_images = 0
-                folder_to_files = {}
-                for folder_name in inner_ids:
+                if fov_number_input:
+                    fov_numbers = self.parse_fov_numbers(fov_number_input)
+                    if fov_numbers is None:
+                        self.log.emit("유효한 FOV Number가 입력되지 않았습니다.")
+                        self.finished.emit("Basic Sorting 중지됨.")
+                        return
+
+                    if not os.path.exists(source):
+                        self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
+                        self.finished.emit("Basic Sorting 중지됨.")
+                        return
+                    if not self.ensure_target_folder(target):
+                        self.finished.emit("Basic Sorting 중지됨.")
+                        return
+
+                    folder_to_files = {}
+                    with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as scan_executor:
+                        future_to_info = {}
+                        for info in inner_id_info:
+                            src_folder_path = os.path.join(source, info['path'])
+                            if os.path.isdir(src_folder_path):
+                                # 수정된 함수 호출 방식 적용
+                                future = scan_executor.submit(self._get_matching_files_for_folder, src_folder_path, formats, fov_numbers)
+                                future_to_info[future] = info
+                        
+                        for future in as_completed(future_to_info):
+                            info = future_to_info[future]
+                            matching_files = future.result()
+                            if matching_files:
+                                folder_to_files[info['path']] = {'files': matching_files, 'name': info['name']}
+
+                    total_images = sum(len(data['files']) for data in folder_to_files.values())
+                    if total_images == 0:
+                        self.log.emit("선택한 FOV Number에 해당하는 이미지가 없습니다.")
+                        self.finished.emit("Basic Sorting 완료.")
+                        return
+
+                    total_processed = 0
+                    with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as copy_executor:
+                        futures = []
+                        for rel_path, data in folder_to_files.items():
+                            source_folder = os.path.join(source, rel_path)
+                            inner_id_name = data['name']
+                            for image_file in data['files']:
+                                if self._is_stopped: break
+                                src_file = os.path.join(source_folder, image_file)
+                                file_base, file_ext = os.path.splitext(image_file)
+                                new_file_name = f"{inner_id_name}_{file_base}{file_ext}"
+                                dst_file = os.path.join(target, new_file_name)
+                                futures.append(copy_executor.submit(self.copy_file_chunked, src_file, dst_file))
+                            if self._is_stopped: break
+                        
+                        for future in as_completed(futures):
+                            if self._is_stopped: break
+                            result = future.result()
+                            if not result.startswith("오류 발생"):
+                                total_processed += 1
+                                self.log.emit(result)
+                                progress_percent = int((total_processed / total_images) * 100)
+                                self.progress.emit(min(progress_percent, 100))
+                    
                     if self._is_stopped:
-                        break
-                    source_folder = os.path.join(inner_id_list_path, folder_name)
-                    if not os.path.isdir(source_folder):
-                        self.log.emit(f"폴더 없음: {source_folder}")
-                        continue
-                    try:
-                        with os.scandir(source_folder) as it:
-                            image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
-                    except Exception as e:
-                        self.log.emit(f"파일 목록 오류: {source_folder} | 에러: {e}")
-                        continue
-                    if image_files:
-                        folder_to_files[folder_name] = image_files
-                        total_images += len(image_files)
-                if total_images == 0:
-                    self.log.emit("formats 조건에 맞는 파일 없음.")
-                    self.finished.emit("Basic Sorting 완료.")
-                    return
-                
-                total_tasks = total_images
-                
-                total_processed = 0
-                all_futures = []
-                with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
-                    for folder_name, image_files in folder_to_files.items():
-                        if self._is_stopped:
-                            break
-                        source_folder = os.path.join(inner_id_list_path, folder_name)
-                        for image_file in image_files:
-                            if self._is_stopped:
-                                self.log.emit(f"작업 중지: 처리 파일 {total_processed}/{total_tasks}")
-                                self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_tasks})")
-                                break
-                            src_file = os.path.join(source_folder, image_file)
-                            new_file_name = f"{folder_name}_{image_file}"
-                            dst_file = os.path.join(target, new_file_name)
-                            all_futures.append(executor.submit(self.copy_file_chunked, src_file, dst_file))
-                    for future in as_completed(all_futures):
-                        if self._is_stopped:
-                            self.log.emit(f"작업 중지: 처리 파일 {total_processed}/{total_tasks}")
-                            self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_tasks})")
-                            break
-                        result = future.result()
-                        if not result.startswith("오류 발생"):
-                            total_processed += 1
-                            progress_percent = int((total_processed / total_tasks) * 100)
-                            self.log.emit(result)
-                            self.progress.emit(min(progress_percent, 100))
-                self.finished.emit(f"Basic Sorting 완료. 총 처리 파일: {total_processed}")
-                self.log.emit("------ Basic Sorting 작업 완료 ------")
-        except Exception as e:
-            logging.error("Basic Sorting 중 오류", exc_info=True)
-            self.log.emit(f"오류 발생: {str(e)}")
-            self.finished.emit("작업 중지됨.")
+                        self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_images})")
+                        return
+                    
+                    self.finished.emit(f"Basic Sorting 완료. 총 처리 파일: {total_processed}")
+                    self.log.emit("------ Basic Sorting 작업 완료 ------")
+                else:
+                    # [FOV 미입력 시] → inner_id_list_path에서 파일 복사 (기존 로직)
+                    self.log.emit("FOV 미입력: inner_id_list_path 폴더의 파일 복사 진행")
+                    total_images = 0
+                    folder_to_files = {}
+                    for info in inner_id_info:
+                        if self._is_stopped: break
+                        source_folder = os.path.join(inner_id_list_path, info['name'])
+                        if not os.path.isdir(source_folder):
+                            self.log.emit(f"폴더 없음: {source_folder}")
+                            continue
+                        try:
+                            with os.scandir(source_folder) as it:
+                                image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                            if image_files:
+                                folder_to_files[info['name']] = image_files
+                                total_images += len(image_files)
+                        except Exception as e:
+                            self.log.emit(f"파일 목록 오류: {source_folder} | 에러: {e}")
+                    
+                    if total_images == 0:
+                        self.log.emit("formats 조건에 맞는 파일 없음.")
+                        self.finished.emit("Basic Sorting 완료.")
+                        return
+
+                    total_processed = 0
+                    with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
+                        futures = []
+                        for folder_name, image_files in folder_to_files.items():
+                            if self._is_stopped: break
+                            source_folder = os.path.join(inner_id_list_path, folder_name)
+                            for image_file in image_files:
+                                if self._is_stopped: break
+                                src_file = os.path.join(source_folder, image_file)
+                                new_file_name = f"{folder_name}_{image_file}"
+                                dst_file = os.path.join(target, new_file_name)
+                                futures.append(executor.submit(self.copy_file_chunked, src_file, dst_file))
+
+                        for future in as_completed(futures):
+                            if self._is_stopped: break
+                            result = future.result()
+                            if not result.startswith("오류 발생"):
+                                total_processed += 1
+                                progress_percent = int((total_processed / total_images) * 100)
+                                self.log.emit(result)
+                                self.progress.emit(min(progress_percent, 100))
+                    
+                    if self._is_stopped:
+                        self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_images})")
+                        return
+
+                    self.finished.emit(f"Basic Sorting 완료. 총 처리 파일: {total_processed}")
+                    self.log.emit("------ Basic Sorting 작업 완료 ------")
+            except Exception as e:
+                logging.error("Basic Sorting 중 오류", exc_info=True)
+                self.log.emit(f"오류 발생: {str(e)}")
+                self.finished.emit("작업 중 오류 발생.")
+
 
         ########################################################################
     # 7) Crop

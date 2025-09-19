@@ -17,8 +17,6 @@ from PyQt5.QtCore import QThreadPool
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s:%(levelname)s:%(message)s')
 
-# ---------------------------------------------------------
-# 공통 베이스 Dialog
 class BaseTaskDialog(QDialog):
     def __init__(self, title):
         super().__init__()
@@ -137,8 +135,6 @@ class BaseTaskDialog(QDialog):
         if operation != 'ng_count':
             if not params.get('source'):
                 missing_fields.append("Source Path")
-            # if not params.get('target'):
-            #     missing_fields.append("Target Path")
         if operation not in ['ng_count', 'btj'] and not params.get('formats', []):
             missing_fields.append("Image Formats")
         if operation == 'ng_sorting' and not params.get('source2'):
@@ -180,6 +176,11 @@ class BasicSortingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Inner ID List Path:</b>"), self.inner_id_list_button)
         self.specific_layout.addRow("", self.inner_id_list_path)
 
+        # ==================== [수정] DoublePathFolder 체크박스 추가 ====================
+        self.double_path_folder_checkbox = QCheckBox("Double Path Folder (Code/InnerID)")
+        self.specific_layout.addRow(QLabel("<b>Path Options:</b>"), self.double_path_folder_checkbox)
+        # =======================================================================
+
         self.source_button = QPushButton("Select Matching Path")
         self.source_button.clicked.connect(self.select_source)
         self.source_path = QLineEdit()
@@ -219,7 +220,6 @@ class BasicSortingDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
-        # self.format_bmp.setChecked(True)
 
     def toggle_inner_id(self, state):
         if state == Qt.Checked:
@@ -235,19 +235,19 @@ class BasicSortingDialog(BaseTaskDialog):
 
     def select_inner_id_list(self):
         inner_id_list = QFileDialog.getExistingDirectory(self, "Select Inner ID List Path", "",
-                                                          QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+                                                           QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
         if inner_id_list:
             self.inner_id_list_path.setText(inner_id_list)
 
     def select_target(self):
         target = QFileDialog.getExistingDirectory(self, "Select Target Folder", "",
-                                                 QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+                                                    QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
         if target:
             self.target_path.setText(target)
 
     def select_source(self):
         source = QFileDialog.getExistingDirectory(self, "Select Source Folder", "",
-                                                 QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+                                                    QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
         if source:
             self.source_path.setText(source)
 
@@ -271,7 +271,10 @@ class BasicSortingDialog(BaseTaskDialog):
             'use_inner_id': self.inner_id_checkbox.isChecked(),
             'inner_id': self.inner_id_input.text(),
             'fov_number': self.fov_input.text(),
-            'formats': formats
+            'formats': formats,
+            # ================= [수정] 체크박스 상태를 파라미터에 추가 ================
+            'double_path_folder': self.double_path_folder_checkbox.isChecked()
+            # =======================================================================
         }
 
     def validate_parameters(self, params):
