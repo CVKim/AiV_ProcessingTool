@@ -3,11 +3,6 @@
 Layout (left → right):
 
     [Operations sidebar]  [Node graph canvas]  [Parameters + Preview]
-
-The user loads a single image, drops operation nodes on the canvas, drags
-edges between port circles, and tweaks parameters in the right pane.  The
-selected node's output is rendered live; any output leaf can be exported to
-disk in batch via the Export button.
 """
 
 from __future__ import annotations
@@ -24,8 +19,6 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QListWidget,
-    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QScrollArea,
@@ -35,9 +28,10 @@ from PyQt5.QtWidgets import (
 )
 
 from apt.dialogs.base import BaseTaskPanel
-from apt.preprocessing import OPERATIONS, Pipeline, PipelineError
+from apt.preprocessing import Pipeline, PipelineError
 from apt.preprocessing.operations import get_operation
 from apt.widgets.image_preview import ImagePreview
+from apt.widgets.op_picker import OpPicker
 from apt.widgets.parameter_form import ParameterForm
 from apt.widgets.node_graph import NodeScene, NodeView
 
@@ -71,8 +65,7 @@ class PreprocessingPanel(BaseTaskPanel):
         self._recompute_timer.timeout.connect(self._recompute_preview)
 
     # ------------------------------------------------------------------
-    # Layout — override BaseTaskPanel because this panel is unusual
-    # (no Logs / Start / Stop buttons; the work is interactive).
+    # Layout
     # ------------------------------------------------------------------
     def _build_layout(self) -> None:
         outer = QVBoxLayout(self)
@@ -94,12 +87,15 @@ class PreprocessingPanel(BaseTaskPanel):
         self.load_button.clicked.connect(self._load_image)
         self.reset_button = QPushButton("Reset Graph")
         self.reset_button.clicked.connect(self._reset_graph)
+        self.fit_button = QPushButton("Fit View")
+        self.fit_button.clicked.connect(self._fit_view)
         self.export_button = QPushButton("Export Outputs…")
         self.export_button.clicked.connect(self._export_outputs)
         self.origin_label = QLabel("Origin: (not loaded)")
         self.origin_label.setStyleSheet("color: #9A9CA3;")
         action_row.addWidget(self.load_button)
         action_row.addWidget(self.reset_button)
+        action_row.addWidget(self.fit_button)
         action_row.addWidget(self.export_button)
         action_row.addSpacing(16)
         action_row.addWidget(self.origin_label, 1)
@@ -116,42 +112,14 @@ class PreprocessingPanel(BaseTaskPanel):
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 3)
         splitter.setStretchFactor(2, 2)
-        splitter.setSizes([200, 700, 380])
+        splitter.setSizes([260, 720, 400])
 
     # ---- operations sidebar -----------------------------------------
     def _build_operations_panel(self) -> QWidget:
-        wrap = QWidget()
-        layout = QVBoxLayout(wrap)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
-        layout.addWidget(QLabel("<b>Operations</b>"))
-        layout.addWidget(
-            self._dim_label("Double-click to add a node to the graph.")
-        )
-
-        self.op_list = QListWidget()
-        self.op_list.setSelectionMode(QListWidget.SingleSelection)
-        self.op_list.itemDoubleClicked.connect(self._on_op_double_clicked)
-
-        # Category headers + items.
-        current_category: str | None = None
-        for op in OPERATIONS:
-            if op.category != current_category:
-                header = QListWidgetItem(f"— {op.category} —")
-                header.setFlags(Qt.NoItemFlags)
-                header.setForeground(Qt.GlobalColor.gray)
-                self.op_list.addItem(header)
-                current_category = op.category
-            item = QListWidgetItem(op.label)
-            item.setData(Qt.UserRole, op.key)
-            self.op_list.addItem(item)
-
-        layout.addWidget(self.op_list, 1)
-
-        self.add_button = QPushButton("Add Selected")
-        self.add_button.clicked.connect(self._add_selected_op)
-        layout.addWidget(self.add_button)
-        return wrap
+        self.op_picker = OpPicker()
+        self.op_picker.opActivated.connect(self._add_op)
+        self.op_picker.setMinimumWidth(240)
+        return self.op_picker
 
     # ---- graph canvas -----------------------------------------------
     def _build_graph_panel(self) -> QWidget:
@@ -163,8 +131,10 @@ class PreprocessingPanel(BaseTaskPanel):
         header.addWidget(QLabel("<b>Pipeline Graph</b>"))
         header.addStretch(1)
         header.addWidget(
-            self._dim_label("Drag output (green) → input (blue) to connect · "
-                            "Wheel = zoom · Mid-drag = pan · Del = remove")
+            self._dim_label(
+                "Drag output (right) → input (left) to connect · "
+                "Wheel = zoom · Mid-drag = pan · Del = remove"
+            )
         )
         layout.addLayout(header)
 
@@ -191,7 +161,7 @@ class PreprocessingPanel(BaseTaskPanel):
         params_layout = QVBoxLayout(params_group)
         scroller = QScrollArea()
         scroller.setWidgetResizable(True)
-        scroller.setFrameShape(0)  # NoFrame
+        scroller.setFrameShape(0)
         self.param_form = ParameterForm()
         self.param_form.valueChanged.connect(self._on_param_changed)
         scroller.setWidget(self.param_form)
@@ -212,7 +182,6 @@ class PreprocessingPanel(BaseTaskPanel):
     # BaseTaskPanel overrides (this panel doesn't use the worker plumbing)
     # ------------------------------------------------------------------
     def build_form(self, form: QFormLayout) -> None:
-        # Layout is fully custom; nothing to add.
         return
 
     def get_parameters(self) -> dict:
@@ -221,7 +190,7 @@ class PreprocessingPanel(BaseTaskPanel):
     def validate_parameters(self, params: dict) -> bool:
         return True
 
-    def start_task(self) -> None:  # called from sidebar Enter, etc. — no-op
+    def start_task(self) -> None:
         return
 
     def stop_task(self) -> None:
@@ -259,8 +228,8 @@ class PreprocessingPanel(BaseTaskPanel):
             f"  ·  preview {self._origin_preview.shape[1]}×{self._origin_preview.shape[0]}"
         )
         # Select origin and refresh preview
+        from apt.widgets.node_graph import NodeItem
         for item in self.scene.items():
-            from apt.widgets.node_graph import NodeItem
             if isinstance(item, NodeItem) and item.node_id == Pipeline.ORIGIN_ID:
                 self.scene.clearSelection()
                 item.setSelected(True)
@@ -279,19 +248,12 @@ class PreprocessingPanel(BaseTaskPanel):
         self.preview.set_image(self._origin_preview)
         self.preview_meta.setText("Origin (graph reset)")
 
+    def _fit_view(self) -> None:
+        self.view.fit_to_content()
+
     # ------------------------------------------------------------------
     # Operation list interactions
     # ------------------------------------------------------------------
-    def _on_op_double_clicked(self, item: QListWidgetItem) -> None:
-        self._add_op(item.data(Qt.UserRole))
-
-    def _add_selected_op(self) -> None:
-        item = self.op_list.currentItem()
-        if item is None or item.data(Qt.UserRole) is None:
-            self._show_status("Pick an operation from the list first.")
-            return
-        self._add_op(item.data(Qt.UserRole))
-
     def _add_op(self, op_key: str | None) -> None:
         if not op_key:
             return
@@ -305,8 +267,8 @@ class PreprocessingPanel(BaseTaskPanel):
             self._show_status(str(exc))
             return
         # Auto-select the newly added node so the inspector populates.
+        from apt.widgets.node_graph import NodeItem
         for it in self.scene.items():
-            from apt.widgets.node_graph import NodeItem
             if isinstance(it, NodeItem) and it.node_id == new_id:
                 self.scene.clearSelection()
                 it.setSelected(True)
@@ -336,8 +298,6 @@ class PreprocessingPanel(BaseTaskPanel):
         self._refresh_preview_for(node_id)
 
     def _on_graph_changed(self) -> None:
-        # Recompute preview for whatever's currently selected so previews of
-        # downstream nodes update when their upstream edges change.
         if self._selected_node_id:
             self._refresh_preview_for(self._selected_node_id)
 
@@ -352,6 +312,8 @@ class PreprocessingPanel(BaseTaskPanel):
         except PipelineError as exc:
             self._show_status(str(exc))
             return
+        # Update the node card's params-summary line so the canvas reflects the new value.
+        self.scene.refresh_node_params(self._selected_node_id)
         self._recompute_timer.start()
 
     def _recompute_preview(self) -> None:
@@ -388,8 +350,10 @@ class PreprocessingPanel(BaseTaskPanel):
         if self._origin_full is None:
             QMessageBox.warning(self, "Export", "Origin 이미지를 먼저 로드하세요.")
             return
-        leaves = [nid for nid in self.pipeline.output_ids() if nid != Pipeline.ORIGIN_ID]
-        if not leaves:
+        original_leaves = [
+            nid for nid in self.pipeline.output_ids() if nid != Pipeline.ORIGIN_ID
+        ]
+        if not original_leaves:
             QMessageBox.information(
                 self,
                 "Export",
@@ -406,29 +370,33 @@ class PreprocessingPanel(BaseTaskPanel):
         if not target:
             return
 
-        # Run the pipeline at full resolution on a fresh Pipeline copy so the
-        # preview cache (downscaled) stays intact.
-        full_pipeline = self._clone_pipeline_for_full_res()
+        # Build a full-resolution clone of the pipeline; remember which new id
+        # corresponds to each original leaf so we compute the right nodes.
+        full_pipeline, id_map = self._clone_pipeline_for_full_res()
         base = Path(self._origin_path).stem
         saved: list[str] = []
         errors: list[str] = []
-        for leaf in leaves:
+        for original_leaf in original_leaves:
+            cloned_leaf = id_map.get(original_leaf)
+            if cloned_leaf is None:
+                errors.append(f"{original_leaf}: missing in cloned pipeline")
+                continue
             try:
-                result = full_pipeline.compute(leaf)
+                result = full_pipeline.compute(cloned_leaf)
             except PipelineError as exc:
-                errors.append(f"{leaf}: {exc}")
+                errors.append(f"{original_leaf}: {exc}")
                 continue
             except Exception as exc:  # noqa: BLE001
-                errors.append(f"{leaf}: {exc}")
+                errors.append(f"{original_leaf}: {exc}")
                 continue
-            out_path = os.path.join(target, f"{base}__{leaf}.png")
+            out_path = os.path.join(target, f"{base}__{original_leaf}.png")
             try:
                 ok = cv2.imwrite(out_path, result)
                 if not ok:
                     raise IOError("cv2.imwrite returned False")
                 saved.append(out_path)
             except Exception as exc:  # noqa: BLE001
-                errors.append(f"{leaf}: write failed — {exc}")
+                errors.append(f"{original_leaf}: write failed — {exc}")
 
         msg_lines = [f"Saved {len(saved)} file(s) to:\n{target}\n"]
         if saved:
@@ -438,10 +406,10 @@ class PreprocessingPanel(BaseTaskPanel):
             msg_lines.extend("  ⚠ " + e for e in errors)
         QMessageBox.information(self, "Export complete", "\n".join(msg_lines))
 
-    def _clone_pipeline_for_full_res(self) -> Pipeline:
+    def _clone_pipeline_for_full_res(self) -> tuple[Pipeline, dict[str, str]]:
         clone = Pipeline()
         clone.set_origin(self._origin_full)
-        id_map = {Pipeline.ORIGIN_ID: Pipeline.ORIGIN_ID}
+        id_map: dict[str, str] = {Pipeline.ORIGIN_ID: Pipeline.ORIGIN_ID}
         for node in self.pipeline.nodes():
             if node.op_key == "origin":
                 continue
@@ -456,7 +424,7 @@ class PreprocessingPanel(BaseTaskPanel):
             for port_idx, src in enumerate(node.inputs):
                 if src and src in id_map:
                     clone.connect(id_map[src], new_id, port_idx)
-        return clone
+        return clone, id_map
 
     # ------------------------------------------------------------------
     # Misc

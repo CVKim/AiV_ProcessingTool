@@ -138,3 +138,20 @@ def test_connect_into_origin_refused():
     a = p.add_node("gaussian_blur")
     with pytest.raises(PipelineError):
         p.connect(a.id, Pipeline.ORIGIN_ID, 0)
+
+
+def test_id_assignment_does_not_reuse_gaps(origin):
+    """Regression: after a delete+add, the new node id must not collide with
+    a stale id that lives elsewhere — and the panel's export-clone path
+    relies on stable per-pipeline numbering to build a correct id map."""
+    p = Pipeline()
+    p.set_origin(origin)
+    a = p.add_node("rotate")
+    b = p.add_node("to_gray")
+    assert a.id == "rotate_1"
+    assert b.id == "to_gray_2"
+    p.remove_node(a.id)
+    c = p.add_node("to_gray")
+    # New node should get a fresh id, not collide with the remaining b.
+    assert c.id != b.id
+    assert c.id == "to_gray_3"

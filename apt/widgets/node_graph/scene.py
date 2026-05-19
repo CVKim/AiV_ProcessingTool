@@ -126,23 +126,32 @@ class NodeScene(QGraphicsScene):
 
     def _add_node_item(self, node_id: str, scene_pos: QPointF | None = None) -> NodeItem:
         node = self.pipeline.get(node_id)
-        from apt.preprocessing.operations import get_operation
-        if node.op_key == "origin":
-            num_inputs = 0
-        else:
-            num_inputs = get_operation(node.op_key).inputs
         item = NodeItem(
             node_id=node.id,
-            title=node.display_title(),
-            num_inputs=num_inputs,
+            op_key=node.op_key,
             is_origin=(node.op_key == "origin"),
         )
+        item.update_params(node.params)
         if scene_pos is None:
-            scene_pos = QPointF(0, len(self._nodes) * (NODE_HEIGHT + 30) - 200)
+            # Lay nodes out diagonally so a newly added node never lands on top
+            # of an existing one. The scene's view will pan to fit on demand.
+            count = len(self._nodes)
+            scene_pos = QPointF(60 * (count + 1), 80 * (count % 5))
         item.setPos(scene_pos.x() - NODE_WIDTH / 2, scene_pos.y() - NODE_HEIGHT / 2)
         self.addItem(item)
         self._nodes[node_id] = item
         return item
+
+    def refresh_node_params(self, node_id: str) -> None:
+        """Re-render the params summary line of ``node_id`` from the pipeline."""
+        item = self._nodes.get(node_id)
+        if item is None:
+            return
+        try:
+            node = self.pipeline.get(node_id)
+        except Exception:
+            return
+        item.update_params(node.params)
 
     def _delete_node(self, node_id: str) -> None:
         item = self._nodes.pop(node_id, None)

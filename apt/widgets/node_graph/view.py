@@ -1,10 +1,14 @@
-"""QGraphicsView with mouse-wheel zoom and middle-button pan."""
+"""QGraphicsView with mouse-wheel zoom, middle-button pan and dotted grid."""
 
 from __future__ import annotations
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter
+from PyQt5.QtCore import QPointF, QRectF, Qt
+from PyQt5.QtGui import QColor, QPainter, QPen
 from PyQt5.QtWidgets import QGraphicsView
+
+GRID_SIZE = 22
+GRID_COLOR_MINOR = QColor(255, 255, 255, 12)
+GRID_COLOR_MAJOR = QColor(255, 255, 255, 26)
 
 
 class NodeView(QGraphicsView):
@@ -20,8 +24,49 @@ class NodeView(QGraphicsView):
         self.setDragMode(QGraphicsView.RubberBandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setBackgroundBrush(QColor("#0B0B0E"))
         self._panning = False
         self._pan_anchor = None
+
+    # Draw a dotted grid behind every paint so the canvas feels like a real
+    # workspace instead of an empty void.
+    def drawBackground(self, painter: QPainter, rect: QRectF) -> None:  # noqa: N802
+        super().drawBackground(painter, rect)
+        left = int(rect.left()) - (int(rect.left()) % GRID_SIZE)
+        top = int(rect.top()) - (int(rect.top()) % GRID_SIZE)
+
+        # Minor lines (every GRID_SIZE), major every 5x.
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing, False)
+
+        minor_pen = QPen(GRID_COLOR_MINOR, 1)
+        major_pen = QPen(GRID_COLOR_MAJOR, 1)
+
+        x = left
+        while x < rect.right():
+            painter.setPen(major_pen if (x // GRID_SIZE) % 5 == 0 else minor_pen)
+            painter.drawLine(int(x), int(rect.top()), int(x), int(rect.bottom()))
+            x += GRID_SIZE
+        y = top
+        while y < rect.bottom():
+            painter.setPen(major_pen if (y // GRID_SIZE) % 5 == 0 else minor_pen)
+            painter.drawLine(int(rect.left()), int(y), int(rect.right()), int(y))
+            y += GRID_SIZE
+        painter.restore()
+
+    def fit_to_content(self) -> None:
+        """Center the view on the bounding rect of all items, with margin."""
+        items_rect = self.scene().itemsBoundingRect()
+        if items_rect.isEmpty():
+            return
+        margin = 80
+        rect = items_rect.adjusted(-margin, -margin, margin, margin)
+        self.fitInView(rect, Qt.KeepAspectRatio)
+        # Clamp scale within bounds after fit-in-view.
+        scale = self.transform().m11()
+        if scale > self.MAX_SCALE:
+            factor = self.MAX_SCALE / scale
+            self.scale(factor, factor)
 
     def wheelEvent(self, event) -> None:  # noqa: N802
         factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15

@@ -7,7 +7,7 @@ from PyQt5.QtGui import QColor, QPainter, QPainterPath, QPen
 from PyQt5.QtWidgets import QGraphicsItem, QGraphicsPathItem
 
 
-COLOR_EDGE = QColor("#5BA9F5")
+COLOR_EDGE_DEFAULT = QColor("#5BA9F5")
 COLOR_EDGE_TEMP = QColor("#FF7029")
 
 
@@ -19,7 +19,13 @@ class EdgeItem(QGraphicsPathItem):
         self.src_port = src_port
         self.dst_port = dst_port
         self.temporary = temporary
-        pen = QPen(COLOR_EDGE_TEMP if temporary else COLOR_EDGE, 2)
+        # Tint the edge with the source node's accent color so the flow
+        # visually matches the category.
+        if temporary:
+            edge_color = COLOR_EDGE_TEMP
+        else:
+            edge_color = getattr(src_port.node, "accent_color", COLOR_EDGE_DEFAULT)
+        pen = QPen(edge_color, 2.5)
         pen.setCapStyle(0)  # FlatCap
         self.setPen(pen)
         self.setZValue(0)
