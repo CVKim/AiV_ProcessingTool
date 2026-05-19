@@ -29,5 +29,8 @@ mim_converter_config.ini
 Thumbs.db
 .vscode/*.code-workspace
 
+# Per-developer Claude Code overrides (team policy is in .claude/settings.json)
+.claude/settings.local.json
+
 # Native executables produced by partner tooling
 mim2color.exe

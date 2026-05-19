@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(git push)",
+      "Bash(git push *)",
+      "Bash(git fetch)",
+      "Bash(git fetch *)",
+      "Bash(git pull)",
+      "Bash(git pull *)",
+      "Bash(git merge)",
+      "Bash(git merge *)",
+      "Bash(git rebase)",
+      "Bash(git rebase *)",
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(git branch *)",
+      "Bash(git tag *)"
+    ],
+    "ask": [
+      "Bash(git push --force)",
+      "Bash(git push --force *)",
+      "Bash(git push -f)",
+      "Bash(git push -f *)",
+      "Bash(git push --force-with-lease)",
+      "Bash(git push --force-with-lease *)",
+      "Bash(git push --delete *)"
+    ]
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "In this repository the agent is trusted to push to any branch including main. The team workflow is: agent develops on feature branches, integrates into dev, then merges dev -> main once the user has reviewed. Standard `git push origin <branch>` (including main) is therefore allowed without confirmation."
+    ]
+  }
+}
