@@ -176,9 +176,16 @@ class BasicSortingDialog(BaseTaskDialog):
         self.specific_layout.addRow(QLabel("<b>Inner ID List Path:</b>"), self.inner_id_list_button)
         self.specific_layout.addRow("", self.inner_id_list_path)
 
-        # ==================== [수정] DoublePathFolder 체크박스 추가 ====================
+        # ==================== [수정 1] 새로운 체크박스 추가 ====================
+        path_options_layout = QHBoxLayout()
         self.double_path_folder_checkbox = QCheckBox("Double Path Folder (Code/InnerID)")
-        self.specific_layout.addRow(QLabel("<b>Path Options:</b>"), self.double_path_folder_checkbox)
+        self.only_defect_checkbox = QCheckBox("Only Defect Image Sorting") # <-- 새 체크박스
+        path_options_layout.addWidget(self.double_path_folder_checkbox)
+        path_options_layout.addWidget(self.only_defect_checkbox)
+        self.specific_layout.addRow(QLabel("<b>Path Options:</b>"), path_options_layout)
+        
+        # 새 체크박스와 FOV 입력란 연동
+        self.only_defect_checkbox.stateChanged.connect(self.toggle_fov_input_based_on_defect_mode)
         # =======================================================================
 
         self.source_button = QPushButton("Select Matching Path")
@@ -220,6 +227,15 @@ class BasicSortingDialog(BaseTaskDialog):
         formats_layout.addWidget(self.format_bmp)
         formats_layout.addWidget(self.format_png)
         self.specific_layout.addRow(QLabel("<b>Image Formats:</b>"), formats_layout)
+
+    def toggle_fov_input_based_on_defect_mode(self, state):
+        """'Only Defect Image Sorting' 체크 시 FOV 입력 비활성화"""
+        if state == Qt.Checked:
+            self.fov_input.setEnabled(False)
+            self.fov_input.setText("") # 내용도 비워줌
+            self.append_log("Only Defect Image Sorting 모드가 활성화되었습니다.\nFOV는 Inner ID List Path의 파일명을 기준으로 자동 추출됩니다.")
+        else:
+            self.fov_input.setEnabled(True)
 
     def toggle_inner_id(self, state):
         if state == Qt.Checked:
@@ -273,7 +289,8 @@ class BasicSortingDialog(BaseTaskDialog):
             'fov_number': self.fov_input.text(),
             'formats': formats,
             # ================= [수정] 체크박스 상태를 파라미터에 추가 ================
-            'double_path_folder': self.double_path_folder_checkbox.isChecked()
+            'double_path_folder': self.double_path_folder_checkbox.isChecked(),
+            'only_defect_sorting': self.only_defect_checkbox.isChecked()
             # =======================================================================
         }
 

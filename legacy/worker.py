@@ -87,6 +87,27 @@ class WorkerThread(QThread):
                 self.log.emit(f"Target 경로 생성 실패: {target_path} | 에러: {e}")
                 return False
         return True
+    
+    def _get_fovs_from_folder(self, folder_path):
+        """
+        주어진 폴더 내의 모든 파일명을 스캔하여 FOV 번호(파일명 앞 숫자) 셋을 반환.
+        """
+        if not os.path.isdir(folder_path):
+            return set()
+
+        fov_numbers = set()
+        try:
+            with os.scandir(folder_path) as it:
+                for entry in it:
+                    if entry.is_file():
+                        # 파일명의 첫번째 '_' 앞부분을 FOV로 간주
+                        prefix = entry.name.split('_', 1)[0]
+                        numeric_part = re.sub(r'[^0-9]', '', prefix)
+                        if numeric_part:
+                            fov_numbers.add(numeric_part)
+        except Exception as e:
+            self.log.emit(f"FOV 추출 오류: {folder_path} | 에러: {e}")
+        return fov_numbers
 
     ########################################################################
     # 헬퍼 함수: 특정 폴더에서 FOV 매칭 파일 목록 반환
@@ -521,181 +542,247 @@ class WorkerThread(QThread):
     # 6) Basic Sorting
     ########################################################################
     def basic_sorting(self, task):
-            self.log.emit("------ Basic Sorting 작업 시작 ------")
-            try:
-                source = task['source']
-                target = task['target']
-                inner_id_list_path = task.get('inner_id_list', '')
-                use_inner_id = task.get('use_inner_id', False)
-                fov_number_input = task.get('fov_number', '').strip()
-                inner_id = task.get('inner_id', '').strip()
-                formats = task['formats']
-                is_double_path = task.get('double_path_folder', False)
+        self.log.emit("------ Basic Sorting 작업 시작 ------")
+        try:
+            source = task['source']
+            target = task['target']
+            inner_id_list_path = task.get('inner_id_list', '')
+            use_inner_id = task.get('use_inner_id', False)
+            fov_number_input = task.get('fov_number', '').strip()
+            inner_id = task.get('inner_id', '').strip()
+            formats = task['formats']
+            is_double_path = task.get('double_path_folder', False)
+            only_defect_sorting = task.get('only_defect_sorting', False)
 
-                # Inner ID 목록 수집
-                inner_id_info = [] # {'path': 'Code/InnerID', 'name': 'InnerID'} 형태의 딕셔너리 리스트
-                ignore_list = {'ok', 'ng', 'ng_info', 'crop', 'thumbnail'}
+            # Inner ID 정보 수집 (경로, 이름, 코드 포함)
+            inner_id_info = []
+            ignore_list = {'ok', 'ng', 'ng_info', 'crop', 'thumbnail'}
 
-                if use_inner_id and inner_id:
-                    inner_id_info.append({'path': inner_id, 'name': inner_id})
-                    if is_double_path:
-                        self.log.emit("경고: 'Use Inner ID' 직접 입력 시 'Double Path Folder' 옵션은 무시됩니다.")
-                elif inner_id_list_path and os.path.isdir(inner_id_list_path):
-                    try:
-                        with os.scandir(inner_id_list_path) as it:
-                            for entry in it:
-                                if not entry.is_dir() or entry.name.lower() in ignore_list:
-                                    continue
-                                
-                                if is_double_path:
-                                    # Double Path: entry는 Code 폴더, 그 안을 한번 더 탐색
-                                    code_folder_path = os.path.join(inner_id_list_path, entry.name)
-                                    with os.scandir(code_folder_path) as sub_it:
-                                        for sub_entry in sub_it:
-                                            if sub_entry.is_dir() and sub_entry.name.lower() not in ignore_list:
-                                                rel_path = os.path.join(entry.name, sub_entry.name)
-                                                inner_id_info.append({'path': rel_path, 'name': sub_entry.name})
-                                else:
-                                    # Single Path: entry가 바로 Inner ID 폴더
-                                    inner_id_info.append({'path': entry.name, 'name': entry.name})
-                    except Exception as e:
-                        self.log.emit(f"Inner ID List Path 오류: {str(e)}")
-                        self.finished.emit("Basic Sorting 중지됨.")
-                        return
-                else:
-                    self.log.emit("Inner ID List Path가 유효하지 않거나, 직접 입력된 Inner ID가 없습니다.")
+            if use_inner_id and inner_id:
+                inner_id_info.append({'path': inner_id, 'name': inner_id, 'code': None})
+                if is_double_path:
+                    self.log.emit("경고: 'Use Inner ID' 직접 입력 시 'Double Path Folder' 옵션은 무시됩니다.")
+            elif inner_id_list_path and os.path.isdir(inner_id_list_path):
+                try:
+                    with os.scandir(inner_id_list_path) as it:
+                        for entry in it:
+                            if not entry.is_dir() or entry.name.lower() in ignore_list:
+                                continue
+
+                            if is_double_path:
+                                code_folder_path = os.path.join(inner_id_list_path, entry.name)
+                                with os.scandir(code_folder_path) as sub_it:
+                                    for sub_entry in sub_it:
+                                        if sub_entry.is_dir() and sub_entry.name.lower() not in ignore_list:
+                                            rel_path = os.path.join(entry.name, sub_entry.name)
+                                            # 'code'와 'name'을 함께 저장
+                                            inner_id_info.append({'path': rel_path, 'name': sub_entry.name, 'code': entry.name})
+                            else:
+                                inner_id_info.append({'path': entry.name, 'name': entry.name, 'code': None})
+                except Exception as e:
+                    self.log.emit(f"Inner ID List Path 오류: {str(e)}")
                     self.finished.emit("Basic Sorting 중지됨.")
                     return
+            else:
+                self.log.emit("Inner ID List Path가 유효하지 않거나, 직접 입력된 Inner ID가 없습니다.")
+                self.finished.emit("Basic Sorting 중지됨.")
+                return
 
-                if not inner_id_info:
-                    self.log.emit("유효한 Inner ID가 없습니다.")
+            if not inner_id_info:
+                self.log.emit("유효한 Inner ID가 없습니다.")
+                self.finished.emit("Basic Sorting 완료.")
+                return
+
+            if not os.path.exists(source):
+                self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
+                self.finished.emit("Basic Sorting 중지됨.")
+                return
+            if not self.ensure_target_folder(target):
+                self.finished.emit("Basic Sorting 중지됨.")
+                return
+
+            # Only Defect Sorting 모드
+            if only_defect_sorting:
+                self.log.emit("Only Defect Image Sorting 모드로 실행합니다.")
+                copy_tasks = []
+                for info in inner_id_info:
+                    if self._is_stopped: break
+                    template_folder_path = os.path.join(inner_id_list_path, info['path'])
+                    fovs_to_find = self._get_fovs_from_folder(template_folder_path)
+
+                    if not fovs_to_find:
+                        self.log.emit(f"[{info['name']}] 기준 폴더({template_folder_path})에 파일이 없어 건너뜁니다.")
+                        continue
+
+                    self.log.emit(f"[{info['name']}] 찾을 FOV: {', '.join(sorted(list(fovs_to_find)))}")
+                    source_folder_path = os.path.join(source, info['path'])
+                    matching_files = self._get_matching_files_for_folder(source_folder_path, formats, fovs_to_find)
+
+                    for filename in matching_files:
+                        src_file = os.path.join(source_folder_path, filename)
+                        file_base, file_ext = os.path.splitext(filename)
+                        
+                        # 파일명 생성 로직 수정
+                        prefix = f"{info['code']}_{info['name']}" if info.get('code') else info['name']
+                        new_file_name = f"{prefix}_{file_base}{file_ext}"
+                        
+                        dst_file = os.path.join(target, new_file_name)
+                        copy_tasks.append((src_file, dst_file))
+
+                if self._is_stopped:
+                    self.finished.emit(f"Basic Sorting 중지됨.")
+                    return
+
+                total_images = len(copy_tasks)
+                if total_images == 0:
+                    self.log.emit("조건에 맞는 이미지를 찾지 못했습니다.")
                     self.finished.emit("Basic Sorting 완료.")
                     return
 
-                if fov_number_input:
-                    fov_numbers = self.parse_fov_numbers(fov_number_input)
-                    if fov_numbers is None:
-                        self.log.emit("유효한 FOV Number가 입력되지 않았습니다.")
-                        self.finished.emit("Basic Sorting 중지됨.")
-                        return
-
-                    if not os.path.exists(source):
-                        self.log.emit(f"Source 경로가 존재하지 않습니다: {source}")
-                        self.finished.emit("Basic Sorting 중지됨.")
-                        return
-                    if not self.ensure_target_folder(target):
-                        self.finished.emit("Basic Sorting 중지됨.")
-                        return
-
-                    folder_to_files = {}
-                    with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as scan_executor:
-                        future_to_info = {}
-                        for info in inner_id_info:
-                            src_folder_path = os.path.join(source, info['path'])
-                            if os.path.isdir(src_folder_path):
-                                # 수정된 함수 호출 방식 적용
-                                future = scan_executor.submit(self._get_matching_files_for_folder, src_folder_path, formats, fov_numbers)
-                                future_to_info[future] = info
-                        
-                        for future in as_completed(future_to_info):
-                            info = future_to_info[future]
-                            matching_files = future.result()
-                            if matching_files:
-                                folder_to_files[info['path']] = {'files': matching_files, 'name': info['name']}
-
-                    total_images = sum(len(data['files']) for data in folder_to_files.values())
-                    if total_images == 0:
-                        self.log.emit("선택한 FOV Number에 해당하는 이미지가 없습니다.")
-                        self.finished.emit("Basic Sorting 완료.")
-                        return
-
-                    total_processed = 0
-                    with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as copy_executor:
-                        futures = []
-                        for rel_path, data in folder_to_files.items():
-                            source_folder = os.path.join(source, rel_path)
-                            inner_id_name = data['name']
-                            for image_file in data['files']:
-                                if self._is_stopped: break
-                                src_file = os.path.join(source_folder, image_file)
-                                file_base, file_ext = os.path.splitext(image_file)
-                                new_file_name = f"{inner_id_name}_{file_base}{file_ext}"
-                                dst_file = os.path.join(target, new_file_name)
-                                futures.append(copy_executor.submit(self.copy_file_chunked, src_file, dst_file))
-                            if self._is_stopped: break
-                        
-                        for future in as_completed(futures):
-                            if self._is_stopped: break
-                            result = future.result()
-                            if not result.startswith("오류 발생"):
-                                total_processed += 1
-                                self.log.emit(result)
-                                progress_percent = int((total_processed / total_images) * 100)
-                                self.progress.emit(min(progress_percent, 100))
-                    
-                    if self._is_stopped:
-                        self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_images})")
-                        return
-                    
-                    self.finished.emit(f"Basic Sorting 완료. 총 처리 파일: {total_processed}")
-                    self.log.emit("------ Basic Sorting 작업 완료 ------")
-                else:
-                    # [FOV 미입력 시] → inner_id_list_path에서 파일 복사 (기존 로직)
-                    self.log.emit("FOV 미입력: inner_id_list_path 폴더의 파일 복사 진행")
-                    total_images = 0
-                    folder_to_files = {}
-                    for info in inner_id_info:
+                self.log.emit(f"총 {total_images}개의 파일을 복사합니다.")
+                total_processed = 0
+                with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
+                    futures = [executor.submit(self.copy_file_chunked, src, dst) for src, dst in copy_tasks]
+                    for future in as_completed(futures):
                         if self._is_stopped: break
-                        source_folder = os.path.join(inner_id_list_path, info['name'])
-                        if not os.path.isdir(source_folder):
-                            self.log.emit(f"폴더 없음: {source_folder}")
-                            continue
-                        try:
-                            with os.scandir(source_folder) as it:
-                                image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
-                            if image_files:
-                                folder_to_files[info['name']] = image_files
-                                total_images += len(image_files)
-                        except Exception as e:
-                            self.log.emit(f"파일 목록 오류: {source_folder} | 에러: {e}")
-                    
-                    if total_images == 0:
-                        self.log.emit("formats 조건에 맞는 파일 없음.")
-                        self.finished.emit("Basic Sorting 완료.")
-                        return
+                        result = future.result()
+                        if not result.startswith("오류 발생"):
+                            total_processed += 1
+                            self.log.emit(result)
+                            progress_percent = int((total_processed / total_images) * 100)
+                            self.progress.emit(min(progress_percent, 100))
 
-                    total_processed = 0
-                    with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
-                        futures = []
-                        for folder_name, image_files in folder_to_files.items():
-                            if self._is_stopped: break
-                            source_folder = os.path.join(inner_id_list_path, folder_name)
-                            for image_file in image_files:
-                                if self._is_stopped: break
-                                src_file = os.path.join(source_folder, image_file)
-                                new_file_name = f"{folder_name}_{image_file}"
-                                dst_file = os.path.join(target, new_file_name)
-                                futures.append(executor.submit(self.copy_file_chunked, src_file, dst_file))
-
-                        for future in as_completed(futures):
-                            if self._is_stopped: break
-                            result = future.result()
-                            if not result.startswith("오류 발생"):
-                                total_processed += 1
-                                progress_percent = int((total_processed / total_images) * 100)
-                                self.log.emit(result)
-                                self.progress.emit(min(progress_percent, 100))
-                    
-                    if self._is_stopped:
-                        self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_images})")
-                        return
-
+                if self._is_stopped:
+                    self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_images})")
+                else:
                     self.finished.emit(f"Basic Sorting 완료. 총 처리 파일: {total_processed}")
-                    self.log.emit("------ Basic Sorting 작업 완료 ------")
-            except Exception as e:
-                logging.error("Basic Sorting 중 오류", exc_info=True)
-                self.log.emit(f"오류 발생: {str(e)}")
-                self.finished.emit("작업 중 오류 발생.")
+                self.log.emit("------ Basic Sorting 작업 완료 ------")
+                return
+
+            # FOV 직접 입력 모드
+            if fov_number_input:
+                fov_numbers = self.parse_fov_numbers(fov_number_input)
+                if fov_numbers is None:
+                    self.log.emit("유효한 FOV Number가 입력되지 않았습니다.")
+                    self.finished.emit("Basic Sorting 중지됨.")
+                    return
+
+                folder_to_files = {}
+                with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as scan_executor:
+                    future_to_info = {}
+                    for info in inner_id_info:
+                        src_folder_path = os.path.join(source, info['path'])
+                        if os.path.isdir(src_folder_path):
+                            future = scan_executor.submit(self._get_matching_files_for_folder, src_folder_path, formats, fov_numbers)
+                            future_to_info[future] = info
+
+                    for future in as_completed(future_to_info):
+                        info = future_to_info[future]
+                        matching_files = future.result()
+                        if matching_files:
+                            folder_to_files[info['path']] = {'files': matching_files, 'info': info}
+
+                total_images = sum(len(data['files']) for data in folder_to_files.values())
+                if total_images == 0:
+                    self.log.emit("선택한 FOV Number에 해당하는 이미지가 없습니다.")
+                    self.finished.emit("Basic Sorting 완료.")
+                    return
+
+                total_processed = 0
+                with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as copy_executor:
+                    futures = []
+                    for rel_path, data in folder_to_files.items():
+                        source_folder = os.path.join(source, rel_path)
+                        info = data['info']
+                        for image_file in data['files']:
+                            if self._is_stopped: break
+                            src_file = os.path.join(source_folder, image_file)
+                            file_base, file_ext = os.path.splitext(image_file)
+                            
+                            # 파일명 생성 로직 수정
+                            prefix = f"{info['code']}_{info['name']}" if info.get('code') else info['name']
+                            new_file_name = f"{prefix}_{file_base}{file_ext}"
+                            
+                            dst_file = os.path.join(target, new_file_name)
+                            futures.append(copy_executor.submit(self.copy_file_chunked, src_file, dst_file))
+                        if self._is_stopped: break
+
+                    for future in as_completed(futures):
+                        if self._is_stopped: break
+                        result = future.result()
+                        if not result.startswith("오류 발생"):
+                            total_processed += 1
+                            self.log.emit(result)
+                            progress_percent = int((total_processed / total_images) * 100)
+                            self.progress.emit(min(progress_percent, 100))
+                
+                if self._is_stopped:
+                    self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_images})")
+                else:
+                    self.finished.emit(f"Basic Sorting 완료. 총 처리 파일: {total_processed}")
+                self.log.emit("------ Basic Sorting 작업 완료 ------")
+
+            # FOV 미입력 모드 (기존 로직 유지하며 파일명만 수정)
+            else:
+                self.log.emit("FOV 미입력: inner_id_list_path 폴더의 파일 복사 진행")
+                total_images = 0
+                folder_to_files = {}
+                for info in inner_id_info:
+                    if self._is_stopped: break
+                    source_folder = os.path.join(inner_id_list_path, info['path'])
+                    if not os.path.isdir(source_folder):
+                        self.log.emit(f"폴더 없음: {source_folder}")
+                        continue
+                    try:
+                        with os.scandir(source_folder) as it:
+                            image_files = [entry.name for entry in it if entry.is_file() and self.is_valid_file(entry.name, formats)]
+                            if image_files:
+                                folder_to_files[info['path']] = {'files': image_files, 'info': info}
+                                total_images += len(image_files)
+                    except Exception as e:
+                        self.log.emit(f"파일 목록 오류: {source_folder} | 에러: {e}")
+
+                if total_images == 0:
+                    self.log.emit("formats 조건에 맞는 파일 없음.")
+                    self.finished.emit("Basic Sorting 완료.")
+                    return
+
+                total_processed = 0
+                with ThreadPoolExecutor(max_workers=self.max_workers, initializer=set_worker_priority) as executor:
+                    futures = []
+                    for rel_path, data in folder_to_files.items():
+                        if self._is_stopped: break
+                        source_folder = os.path.join(inner_id_list_path, rel_path)
+                        info = data['info']
+                        for image_file in data['files']:
+                            if self._is_stopped: break
+                            src_file = os.path.join(source_folder, image_file)
+                            
+                            # 파일명 생성 로직 수정
+                            prefix = f"{info['code']}_{info['name']}" if info.get('code') else info['name']
+                            new_file_name = f"{prefix}_{image_file}"
+                            
+                            dst_file = os.path.join(target, new_file_name)
+                            futures.append(executor.submit(self.copy_file_chunked, src_file, dst_file))
+
+                    for future in as_completed(futures):
+                        if self._is_stopped: break
+                        result = future.result()
+                        if not result.startswith("오류 발생"):
+                            total_processed += 1
+                            progress_percent = int((total_processed / total_images) * 100)
+                            self.log.emit(result)
+                            self.progress.emit(min(progress_percent, 100))
+
+                if self._is_stopped:
+                    self.finished.emit(f"Basic Sorting 중지됨. ({total_processed}/{total_images})")
+                else:
+                    self.finished.emit(f"Basic Sorting 완료. 총 처리 파일: {total_processed}")
+                self.log.emit("------ Basic Sorting 작업 완료 ------")
+        except Exception as e:
+            logging.error("Basic Sorting 중 오류", exc_info=True)
+            self.log.emit(f"오류 발생: {str(e)}")
+            self.finished.emit("작업 중 오류 발생.")
 
 
         ########################################################################
@@ -1001,7 +1088,7 @@ class WorkerThread(QThread):
             self.finished.emit("MIM to BMP 중 오류 발생.")
 
     ########################################################################
-    # C) TEMP
+    # C) TEMP`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              `
     ########################################################################
     def btj_operation(self, task):
             """

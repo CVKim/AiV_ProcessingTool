@@ -1,2 +1,4 @@
-Pillow
-PyQt5
+Pillow>=10.0
+PyQt5>=5.15
+# Windows-only worker priority lowering (optional — falls back to no-op):
+pywin32>=305; sys_platform == "win32"

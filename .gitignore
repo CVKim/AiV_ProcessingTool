@@ -1,8 +1,33 @@
+# Virtualenv (legacy in-repo venv)
+AiV_ProTool/
+venv/
+.venv/
+
+# Build artefacts
 build/
 dist/
-AiV_ProTool/
-*.spec
-*.log
+*.spec.bak
+
+# Python caches
+__pycache__/
 *.pyc
-*.ini
-*.exe
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime / logs
+error.log
+*.log
+
+# Local INI configs (often contain machine-specific paths)
+mim_converter_config.ini
+*.local.ini
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/*.code-workspace
+
+# Native executables produced by partner tooling
+mim2color.exe

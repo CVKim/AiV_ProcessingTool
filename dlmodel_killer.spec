@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['AiV_Processing_Tool.py'],
+    ['dlmodel_killer.py'],
     pathex=[],
     binaries=[],
-    datas=[('AiV.ico', '.')],
+    datas=[('AiV_LOGO.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -19,21 +19,27 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.datas,
     [],
-    name='AiV_Processing_Tool',
+    exclude_binaries=True,
+    name='dlmodel_killer',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['AiV.ico'],
+    icon=['AiV_LOGO.ico'],
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='dlmodel_killer',
 )
