@@ -49,6 +49,7 @@ def test_main_window_lists_all_pages(qt_app):
 
     win = MainWindow()
     titles = [win.stack.widget(i).TITLE for i in range(win.stack.count())]
-    assert len(titles) == 10
+    assert len(titles) == 11
     assert "Basic Sorting" in titles
     assert "MIM to BMP" in titles
+    assert "Preprocessing" in titles
