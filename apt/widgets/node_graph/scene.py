@@ -132,12 +132,20 @@ class NodeScene(QGraphicsScene):
             is_origin=(node.op_key == "origin"),
         )
         item.update_params(node.params)
-        if scene_pos is None:
-            # Lay nodes out diagonally so a newly added node never lands on top
-            # of an existing one. The scene's view will pan to fit on demand.
-            count = len(self._nodes)
-            scene_pos = QPointF(60 * (count + 1), 80 * (count % 5))
-        item.setPos(scene_pos.x() - NODE_WIDTH / 2, scene_pos.y() - NODE_HEIGHT / 2)
+        # If the pipeline carries a position (e.g. loaded from a job file),
+        # use it. Otherwise fall back to the caller-supplied scene_pos, then
+        # to a diagonal default that avoids overlap with existing nodes.
+        if node.position != (0.0, 0.0):
+            item.setPos(node.position[0], node.position[1])
+        else:
+            if scene_pos is None:
+                count = len(self._nodes)
+                scene_pos = QPointF(60 * (count + 1), 80 * (count % 5))
+            top_left_x = scene_pos.x() - NODE_WIDTH / 2
+            top_left_y = scene_pos.y() - NODE_HEIGHT / 2
+            item.setPos(top_left_x, top_left_y)
+            node.position = (top_left_x, top_left_y)
+        item.add_move_listener(lambda nid=node.id: self._sync_node_position(nid))
         self.addItem(item)
         self._nodes[node_id] = item
         return item
@@ -152,6 +160,38 @@ class NodeScene(QGraphicsScene):
         except Exception:
             return
         item.update_params(node.params)
+
+    def set_pipeline(self, pipeline: Pipeline) -> None:
+        """Replace the underlying pipeline and rebuild the scene visuals.
+
+        Used after loading a job file (the entire graph is swapped out).
+        """
+        # Drop every edge / node currently in the scene.
+        for edge in list(self._edges):
+            edge.detach()
+            self.removeItem(edge)
+        self._edges.clear()
+        for item in list(self._nodes.values()):
+            self.removeItem(item)
+        self._nodes.clear()
+        self.pipeline = pipeline
+        # Recreate origin + every op node at its saved position.
+        for node in pipeline.nodes():
+            self._add_node_item(node.id)
+        self._rebuild_edges()
+        self.graphChanged.emit()
+
+    def _sync_node_position(self, node_id: str) -> None:
+        """Mirror an item's top-left pos back onto its pipeline ``Node``."""
+        item = self._nodes.get(node_id)
+        if item is None:
+            return
+        try:
+            node = self.pipeline.get(node_id)
+        except Exception:
+            return
+        p = item.scenePos()
+        node.position = (float(p.x()), float(p.y()))
 
     def _delete_node(self, node_id: str) -> None:
         item = self._nodes.pop(node_id, None)

@@ -47,7 +47,7 @@ pytest
 | Image Ops   | Crop                   | `crop`                   | Bulk crop with `ltrb` or `xywh` coords. BMP+JSON pairs are co-cropped and labels are re-projected. |
 | Image Ops   | Attach FOV             | `attach_fov`             | Pairs `fov*.jpg` images by FOV number across two folder trees. |
 | Image Ops   | BMP to JPG (BTJ)       | `btj`                    | Recursive BMP → JPG conversion. Auto-creates `<source>_JPG` if no target given. |
-| Image Ops   | Preprocessing          | (interactive)            | Node-graph editor for image preprocessing pipelines. 28 built-in ops (geometry, color, filter, threshold, edge, morphology, histogram, combine) with live preview and per-leaf batch export. |
+| Image Ops   | Preprocessing          | (interactive)            | Node-graph editor for image preprocessing pipelines. 31 built-in ops with live preview, multi-image batch (grid view), portable job files (`.apt.json`), and full-resolution export. |
 | Conversion  | MIM to BMP             | `mim_to_bmp`             | Edits the INI in-place then launches `mim2color.exe` in a new console. |
 
 FOV expressions accepted everywhere: `1,2,3` or with ranges `1,2,3/5`.
@@ -58,19 +58,47 @@ contain `fov`; `fov_jpg` matches `*.jpg` whose name **does** contain `fov`.
 
 ### Preprocessing panel (node graph editor)
 
-- **Load** a single JPG / PNG / BMP as the origin (MIM is not natively
-  supported — convert via the *MIM to BMP* panel first).
-- **Add** any of the 28 operations from the left sidebar (double-click).
-- **Connect** an output port (green, right side of a node) to an input
-  port (blue, left side) by drag-and-drop. Origin can fan out to any
-  number of downstream nodes. *Combine* nodes (`Blend`, `Add`, …) take
-  two inputs.
-- Click a node to edit its **parameters** on the right — the preview
-  updates live.
-- **Export Outputs…** writes every leaf node's result (full resolution,
-  computed from the original image — preview uses a 720px downscale for
-  speed) as `<origin>__<node-id>.png` into the chosen folder.
+- **Load Images / Add Images** — bring in any number of JPG / PNG / BMP
+  files. Thumbnails appear in the strip below the canvas. Click a
+  thumbnail to mark it the *active* image (parameter tuning runs against
+  this one). MIM is not natively supported — convert via the *MIM to
+  BMP* panel first.
+- **Add** any of the 31 operations from the left sidebar (double-click).
+  Use the search box at the top to filter; categories are colour-coded
+  in the sidebar AND on every node title bar / edge.
+- **Connect** an output port (right side of a node) to an input port
+  (left) by drag-and-drop. Origin can fan out to any number of
+  downstream nodes. *Combine* nodes (`Blend`, `Add`, …) take two inputs.
+- Click a node to edit its **parameters** on the right. The inspector
+  has two preview tabs:
+  - **Active** — selected node's output on the active image
+  - **All Images** — same op on every loaded image, side-by-side grid
+  Default tab switches to *All Images* automatically when more than one
+  image is loaded.
+- **Save Job / Load Job** — save the entire graph (nodes, parameters,
+  connections, positions) to a `.apt.json` file and reload it later
+  against any image set. Job files are portable across machines.
+- **Save Outputs…** writes every (image × leaf node) combination at
+  **full resolution** as `<image-stem>__<node-id>.png` into the chosen
+  folder. Errors are reported per file — one bad node does not abort the
+  whole batch.
 - Wheel = zoom · middle-drag = pan · Delete = remove selected node/edge.
+
+**Operations (31 in 8 categories):**
+
+| Category | Operations |
+|---|---|
+| Geometry | Resize · Rotate · Flip · **Crop (XYWH)** |
+| Color | Grayscale · Invert · Brightness/Contrast · Gamma · **Window Stretch** |
+| Filter | Gaussian / Median / Bilateral / Box Blur · Unsharp Mask · **Resize Smooth (down→up)** |
+| Threshold | Binary · Otsu · Adaptive (gaussian / mean) |
+| Edge | Canny · Sobel · Laplacian |
+| Morphology | Erode · Dilate · Open · Close |
+| Histogram | Equalise · CLAHE |
+| Combine (2-input) | Blend · Add · Subtract · Max · Min |
+
+Median Blur and Bilateral Filter expose an `iterations` parameter to
+match the crack-defect preprocessing recipes used internally.
 
 Adding a new preprocessing op is a single `Operation(...)` entry in
 `apt/preprocessing/operations.py` plus a pure function taking
@@ -96,12 +124,17 @@ DL_Tool/
 │  │  ├─ log_console.py         # read-only log + Clear button
 │  │  ├─ sidebar.py             # branded navigation column
 │  │  ├─ image_preview.py       # numpy → QPixmap auto-scaling preview
+│  │  ├─ image_strip.py         # horizontal thumbnail strip of loaded images
+│  │  ├─ batch_grid.py          # grid of leaf results across all images
+│  │  ├─ op_picker.py           # search + category-coloured op cards
 │  │  ├─ parameter_form.py      # dynamic form from ParamSpec list
 │  │  └─ node_graph/            # QGraphicsScene/View node editor
 │  │     ├─ scene.py · view.py · node_item.py · edge_item.py
 │  ├─ preprocessing/            # Qt-free image ops + DAG executor
-│  │  ├─ operations.py          # 28 ops (Geometry / Color / Filter / Threshold / Edge / Morph / Histogram / Combine)
-│  │  └─ pipeline.py            # Node, Pipeline with per-node result cache
+│  │  ├─ operations.py          # 31 ops (Geometry / Color / Filter / Threshold / Edge / Morph / Histogram / Combine)
+│  │  ├─ pipeline.py            # Node, Pipeline, duplicate_with_origin (batch / export)
+│  │  ├─ categories.py          # Category colour palette + hints
+│  │  └─ job.py                 # .apt.json save / load with version + validation
 │  ├─ utils/                    # Qt-free pure helpers (unit-tested)
 │  │  ├─ fov.py                 # parse_fov_numbers, extract_fov_from_filename
 │  │  ├─ formats.py             # is_valid_file (org_jpg / fov_jpg semantics)
@@ -132,6 +165,7 @@ DL_Tool/
 │  ├─ test_workers_counting.py
 │  ├─ test_preprocessing_operations.py
 │  ├─ test_preprocessing_pipeline.py
+│  ├─ test_preprocessing_job.py
 │  └─ test_panels.py            # headless construction of every panel
 ├─ legacy/                      # the pre-refactor monoliths (for reference)
 │  ├─ APT.py
@@ -231,8 +265,8 @@ panel; each panel runs an independent worker.
 
 ```
 $ pytest -q
-..............................................................................................
-94 passed
+..................................................................................................................
+114 passed
 ```
 
 The dummy tree factory under `tests/fixtures/tree_factory.py` generates

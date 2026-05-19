@@ -29,6 +29,10 @@ class Node:
     :data:`apt.preprocessing.operations.OPERATIONS`.  The special key
     ``"origin"`` denotes the input image and has zero inputs; its image is
     provided via :meth:`Pipeline.set_origin`.
+
+    ``position`` carries the canvas (x, y) of the node so that saving and
+    loading a job file restores the same graph layout. Kept as a plain
+    tuple — the pipeline module stays Qt-free.
     """
 
     id: str
@@ -36,6 +40,7 @@ class Node:
     inputs: list[str] = field(default_factory=list)
     params: dict = field(default_factory=dict)
     title: str = ""
+    position: tuple[float, float] = (0.0, 0.0)
 
     def display_title(self) -> str:
         if self.title:
@@ -142,6 +147,39 @@ class Pipeline:
         self._nodes = {self.ORIGIN_ID: Node(id=self.ORIGIN_ID, op_key="origin")}
         self._next_id = 1
         self._cache.clear()
+
+    def duplicate_with_origin(
+        self,
+        origin_image: np.ndarray | None,
+    ) -> tuple["Pipeline", dict[str, str]]:
+        """Return a fresh pipeline with the same topology + params and a
+        different origin image. Also returns an ``id_map`` from this
+        pipeline's node ids to the clone's ids.
+
+        Used by both full-resolution export and batch processing across
+        multiple loaded images.
+        """
+        clone = Pipeline()
+        clone.set_origin(origin_image)
+        id_map: dict[str, str] = {self.ORIGIN_ID: self.ORIGIN_ID}
+        # First pass: create every op node, mapping old id → new id.
+        for node in self._nodes.values():
+            if node.op_key == "origin":
+                continue
+            new = clone.add_node(node.op_key)
+            id_map[node.id] = new.id
+            for k, v in node.params.items():
+                clone.set_param(new.id, k, v)
+            clone.get(new.id).position = node.position
+        # Second pass: wire connections using the mapping.
+        for node in self._nodes.values():
+            if node.op_key == "origin":
+                continue
+            new_id = id_map[node.id]
+            for port_idx, src in enumerate(node.inputs):
+                if src and src in id_map:
+                    clone.connect(id_map[src], new_id, port_idx)
+        return clone, id_map
 
     # ------------------------------------------------------------------
     # Execution

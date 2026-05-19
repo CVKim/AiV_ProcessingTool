@@ -94,6 +94,48 @@ def test_resize_by_scale_when_dims_zero(image):
     assert out.shape[1] == image.shape[1] // 2
 
 
+def test_crop_xywh_extracts_region(image):
+    out = apply_operation("crop_xywh", [image], x=10, y=20, width=30, height=15)
+    assert out.shape[:2] == (15, 30)
+
+
+def test_crop_xywh_clamps_oversized_region(image):
+    h, w = image.shape[:2]
+    # Way outside image bounds — should clamp without raising.
+    out = apply_operation("crop_xywh", [image], x=w - 5, y=h - 5, width=200, height=200)
+    assert out.shape[0] >= 1 and out.shape[1] >= 1
+
+
+def test_window_stretch_endpoints():
+    img = np.array([[0, 50, 100, 150, 200, 255]], dtype=np.uint8)
+    img = img[..., None].repeat(3, axis=-1)  # to BGR
+    out = apply_operation("window_stretch", [img], lower=50, upper=200)
+    # Pixels ≤50 → 0; pixels ≥200 → 255.
+    assert out[0, 0, 0] == 0
+    assert out[0, 5, 0] == 255
+
+
+def test_window_stretch_invalid_window_returns_zeros(image):
+    out = apply_operation("window_stretch", [image], lower=200, upper=100)
+    assert out.shape == image.shape
+    assert out.max() == 0
+
+
+def test_resize_smooth_preserves_shape(image):
+    out = apply_operation("resize_smooth", [image], scale=0.5, interp="bilinear", pre_blur_sigma=0.0)
+    assert out.shape == image.shape
+
+
+def test_median_blur_iterations_runs(image):
+    out = apply_operation("median_blur", [image], ksize=3, iterations=3)
+    assert out.shape == image.shape
+
+
+def test_bilateral_iterations_runs(image):
+    out = apply_operation("bilateral", [image], d=5, sigma_color=50.0, sigma_space=50.0, iterations=2)
+    assert out.shape == image.shape
+
+
 def test_get_operation_raises_for_unknown_key():
     with pytest.raises(KeyError):
         get_operation("nope")

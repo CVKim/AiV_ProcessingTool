@@ -24,6 +24,15 @@ from apt.preprocessing.pipeline import (
     Pipeline,
     PipelineError,
 )
+from apt.preprocessing.job import (
+    JobFormatError,
+    CURRENT_VERSION as JOB_FORMAT_VERSION,
+    FORMAT_TAG as JOB_FORMAT_TAG,
+    deserialize_pipeline,
+    load_job,
+    save_job,
+    serialize_pipeline,
+)
 
 __all__ = [
     "OPERATIONS",
@@ -39,4 +48,11 @@ __all__ = [
     "ORIGIN_STYLE",
     "style_for",
     "short_hint",
+    "JobFormatError",
+    "JOB_FORMAT_TAG",
+    "JOB_FORMAT_VERSION",
+    "save_job",
+    "load_job",
+    "serialize_pipeline",
+    "deserialize_pipeline",
 ]
