@@ -147,13 +147,26 @@ class PreprocessingPanel(BaseTaskPanel):
         self.reset_button.clicked.connect(self._reset_graph)
         self.fit_button = QPushButton("Fit View")
         self.fit_button.clicked.connect(self._fit_view)
+        self.fit_button.setToolTip("Fit all nodes in the canvas  (F)")
+        self.layout_button = QPushButton("Auto-Layout")
+        self.layout_button.clicked.connect(self._auto_layout)
+        self.layout_button.setToolTip(
+            "Rearrange nodes left → right by depth from Origin"
+        )
+        self.snap_button = QPushButton("Snap")
+        self.snap_button.setCheckable(True)
+        self.snap_button.setChecked(True)
+        self.snap_button.setToolTip(
+            "Snap nodes to the grid while dragging (hold Shift to free-place)"
+        )
+        self.snap_button.toggled.connect(self._on_snap_toggled)
         self.export_button = QPushButton("Save Outputs…")
         self.export_button.clicked.connect(self._export_outputs)
 
         for btn in (
             self.load_button, self.add_button, self.save_job_button,
             self.load_job_button, self.reset_button, self.fit_button,
-            self.export_button,
+            self.layout_button, self.snap_button, self.export_button,
         ):
             row.addWidget(btn)
         row.addSpacing(16)
@@ -197,6 +210,12 @@ class PreprocessingPanel(BaseTaskPanel):
         self.scene.statusMessage.connect(self._show_status)
         self.view = NodeView(self.scene)
         graph_layout.addWidget(self.view, 1)
+        shortcuts = self._dim_label(
+            "Shortcuts:  F = fit  ·  Ctrl+0 = reset zoom  ·  Ctrl+D = duplicate  ·  "
+            "Ctrl+A = select all  ·  Esc = deselect  ·  ←↑↓→ = nudge "
+            "(Shift = ×5)  ·  Space + drag = pan  ·  Right-click node = menu"
+        )
+        graph_layout.addWidget(shortcuts)
 
         # Image strip
         self.image_strip = ImageStrip()
@@ -384,6 +403,13 @@ class PreprocessingPanel(BaseTaskPanel):
 
     def _fit_view(self) -> None:
         self.view.fit_to_content()
+
+    def _auto_layout(self) -> None:
+        self.scene.auto_layout()
+        QTimer.singleShot(50, self.view.fit_to_content)
+
+    def _on_snap_toggled(self, enabled: bool) -> None:
+        self.scene.set_snap_enabled(enabled)
 
     def _add_op(self, op_key: str | None) -> None:
         if not op_key:

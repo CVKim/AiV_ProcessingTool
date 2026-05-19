@@ -12,6 +12,7 @@ clicks back to the data model.
 from __future__ import annotations
 
 from PyQt5.QtCore import QPointF, QRectF, Qt
+from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtGui import (
     QBrush,
     QColor,
@@ -37,6 +38,10 @@ NODE_WIDTH = 200
 NODE_HEIGHT = 96
 TITLE_HEIGHT = 30
 PORT_RADIUS = 8
+
+# Snap step (px) used when ``snap_enabled`` is true. Matches the dotted-grid
+# spacing drawn by NodeView so visual lines line up with stop points.
+SNAP_STEP = 22
 
 COLOR_NODE_FILL = QColor("#13141A")
 COLOR_NODE_FILL_HOVER = QColor("#181A22")
@@ -77,6 +82,9 @@ class PortItem(QGraphicsEllipseItem):
 
 class NodeItem(QGraphicsRectItem):
     """Rounded-rectangle node with title bar, params summary and ports."""
+
+    # Snap toggle owned by the scene; flipped via NodeScene.set_snap_enabled.
+    snap_enabled: bool = True
 
     def __init__(
         self,
@@ -188,6 +196,19 @@ class NodeItem(QGraphicsRectItem):
         port.setPos(x, y)
 
     def itemChange(self, change, value):  # noqa: N802
+        if change == QGraphicsItem.ItemPositionChange and self.snap_enabled:
+            # Hold Shift while dragging to bypass the snap and place freely.
+            mods = QGuiApplication.keyboardModifiers()
+            if not (mods & Qt.ShiftModifier):
+                x = round(value.x() / SNAP_STEP) * SNAP_STEP
+                y = round(value.y() / SNAP_STEP) * SNAP_STEP
+                return QPointF(x, y)
+        if change == QGraphicsItem.ItemSelectedHasChanged and value:
+            # Bring selected node above its peers so its ports / title
+            # aren't hidden by overlapping nodes during drag operations.
+            self.setZValue(3)
+        elif change == QGraphicsItem.ItemSelectedHasChanged and not value:
+            self.setZValue(1)
         if change == QGraphicsItem.ItemPositionHasChanged:
             for cb in list(self._move_listeners):
                 cb()

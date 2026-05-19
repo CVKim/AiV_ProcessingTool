@@ -7,11 +7,17 @@ from __future__ import annotations
 
 from PyQt5.QtCore import QPointF, Qt, pyqtSignal
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent
+from PyQt5.QtWidgets import (
+    QAction,
+    QGraphicsScene,
+    QGraphicsSceneContextMenuEvent,
+    QGraphicsSceneMouseEvent,
+    QMenu,
+)
 
 from apt.preprocessing import Operation, Pipeline, PipelineError
 from apt.widgets.node_graph.edge_item import EdgeItem
-from apt.widgets.node_graph.node_item import NODE_HEIGHT, NODE_WIDTH, NodeItem, PortItem
+from apt.widgets.node_graph.node_item import NODE_HEIGHT, NODE_WIDTH, NodeItem, PortItem, SNAP_STEP
 
 
 class NodeScene(QGraphicsScene):
@@ -110,11 +116,66 @@ class NodeScene(QGraphicsScene):
         super().mouseReleaseEvent(event)
 
     def keyPressEvent(self, event) -> None:  # noqa: N802
-        if event.key() in (Qt.Key_Delete, Qt.Key_Backspace):
+        key = event.key()
+        mods = event.modifiers()
+        if key in (Qt.Key_Delete, Qt.Key_Backspace):
             self.remove_selected()
             event.accept()
             return
+        if key == Qt.Key_Escape:
+            self.clearSelection()
+            event.accept()
+            return
+        if key == Qt.Key_A and (mods & Qt.ControlModifier):
+            for item in self._nodes.values():
+                item.setSelected(True)
+            event.accept()
+            return
+        if key == Qt.Key_D and (mods & Qt.ControlModifier):
+            self.duplicate_selected()
+            event.accept()
+            return
+        if key in (Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down):
+            self._nudge_selected(key, fast=bool(mods & Qt.ShiftModifier))
+            event.accept()
+            return
         super().keyPressEvent(event)
+
+    def contextMenuEvent(self, event: QGraphicsSceneContextMenuEvent) -> None:  # noqa: N802
+        item = next(
+            (it for it in self.items(event.scenePos()) if isinstance(it, NodeItem)),
+            None,
+        )
+        if item is None:
+            return
+        if not item.isSelected():
+            self.clearSelection()
+            item.setSelected(True)
+
+        menu = QMenu()
+        menu.setStyleSheet(
+            "QMenu { background-color: #15161B; color: #EDEDEF; border: 1px solid #2E3140; }"
+            "QMenu::item { padding: 6px 18px; }"
+            "QMenu::item:selected { background-color: #FF7029; color: #0B0B0E; }"
+        )
+
+        if not item.is_origin:
+            dup_action = QAction("Duplicate  (Ctrl+D)", menu)
+            dup_action.triggered.connect(self.duplicate_selected)
+            menu.addAction(dup_action)
+
+        disc_action = QAction("Disconnect inputs", menu)
+        disc_action.triggered.connect(lambda: self._disconnect_inputs(item.node_id))
+        menu.addAction(disc_action)
+
+        menu.addSeparator()
+        if not item.is_origin:
+            del_action = QAction("Delete  (Del)", menu)
+            del_action.triggered.connect(self.remove_selected)
+            menu.addAction(del_action)
+
+        menu.exec_(event.screenPos())
+        event.accept()
 
     # ------------------------------------------------------------------
     # Internals
@@ -192,6 +253,120 @@ class NodeScene(QGraphicsScene):
             return
         p = item.scenePos()
         node.position = (float(p.x()), float(p.y()))
+
+    # ------------------------------------------------------------------
+    # Snap / duplicate / layout / nudge
+    # ------------------------------------------------------------------
+    def set_snap_enabled(self, enabled: bool) -> None:
+        NodeItem.snap_enabled = bool(enabled)
+        self.statusMessage.emit(
+            "Snap-to-grid ON (hold Shift to free-place)" if enabled
+            else "Snap-to-grid OFF"
+        )
+
+    def duplicate_selected(self) -> None:
+        """Clone every selected op node (no inputs wired) with a small offset."""
+        clones: list[str] = []
+        for item in [it for it in self.selectedItems() if isinstance(it, NodeItem)]:
+            if item.is_origin:
+                continue
+            try:
+                src_node = self.pipeline.get(item.node_id)
+            except PipelineError:
+                continue
+            new_node = self.pipeline.add_node(src_node.op_key)
+            for k, v in src_node.params.items():
+                self.pipeline.set_param(new_node.id, k, v)
+            x = item.scenePos().x() + NODE_WIDTH + 30
+            y = item.scenePos().y() + 30
+            new_node.position = (x, y)
+            self._add_node_item(new_node.id, scene_pos=QPointF(x + NODE_WIDTH / 2, y + NODE_HEIGHT / 2))
+            clones.append(new_node.id)
+        if clones:
+            self.clearSelection()
+            for nid in clones:
+                self._nodes[nid].setSelected(True)
+            self.graphChanged.emit()
+
+    def auto_layout(self) -> None:
+        """Hierarchical left→right layout: depth from Origin = column index.
+
+        Origin gets depth 0; every other node's depth is ``max(input depths) + 1``.
+        Within a column, nodes are stacked vertically with a constant gap.
+        Disconnected nodes land in their own column past the deepest one.
+        """
+        depths: dict[str, int] = {Pipeline.ORIGIN_ID: 0}
+        node_list = [n for n in self.pipeline.nodes()]
+
+        # Iterate until every node has a depth (DAG, so this converges).
+        changed = True
+        while changed:
+            changed = False
+            for node in node_list:
+                if node.id in depths:
+                    continue
+                src_depths = [
+                    depths[src] for src in node.inputs if src and src in depths
+                ]
+                if not node.inputs or not any(node.inputs):
+                    depths[node.id] = max(depths.values(), default=0) + 1
+                    changed = True
+                elif len(src_depths) == sum(1 for s in node.inputs if s):
+                    depths[node.id] = max(src_depths) + 1
+                    changed = True
+        # Anything still missing (shouldn't happen but be defensive).
+        for node in node_list:
+            depths.setdefault(node.id, max(depths.values(), default=0) + 1)
+
+        # Group by depth.
+        columns: dict[int, list[str]] = {}
+        for nid, d in depths.items():
+            columns.setdefault(d, []).append(nid)
+
+        col_gap_x = NODE_WIDTH + 60
+        row_gap_y = NODE_HEIGHT + 24
+        for depth, ids in sorted(columns.items()):
+            ids_sorted = sorted(ids)
+            n = len(ids_sorted)
+            total_h = n * NODE_HEIGHT + (n - 1) * 24
+            top = -total_h / 2
+            x = depth * col_gap_x
+            for i, nid in enumerate(ids_sorted):
+                y = top + i * row_gap_y
+                item = self._nodes.get(nid)
+                if item is None:
+                    continue
+                item.setPos(x, y)
+                try:
+                    self.pipeline.get(nid).position = (float(x), float(y))
+                except PipelineError:
+                    pass
+        # Edges follow because each NodeItem move listener was installed at
+        # _add_node_item time.
+        self.graphChanged.emit()
+        self.statusMessage.emit("Auto-layout applied")
+
+    def _nudge_selected(self, key: int, fast: bool = False) -> None:
+        step = SNAP_STEP * (5 if fast else 1)
+        dx, dy = {
+            Qt.Key_Left: (-step, 0),
+            Qt.Key_Right: (step, 0),
+            Qt.Key_Up: (0, -step),
+            Qt.Key_Down: (0, step),
+        }.get(key, (0, 0))
+        for item in [it for it in self.selectedItems() if isinstance(it, NodeItem)]:
+            item.moveBy(dx, dy)
+
+    def _disconnect_inputs(self, node_id: str) -> None:
+        try:
+            node = self.pipeline.get(node_id)
+        except PipelineError:
+            return
+        for port_idx, src in enumerate(list(node.inputs)):
+            if src:
+                self.pipeline.disconnect(node_id, port_idx)
+        self._rebuild_edges()
+        self.graphChanged.emit()
 
     def _delete_node(self, node_id: str) -> None:
         item = self._nodes.pop(node_id, None)
