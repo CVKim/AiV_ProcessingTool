@@ -210,6 +210,67 @@ without requiring access to production data shares.
 
 ---
 
-## 9. License & ownership
+## 9. Git workflow
+
+The repository uses a simple **two long-lived branches + short-lived feature
+branches** model.
+
+```
+main            ──●────────────●────────────●───────  (production / tagged releases)
+                  ▲            ▲            ▲
+                  │  merge     │  merge     │
+                  │            │            │
+dev      ──●──●───┴──●──●──●───┴──●──●──●───┴──●──   (integration / next release)
+           ▲     ▲                ▲     ▲
+           │     │ merge          │     │
+feature/x  └──●──┘                │     │
+feature/y                feature/y└──●──┘
+```
+
+### Rules
+
+- **`main`** — always shippable. Only fast-forward or PR merges from `dev`.
+  Never commit directly.
+- **`dev`** — integration branch. New work lands here first via PRs from
+  feature branches; periodically rolled into `main` once stable.
+- **`feature/<short-name>`** — branched off `dev`, one branch per
+  task/ticket. Deleted after merge.
+- **`fix/<short-name>`** — same as feature, for bug fixes.
+- **`hotfix/<short-name>`** — branched off `main` for urgent production
+  fixes; merged back into both `main` and `dev`.
+
+### Day-to-day commands
+
+```powershell
+# Start a new feature
+git checkout dev
+git pull
+git checkout -b feature/add-resize-panel
+
+# …work, commit, push…
+git push -u origin feature/add-resize-panel
+
+# Open a PR on GitHub: feature/add-resize-panel → dev
+# After review + merge, delete the branch:
+git branch -d feature/add-resize-panel
+git push origin --delete feature/add-resize-panel
+
+# When dev is stable enough to release, PR dev → main on GitHub
+# (no fast-forward — leave the merge commit so release history is visible).
+```
+
+### Suggested PR titles
+
+```
+feat:  add resize panel
+fix:   handle empty NG folder in counting worker
+docs:  update FOV expression examples
+chore: bump Pillow to 11
+test:  cover crop_image bounds clamping
+```
+
+---
+
+## 10. License & ownership
 
 Internal AIVEX DL-PM team tool. Not for external distribution.
