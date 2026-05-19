@@ -1,4 +1,6 @@
 Pillow>=10.0
 PyQt5>=5.15
+numpy>=1.24
+opencv-python>=4.8
 # Windows-only worker priority lowering (optional — falls back to no-op):
 pywin32>=305; sys_platform == "win32"

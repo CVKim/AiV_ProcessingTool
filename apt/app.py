@@ -27,6 +27,7 @@ from apt.dialogs import (
     MIMtoBMPPanel,
     NGCountPanel,
     NGSortingPanel,
+    PreprocessingPanel,
     SimulationFolderingPanel,
 )
 from apt.theme import QSS, apply_palette
@@ -76,6 +77,7 @@ class MainWindow(QMainWindow):
             ("Image Ops",     "Crop",                 CropPanel),
             ("Image Ops",     "Attach FOV",           AttachFOVPanel),
             ("Image Ops",     "BMP to JPG (BTJ)",     BMPtoJPGPanel),
+            ("Image Ops",     "Preprocessing",        PreprocessingPanel),
             ("Conversion",    "MIM to BMP",           MIMtoBMPPanel),
         ]
         sections: dict[str, list[tuple[str, int]]] = {}

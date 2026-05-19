@@ -17,6 +17,7 @@ from apt.dialogs.crop import CropPanel
 from apt.dialogs.mim_to_bmp import MIMtoBMPPanel
 from apt.dialogs.attach_fov import AttachFOVPanel
 from apt.dialogs.btj import BMPtoJPGPanel
+from apt.dialogs.preprocessing import PreprocessingPanel
 
 __all__ = [
     "BaseTaskPanel",
@@ -30,4 +31,5 @@ __all__ = [
     "MIMtoBMPPanel",
     "AttachFOVPanel",
     "BMPtoJPGPanel",
+    "PreprocessingPanel",
 ]
