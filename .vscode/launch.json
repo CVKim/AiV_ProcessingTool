@@ -2,43 +2,23 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "MinGW gdb Debug",
-      "type": "cppdbg",
+      "name": "APT: Run main.py",
+      "type": "debugpy",
       "request": "launch",
-      "program": "e:/Dev/DL_Tool/build/Debug/outDebug.exe",
-      "args": [],
-      "stopAtEntry": false,
-      "cwd": "e:/Dev/DL_Tool",
-      "environment": [],
-      "externalConsole": true,
-      "MIMode": "gdb",
-      "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
     },
     {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
+      "name": "APT: pytest (all)",
+      "type": "debugpy",
       "request": "launch",
-      "args": [],
-      "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "e:/Dev/DL_Tool/AiV_ProTool",
-      "program": "e:/Dev/DL_Tool/AiV_ProTool/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
+      "module": "pytest",
+      "args": ["-q"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": false
     }
   ]
 }
