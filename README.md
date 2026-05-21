@@ -32,6 +32,17 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
+### Distributing a built EXE / installer
+
+Two options:
+
+| Method | Output | Notes |
+|---|---|---|
+| **Directory build** (`pyinstaller APT.spec`) | `dist\APT\` folder | Zip + share the whole folder. EXE alone won't run — `_internal\` carries Python + Qt DLLs. |
+| **Installer** (`installer\build.ps1`) | `installer\Output\APT_Setup_v<ver>.exe` | Single self-extracting installer. Requires Inno Setup 6 ([free](https://jrsoftware.org/isdl.php)). Bundles `APT.exe + _internal\ + mim2color.exe + mim_converter_config.ini` and installs to `Program Files\AIVEX\APT\`, registers in Add/Remove Programs, creates Start Menu shortcuts. |
+
+The installer build script parses the version from `apt/brand.py:APP_VERSION` so you only need to bump that one line per release. See [`installer/README.md`](installer/README.md) for details.
+
 ---
 
 ## 2. Features
