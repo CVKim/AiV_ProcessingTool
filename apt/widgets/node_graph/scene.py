@@ -5,6 +5,8 @@ syncs UI gestures (drag-to-connect, delete, select) into a
 
 from __future__ import annotations
 
+import logging
+
 from PyQt5.QtCore import QPointF, Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
@@ -47,27 +49,86 @@ class NodeScene(QGraphicsScene):
         return node.id
 
     def remove_selected(self) -> None:
-        """Delete the currently selected node(s) and/or edge(s)."""
-        removed = False
-        for item in list(self.selectedItems()):
+        """Delete the currently selected node(s) and/or edge(s).
+
+        Snapshots both lists *first*, then mutates — otherwise the per-item
+        ``_rebuild_edges`` call would invalidate later iterations of the
+        same press (the user's "Delete takes multiple presses" bug).
+        """
+        nodes_to_delete: list[str] = []
+        edges_to_delete: list[EdgeItem] = []
+        for item in self.selectedItems():
             if isinstance(item, EdgeItem) and not item.temporary:
-                self._delete_edge(item)
-                removed = True
+                edges_to_delete.append(item)
             elif isinstance(item, NodeItem) and not item.is_origin:
-                self._delete_node(item.node_id)
-                removed = True
-        if removed:
-            self.graphChanged.emit()
+                nodes_to_delete.append(item.node_id)
+
+        if not nodes_to_delete and not edges_to_delete:
+            return
+
+        self._cancel_pending_grabs()
+
+        # Edges first so node deletion can't double-process them.
+        for edge in edges_to_delete:
+            try:
+                dst_id = edge.dst_port.node.node_id
+                dst_port = edge.dst_port.index
+                self.pipeline.disconnect(dst_id, dst_port)
+                edge.detach()
+                if edge.scene() is self:
+                    self.removeItem(edge)
+                if edge in self._edges:
+                    self._edges.remove(edge)
+            except Exception:
+                logging.exception("remove_selected: failed to drop edge")
+
+        # Then nodes.
+        for node_id in nodes_to_delete:
+            try:
+                item = self._nodes.pop(node_id, None)
+                if item is None:
+                    continue
+                for edge in [
+                    e for e in list(self._edges)
+                    if e.src_port.node is item or e.dst_port.node is item
+                ]:
+                    try:
+                        edge.detach()
+                        if edge.scene() is self:
+                            self.removeItem(edge)
+                        if edge in self._edges:
+                            self._edges.remove(edge)
+                    except Exception:
+                        logging.exception("remove_selected: edge cleanup for node %s", node_id)
+                if item.scene() is self:
+                    self.removeItem(item)
+                self.pipeline.remove_node(node_id)
+            except Exception:
+                logging.exception("remove_selected: failed to drop node %s", node_id)
+
+        # Single rebuild at the end keeps everything consistent.
+        self._rebuild_edges()
+        self.graphChanged.emit()
 
     def reset_graph(self) -> None:
+        self._cancel_pending_grabs()
         for edge in list(self._edges):
-            edge.detach()
-            self.removeItem(edge)
+            try:
+                edge.detach()
+                if edge.scene() is self:
+                    self.removeItem(edge)
+            except Exception:
+                logging.exception("reset_graph: edge cleanup")
         self._edges.clear()
         for nid, item in list(self._nodes.items()):
-            if nid != Pipeline.ORIGIN_ID:
-                self.removeItem(item)
+            if nid == Pipeline.ORIGIN_ID:
+                continue
+            try:
+                if item.scene() is self:
+                    self.removeItem(item)
                 del self._nodes[nid]
+            except Exception:
+                logging.exception("reset_graph: removing node %s", nid)
         self.pipeline.clear()
         # Re-anchor origin position.
         origin = self._nodes.get(Pipeline.ORIGIN_ID)
@@ -227,20 +288,53 @@ class NodeScene(QGraphicsScene):
 
         Used after loading a job file (the entire graph is swapped out).
         """
-        # Drop every edge / node currently in the scene.
+        self._cancel_pending_grabs()
+        self.clearSelection()
         for edge in list(self._edges):
-            edge.detach()
-            self.removeItem(edge)
+            try:
+                edge.detach()
+                if edge.scene() is self:
+                    self.removeItem(edge)
+            except Exception:
+                logging.exception("set_pipeline: edge cleanup")
         self._edges.clear()
         for item in list(self._nodes.values()):
-            self.removeItem(item)
+            try:
+                if item.scene() is self:
+                    self.removeItem(item)
+            except Exception:
+                logging.exception("set_pipeline: node cleanup")
         self._nodes.clear()
         self.pipeline = pipeline
         # Recreate origin + every op node at its saved position.
         for node in pipeline.nodes():
-            self._add_node_item(node.id)
+            try:
+                self._add_node_item(node.id)
+            except Exception:
+                logging.exception("set_pipeline: adding node %s", node.id)
         self._rebuild_edges()
         self.graphChanged.emit()
+
+    def _cancel_pending_grabs(self) -> None:
+        """Drop any in-flight temporary edge / port drag and release any
+        currently-held mouse grab. Called before mutations that remove items
+        from the scene to silence ``QGraphicsItem::ungrabMouse`` warnings.
+        """
+        if self._temp_edge is not None:
+            try:
+                if self._temp_edge.scene() is self:
+                    self.removeItem(self._temp_edge)
+            except Exception:
+                logging.exception("_cancel_pending_grabs: temp edge")
+            self._temp_edge = None
+        self._drag_origin = None
+        grabber = self.mouseGrabberItem()
+        if grabber is not None:
+            try:
+                grabber.ungrabMouse()
+            except Exception:
+                # Some Qt builds whine here too — that's fine, we tried.
+                pass
 
     def _sync_node_position(self, node_id: str) -> None:
         """Mirror an item's top-left pos back onto its pipeline ``Node``."""
@@ -368,33 +462,14 @@ class NodeScene(QGraphicsScene):
         self._rebuild_edges()
         self.graphChanged.emit()
 
-    def _delete_node(self, node_id: str) -> None:
-        item = self._nodes.pop(node_id, None)
-        if item is None:
-            return
-        # Drop edges touching this node.
-        for edge in [e for e in self._edges if e.src_port.node is item or e.dst_port.node is item]:
-            edge.detach()
-            self.removeItem(edge)
-            self._edges.remove(edge)
-        self.removeItem(item)
-        self.pipeline.remove_node(node_id)
-        self._rebuild_edges()
-
-    def _delete_edge(self, edge: EdgeItem) -> None:
-        dst_id = edge.dst_port.node.node_id
-        dst_port = edge.dst_port.index
-        self.pipeline.disconnect(dst_id, dst_port)
-        edge.detach()
-        self.removeItem(edge)
-        if edge in self._edges:
-            self._edges.remove(edge)
-        self._rebuild_edges()
-
     def _rebuild_edges(self) -> None:
         for edge in list(self._edges):
-            edge.detach()
-            self.removeItem(edge)
+            try:
+                edge.detach()
+                if edge.scene() is self:
+                    self.removeItem(edge)
+            except Exception:
+                logging.exception("_rebuild_edges: removing edge")
         self._edges.clear()
         for node in self.pipeline.nodes():
             for port_idx, src_id in enumerate(node.inputs):
@@ -404,9 +479,23 @@ class NodeScene(QGraphicsScene):
                 dst_item = self._nodes.get(node.id)
                 if src_item is None or dst_item is None:
                     continue
-                edge = EdgeItem(src_port=src_item.output, dst_port=dst_item.inputs[port_idx])
-                self.addItem(edge)
-                self._edges.append(edge)
+                if port_idx >= len(dst_item.inputs):
+                    logging.warning(
+                        "_rebuild_edges: %s port %d out of range (%d inputs)",
+                        node.id, port_idx, len(dst_item.inputs),
+                    )
+                    continue
+                try:
+                    edge = EdgeItem(
+                        src_port=src_item.output,
+                        dst_port=dst_item.inputs[port_idx],
+                    )
+                    self.addItem(edge)
+                    self._edges.append(edge)
+                except Exception:
+                    logging.exception(
+                        "_rebuild_edges: creating edge %s -> %s", src_id, node.id
+                    )
 
     def _port_at(self, pos: QPointF):
         for item in self.items(pos):

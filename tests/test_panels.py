@@ -53,3 +53,94 @@ def test_main_window_lists_all_pages(qt_app):
     assert "Basic Sorting" in titles
     assert "MIM to BMP" in titles
     assert "Preprocessing" in titles
+
+
+def test_preprocessing_delete_clears_multiselection_in_one_call(qt_app):
+    """Regression: multi-select + Delete used to leave items behind because
+    _rebuild_edges fired per-item and invalidated the snapshot mid-iteration."""
+    from apt.app import MainWindow
+    from apt.dialogs.preprocessing import PreprocessingPanel
+    from apt.preprocessing import Pipeline
+    from apt.widgets.node_graph import NodeItem
+
+    win = MainWindow()
+    panel = next(
+        win.stack.widget(i) for i in range(win.stack.count())
+        if isinstance(win.stack.widget(i), PreprocessingPanel)
+    )
+    panel._add_op("gaussian_blur")
+    panel._add_op("canny")
+    panel._add_op("brightness_contrast")
+    panel._add_op("blend")
+    ids = {n.op_key: n.id for n in panel.pipeline.nodes() if n.op_key != "origin"}
+    panel.pipeline.connect(Pipeline.ORIGIN_ID, ids["gaussian_blur"], 0)
+    panel.pipeline.connect(ids["gaussian_blur"], ids["canny"], 0)
+    panel.pipeline.connect(Pipeline.ORIGIN_ID, ids["brightness_contrast"], 0)
+    panel.pipeline.connect(ids["canny"], ids["blend"], 0)
+    panel.pipeline.connect(ids["brightness_contrast"], ids["blend"], 1)
+    panel.scene._rebuild_edges()
+
+    # Select two non-origin nodes and call remove_selected once.
+    panel.scene.clearSelection()
+    target_ids = {ids["canny"], ids["brightness_contrast"]}
+    for it in panel.scene.items():
+        if isinstance(it, NodeItem) and it.node_id in target_ids:
+            it.setSelected(True)
+    panel.scene.remove_selected()
+
+    keys = {n.op_key for n in panel.pipeline.nodes()}
+    assert "canny" not in keys
+    assert "brightness_contrast" not in keys
+    assert {"origin", "gaussian_blur", "blend"} <= keys
+
+
+def test_preprocessing_image_switch_is_stable(qt_app):
+    """Regression: swapping the active image used to leave the preview /
+    params stale because exceptions in the refresh path were silenced."""
+    import numpy as np
+    from apt.app import MainWindow
+    from apt.dialogs.preprocessing import LoadedImage, PreprocessingPanel
+
+    win = MainWindow()
+    panel = next(
+        win.stack.widget(i) for i in range(win.stack.count())
+        if isinstance(win.stack.widget(i), PreprocessingPanel)
+    )
+    panel._images = [
+        LoadedImage("a.bmp", np.full((30, 30, 3), 50, np.uint8),
+                    np.full((30, 30, 3), 50, np.uint8)),
+        LoadedImage("b.bmp", np.full((30, 30, 3), 200, np.uint8),
+                    np.full((30, 30, 3), 200, np.uint8)),
+    ]
+    panel._active_index = 0
+    panel._sync_image_strip()
+    panel._apply_active_image_to_pipeline()
+    panel._on_image_selected(1)
+    assert panel._active_index == 1
+    panel._on_image_selected(0)
+    assert panel._active_index == 0
+
+
+def test_preprocessing_remove_active_image_picks_safe_index(qt_app):
+    import numpy as np
+    from apt.app import MainWindow
+    from apt.dialogs.preprocessing import LoadedImage, PreprocessingPanel
+
+    win = MainWindow()
+    panel = next(
+        win.stack.widget(i) for i in range(win.stack.count())
+        if isinstance(win.stack.widget(i), PreprocessingPanel)
+    )
+    panel._images = [
+        LoadedImage(f"{ch}.bmp", np.zeros((10, 10, 3), np.uint8),
+                    np.zeros((10, 10, 3), np.uint8))
+        for ch in "abc"
+    ]
+    panel._active_index = 2
+    panel._sync_image_strip()
+    panel._on_image_removed(2)  # remove the active one
+    assert len(panel._images) == 2
+    assert panel._active_index == 1   # falls back to previous
+    panel._on_image_removed(0)  # remove a non-active before active
+    assert len(panel._images) == 1
+    assert panel._active_index == 0   # shifted down

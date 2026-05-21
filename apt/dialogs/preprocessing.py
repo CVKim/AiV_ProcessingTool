@@ -21,6 +21,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+_log = logging.getLogger("apt.preprocessing.panel")
+
 import cv2
 import numpy as np
 from PyQt5.QtCore import Qt, QTimer
@@ -369,22 +371,37 @@ class PreprocessingPanel(BaseTaskPanel):
 
     def _on_image_selected(self, index: int) -> None:
         if not (0 <= index < len(self._images)):
+            _log.warning("Image select: index %d out of range (have %d)", index, len(self._images))
             return
+        if index == self._active_index:
+            return  # no-op click on the already-active card
         self._active_index = index
         self.image_strip.set_active(index)
         self._apply_active_image_to_pipeline()
+        # Show "computing…" placeholder so the user doesn't think the click
+        # was lost while the batch grid is being rebuilt.
+        if self.preview_tabs.currentIndex() == 1 and len(self._images) > 1:
+            self.batch_grid.set_header(
+                f"Switching to <b>{self._images[index].name}</b> — recomputing…"
+            )
         self._refresh_all()
 
     def _on_image_removed(self, index: int) -> None:
         if not (0 <= index < len(self._images)):
             return
+        removed_name = self._images[index].name
         del self._images[index]
         if not self._images:
             self._active_index = -1
-        elif self._active_index >= len(self._images):
-            self._active_index = len(self._images) - 1
+        elif self._active_index == index:
+            # Removed the active one — pick the previous (or 0).
+            self._active_index = max(0, index - 1)
+        elif self._active_index > index:
+            # Active index shifts down by one.
+            self._active_index -= 1
         self._sync_image_strip()
         self._apply_active_image_to_pipeline()
+        self._show_status(f"Removed {removed_name}")
         self._refresh_all()
 
     # ------------------------------------------------------------------
@@ -438,27 +455,46 @@ class PreprocessingPanel(BaseTaskPanel):
         self._selected_node_id = node_id
         if not node_id:
             self.param_form.clear()
+            self.preview.set_image(None)
             self.preview_meta.setText("(no node selected)")
             self.batch_grid.set_header("(no node selected)")
+            self.batch_grid.set_results([])
             return
         try:
             node = self.pipeline.get(node_id)
-        except PipelineError:
+        except PipelineError as exc:
+            _log.warning("Selected node %r missing from pipeline: %s", node_id, exc)
+            self.param_form.clear()
+            self.preview.set_image(None)
+            self.preview_meta.setText(f"⚠ Node not found ({node_id})")
             return
-        if node.op_key == "origin":
-            self.param_form.show_params("Origin", (), {})
-        else:
-            op = get_operation(node.op_key)
-            self.param_form.show_params(op.label, op.params, node.params)
+        except Exception:
+            _log.exception("_on_node_selected: failed to look up node %r", node_id)
+            return
+        try:
+            if node.op_key == "origin":
+                self.param_form.show_params("Origin", (), {})
+            else:
+                op = get_operation(node.op_key)
+                self.param_form.show_params(op.label, op.params, node.params)
+        except Exception:
+            _log.exception("_on_node_selected: param form for %r", node_id)
         self._refresh_all()
 
     def _on_graph_changed(self) -> None:
-        self._refresh_all()
+        try:
+            self._refresh_all()
+        except Exception:
+            _log.exception("_on_graph_changed: refresh failed")
 
     def _on_param_changed(self, name: str, value) -> None:
         if not self._selected_node_id:
             return
-        node = self.pipeline.get(self._selected_node_id)
+        try:
+            node = self.pipeline.get(self._selected_node_id)
+        except PipelineError as exc:
+            _log.warning("Param change on missing node %r: %s", self._selected_node_id, exc)
+            return
         if node.op_key == "origin":
             return
         try:
@@ -466,20 +502,37 @@ class PreprocessingPanel(BaseTaskPanel):
         except PipelineError as exc:
             self._show_status(str(exc))
             return
+        except Exception:
+            _log.exception("_on_param_changed: set_param failed (%s=%r)", name, value)
+            return
         self.scene.refresh_node_params(self._selected_node_id)
         self._recompute_timer.start()
-        self._batch_timer.start()
+        if self.preview_tabs.currentIndex() == 1:
+            self._batch_timer.start()
 
-    def _on_preview_tab_changed(self, _index: int) -> None:
-        self._refresh_all()
+    def _on_preview_tab_changed(self, index: int) -> None:
+        # Switching to the batch tab triggers a (deferred) recompute; the
+        # active tab is already up to date from the last preview run.
+        if index == 1:
+            self._batch_timer.start()
 
     # ------------------------------------------------------------------
     # Preview / batch grid recomputation
     # ------------------------------------------------------------------
     def _refresh_all(self) -> None:
+        """Refresh status + previews. Single-image preview is synchronous
+        because it's cheap and the user expects to see it on click; the
+        batch-grid recompute is deferred via a 120 ms timer so switching
+        images / clicking nodes stays responsive even with many images
+        loaded.
+        """
         self._update_status_summary()
-        self._recompute_preview()
-        self._recompute_batch_grid()
+        try:
+            self._recompute_preview()
+        except Exception:
+            logging.exception("preprocessing: _recompute_preview failed")
+        if self.preview_tabs.currentIndex() == 1:
+            self._batch_timer.start()
 
     def _recompute_preview(self) -> None:
         if not self._selected_node_id:
@@ -522,8 +575,15 @@ class PreprocessingPanel(BaseTaskPanel):
             return
         try:
             node = self.pipeline.get(self._selected_node_id)
-        except PipelineError:
+        except PipelineError as exc:
+            _log.warning("Batch grid: selected node %r gone (%s)", self._selected_node_id, exc)
+            self.batch_grid.set_header(f"⚠ Selected node not found ({self._selected_node_id})")
+            self.batch_grid.set_results([])
             return
+        except Exception:
+            _log.exception("Batch grid: lookup failed")
+            return
+
         self.batch_grid.set_header(
             f"<b>{node.display_title()}</b> ({node.id}) · {len(self._images)} image(s) · preview-resolution"
         )
@@ -542,6 +602,7 @@ class PreprocessingPanel(BaseTaskPanel):
             except PipelineError as exc:
                 entries.append((img.name, None, str(exc)))
             except Exception as exc:  # noqa: BLE001
+                _log.exception("Batch grid: compute failed for %s", img.name)
                 entries.append((img.name, None, str(exc)))
         self.batch_grid.set_results(entries)
 
