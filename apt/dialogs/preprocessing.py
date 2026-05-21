@@ -57,12 +57,12 @@ from apt.preprocessing import (
 )
 from apt.preprocessing.operations import get_operation
 from apt.widgets.batch_grid import BatchResultGrid
-from apt.widgets.image_preview import ImagePreview
 from apt.widgets.image_strip import ImageStrip
 from apt.widgets.node_properties import NodePropertiesPanel
 from apt.widgets.op_picker import OpPicker
 from apt.widgets.parameter_form import ParameterForm
 from apt.widgets.node_graph import NodeScene, NodeView
+from apt.widgets.zoomable_image import ZoomableImageView
 
 
 _PREVIEW_MAX_DIM = 720
@@ -280,15 +280,18 @@ class PreprocessingPanel(BaseTaskPanel):
         preview_group = QGroupBox("Preview")
         preview_layout = QVBoxLayout(preview_group)
         self.preview_tabs = QTabWidget()
-        # Tab 1: single active image
+        # Tab 1: single active image (zoomable / pannable)
         active_tab = QWidget()
         active_layout = QVBoxLayout(active_tab)
         active_layout.setContentsMargins(4, 4, 4, 4)
         active_layout.setSpacing(4)
-        self.preview = ImagePreview()
+        self.preview = ZoomableImageView()
         active_layout.addWidget(self.preview, 1)
         self.preview_meta = QLabel("(no node selected)")
         self.preview_meta.setStyleSheet("color: #9A9CA3; font-size: 11px;")
+        self.preview_meta.setToolTip(
+            "Wheel = zoom · drag = pan · double-click = toggle fit / 1:1"
+        )
         active_layout.addWidget(self.preview_meta)
         self.preview_tabs.addTab(active_tab, "Active")
         # Tab 2: all images grid
