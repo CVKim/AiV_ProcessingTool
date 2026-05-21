@@ -123,19 +123,19 @@ class ImageStrip(QWidget):
         header.addStretch(1)
         outer.addLayout(header)
 
-        scroller = QScrollArea()
-        scroller.setWidgetResizable(True)
-        scroller.setFrameShape(QFrame.NoFrame)
-        scroller.setFixedHeight(CARD_HEIGHT + 18)
-        scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        scroller.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._scroller = QScrollArea()
+        self._scroller.setWidgetResizable(True)
+        self._scroller.setFrameShape(QFrame.NoFrame)
+        self._scroller.setFixedHeight(CARD_HEIGHT + 18)
+        self._scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self._scroller.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self._container = QWidget()
         self._row = QHBoxLayout(self._container)
         self._row.setContentsMargins(2, 2, 2, 2)
         self._row.setSpacing(8)
         self._row.addStretch(1)
-        scroller.setWidget(self._container)
-        outer.addWidget(scroller)
+        self._scroller.setWidget(self._container)
+        outer.addWidget(self._scroller)
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -164,6 +164,9 @@ class ImageStrip(QWidget):
         self._active_index = index
         for i, card in enumerate(self._cards):
             card.set_active(i == index)
+        # Keep the active card on screen when navigating via shortcut.
+        if 0 <= index < len(self._cards):
+            self._scroller.ensureWidgetVisible(self._cards[index], xMargin=40, yMargin=0)
 
     # -- Internals -----------------------------------------------------
     def _refresh_title(self, count: int) -> None:

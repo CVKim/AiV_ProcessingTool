@@ -1,0 +1,44 @@
+{
+  "format": "aivex-preprocessing-job",
+  "version": 1,
+  "saved_at": "2026-05-21T11:21:47",
+  "nodes": [
+    {
+      "id": "origin",
+      "op_key": "origin",
+      "params": {},
+      "inputs": [],
+      "position": [
+        -572.0,
+        -132.0
+      ]
+    },
+    {
+      "id": "to_gray_1",
+      "op_key": "to_gray",
+      "params": {},
+      "inputs": [
+        "origin"
+      ],
+      "position": [
+        -286.0,
+        -132.0
+      ]
+    },
+    {
+      "id": "window_stretch_2",
+      "op_key": "window_stretch",
+      "params": {
+        "lower": 128,
+        "upper": 191
+      },
+      "inputs": [
+        "to_gray_1"
+      ],
+      "position": [
+        -44.0,
+        -132.0
+      ]
+    }
+  ]
+}

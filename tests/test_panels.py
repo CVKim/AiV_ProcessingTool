@@ -158,6 +158,66 @@ def test_preprocessing_properties_panel_populates_from_compute(qt_app):
     assert "Gaussian Blur" in panel.properties._type.text()
 
 
+def test_preprocessing_image_navigation_shortcuts_step_and_wrap(qt_app):
+    """``]`` / ``[`` (and ``.`` / ``,``) walk the loaded image set with
+    wrap-around. Active index updates, ``_on_image_selected`` runs the
+    refresh, and the strip's active highlight follows."""
+    import numpy as np
+    from apt.app import MainWindow
+    from apt.dialogs.preprocessing import LoadedImage, PreprocessingPanel
+
+    win = MainWindow()
+    panel = next(
+        win.stack.widget(i) for i in range(win.stack.count())
+        if isinstance(win.stack.widget(i), PreprocessingPanel)
+    )
+    panel._images = [
+        LoadedImage(f"{ch}.bmp", np.zeros((8, 8, 3), np.uint8),
+                    np.zeros((8, 8, 3), np.uint8))
+        for ch in "abcd"
+    ]
+    panel._active_index = 1
+    panel._sync_image_strip()
+    panel._apply_active_image_to_pipeline()
+
+    panel._activate_next_image()
+    assert panel._active_index == 2
+    panel._activate_next_image()
+    panel._activate_next_image()
+    assert panel._active_index == 0   # wrapped past the end
+    panel._activate_prev_image()
+    assert panel._active_index == 3   # wrapped past the start
+
+
+def test_preprocessing_navigation_is_noop_with_under_two_images(qt_app):
+    import numpy as np
+    from apt.app import MainWindow
+    from apt.dialogs.preprocessing import LoadedImage, PreprocessingPanel
+
+    win = MainWindow()
+    panel = next(
+        win.stack.widget(i) for i in range(win.stack.count())
+        if isinstance(win.stack.widget(i), PreprocessingPanel)
+    )
+    # Zero images
+    panel._images = []
+    panel._active_index = -1
+    panel._activate_next_image()
+    panel._activate_prev_image()
+    assert panel._active_index == -1
+
+    # One image — shortcuts should not move it.
+    panel._images = [
+        LoadedImage("only.bmp", np.zeros((4, 4, 3), np.uint8),
+                    np.zeros((4, 4, 3), np.uint8)),
+    ]
+    panel._active_index = 0
+    panel._sync_image_strip()
+    panel._activate_next_image()
+    panel._activate_prev_image()
+    assert panel._active_index == 0
+
+
 def test_preprocessing_remove_active_image_picks_safe_index(qt_app):
     import numpy as np
     from apt.app import MainWindow

@@ -26,6 +26,7 @@ _log = logging.getLogger("apt.preprocessing.panel")
 import cv2
 import numpy as np
 from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
     QFileDialog,
     QFormLayout,
@@ -35,6 +36,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QShortcut,
     QSplitter,
     QTabWidget,
     QVBoxLayout,
@@ -101,6 +103,7 @@ class PreprocessingPanel(BaseTaskPanel):
         super().__init__(parent)
         self._recompute_timer.timeout.connect(self._recompute_preview)
         self._batch_timer.timeout.connect(self._recompute_batch_grid)
+        self._install_navigation_shortcuts()
 
     # ------------------------------------------------------------------
     # Layout
@@ -214,9 +217,10 @@ class PreprocessingPanel(BaseTaskPanel):
         self.view = NodeView(self.scene)
         graph_layout.addWidget(self.view, 1)
         shortcuts = self._dim_label(
-            "Shortcuts:  F = fit  ·  Ctrl+0 = reset zoom  ·  Ctrl+D = duplicate  ·  "
+            "Canvas:  F = fit  ·  Ctrl+0 = reset zoom  ·  Ctrl+D = duplicate  ·  "
             "Ctrl+A = select all  ·  Esc = deselect  ·  ←↑↓→ = nudge "
             "(Shift = ×5)  ·  Space + drag = pan  ·  Right-click node = menu"
+            "<br>Images:  [ / ] = previous / next  ·  , / . = aliases"
         )
         graph_layout.addWidget(shortcuts)
 
@@ -435,6 +439,45 @@ class PreprocessingPanel(BaseTaskPanel):
 
     def _on_snap_toggled(self, enabled: bool) -> None:
         self.scene.set_snap_enabled(enabled)
+
+    # ------------------------------------------------------------------
+    # Keyboard navigation across loaded images ( [ / ] / , / . )
+    # ------------------------------------------------------------------
+    def _install_navigation_shortcuts(self) -> None:
+        """Step through loaded images with bracket / comma-period keys.
+
+        Active anywhere in the panel (WidgetWithChildrenShortcut), so the
+        user doesn't need to give focus to the canvas. The previewed
+        result swaps to the newly-active image on the Active tab; the
+        All Images tab simply moves the highlight in the strip.
+        """
+        for seq, slot in (
+            ("]", self._activate_next_image),
+            (".", self._activate_next_image),
+            ("[", self._activate_prev_image),
+            (",", self._activate_prev_image),
+        ):
+            sc = QShortcut(QKeySequence(seq), self)
+            sc.setContext(Qt.WidgetWithChildrenShortcut)
+            sc.activated.connect(slot)
+
+    def _activate_next_image(self) -> None:
+        self._step_active_image(+1)
+
+    def _activate_prev_image(self) -> None:
+        self._step_active_image(-1)
+
+    def _step_active_image(self, delta: int) -> None:
+        count = len(self._images)
+        if count < 2:
+            if count == 1:
+                self._show_status("Only one image loaded.")
+            return
+        new_index = (self._active_index + delta) % count
+        self._on_image_selected(new_index)
+        active_name = self._images[new_index].name
+        arrow = "→" if delta > 0 else "←"
+        self._show_status(f"{arrow} Active: {active_name}  ({new_index + 1}/{count})")
 
     def _add_op(self, op_key: str | None) -> None:
         if not op_key:
