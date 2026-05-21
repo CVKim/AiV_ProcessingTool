@@ -158,6 +158,108 @@ def test_preprocessing_properties_panel_populates_from_compute(qt_app):
     assert "Gaussian Blur" in panel.properties._type.text()
 
 
+def test_preprocessing_drag_to_occupied_port_forks_single_input_op(qt_app):
+    """Dragging a second connection to a single-input op's already-connected
+    port must NOT silently overwrite. The destination node should be cloned
+    with the same params so both upstream branches survive."""
+    from apt.app import MainWindow
+    from apt.dialogs.preprocessing import PreprocessingPanel
+    from apt.preprocessing import Pipeline
+    from apt.widgets.node_graph import NodeItem
+
+    win = MainWindow()
+    panel = next(
+        win.stack.widget(i) for i in range(win.stack.count())
+        if isinstance(win.stack.widget(i), PreprocessingPanel)
+    )
+
+    panel._add_op("crop_xywh")
+    panel._add_op("resize")
+    panel._add_op("window_stretch")
+    ids = {n.op_key: n.id for n in panel.pipeline.nodes() if n.op_key != "origin"}
+    panel.pipeline.connect(Pipeline.ORIGIN_ID, ids["crop_xywh"], 0)
+    panel.pipeline.connect(Pipeline.ORIGIN_ID, ids["resize"], 0)
+    panel.pipeline.connect(ids["crop_xywh"], ids["window_stretch"], 0)
+    panel.pipeline.set_param(ids["window_stretch"], "lower", 100)
+    panel.pipeline.set_param(ids["window_stretch"], "upper", 200)
+    panel.scene._rebuild_edges()
+
+    ws_item = panel.scene._nodes[ids["window_stretch"]]
+    resize_item = panel.scene._nodes[ids["resize"]]
+
+    # Simulate dragging Resize → WS (port already taken by Crop)
+    panel.scene._connect_or_fork(resize_item.output, ws_item.inputs[0])
+
+    ws_nodes = [n for n in panel.pipeline.nodes() if n.op_key == "window_stretch"]
+    assert len(ws_nodes) == 2, "destination should have been auto-forked"
+    original = panel.pipeline.get(ids["window_stretch"])
+    forked = next(n for n in ws_nodes if n.id != ids["window_stretch"])
+
+    # Original keeps its input; fork wires to Resize.
+    assert original.inputs[0] == ids["crop_xywh"]
+    assert forked.inputs[0] == ids["resize"]
+    # Params copied verbatim — user can edit independently afterwards.
+    assert forked.params["lower"] == 100
+    assert forked.params["upper"] == 200
+
+
+def test_preprocessing_drag_to_occupied_port_replaces_for_multi_input_op(qt_app):
+    """Combine ops (Blend, Add, ...) take 2 deliberate inputs. Dragging a
+    second source to an already-connected specific port should REPLACE,
+    not fork — the user is changing that particular input by hand."""
+    from apt.app import MainWindow
+    from apt.dialogs.preprocessing import PreprocessingPanel
+    from apt.preprocessing import Pipeline
+
+    win = MainWindow()
+    panel = next(
+        win.stack.widget(i) for i in range(win.stack.count())
+        if isinstance(win.stack.widget(i), PreprocessingPanel)
+    )
+
+    panel._add_op("crop_xywh")
+    panel._add_op("resize")
+    panel._add_op("blend")
+    ids = {n.op_key: n.id for n in panel.pipeline.nodes() if n.op_key != "origin"}
+    panel.pipeline.connect(Pipeline.ORIGIN_ID, ids["crop_xywh"], 0)
+    panel.pipeline.connect(Pipeline.ORIGIN_ID, ids["resize"], 0)
+    panel.pipeline.connect(ids["crop_xywh"], ids["blend"], 0)
+    panel.scene._rebuild_edges()
+
+    blend_item = panel.scene._nodes[ids["blend"]]
+    resize_item = panel.scene._nodes[ids["resize"]]
+    panel.scene._connect_or_fork(resize_item.output, blend_item.inputs[0])
+
+    # No fork — input 0 was simply replaced.
+    blend_nodes = [n for n in panel.pipeline.nodes() if n.op_key == "blend"]
+    assert len(blend_nodes) == 1
+    assert blend_nodes[0].inputs[0] == ids["resize"]
+
+
+def test_preprocessing_redrop_same_source_is_noop(qt_app):
+    """Dropping the exact same connection onto the same port shouldn't
+    create a fork or change anything."""
+    from apt.app import MainWindow
+    from apt.dialogs.preprocessing import PreprocessingPanel
+    from apt.preprocessing import Pipeline
+
+    win = MainWindow()
+    panel = next(
+        win.stack.widget(i) for i in range(win.stack.count())
+        if isinstance(win.stack.widget(i), PreprocessingPanel)
+    )
+    panel._add_op("gaussian_blur")
+    blur_id = next(n.id for n in panel.pipeline.nodes() if n.op_key == "gaussian_blur")
+    panel.pipeline.connect(Pipeline.ORIGIN_ID, blur_id, 0)
+    panel.scene._rebuild_edges()
+
+    blur_item = panel.scene._nodes[blur_id]
+    origin_item = panel.scene._nodes[Pipeline.ORIGIN_ID]
+    pre_count = len(list(panel.pipeline.nodes()))
+    panel.scene._connect_or_fork(origin_item.output, blur_item.inputs[0])
+    assert len(list(panel.pipeline.nodes())) == pre_count
+
+
 def test_zoomable_preview_preserves_zoom_for_same_shape(qt_app):
     """When a new image of the same shape replaces the current one, the
     user's manual zoom should be kept. Different shape → auto-refit."""

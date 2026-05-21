@@ -27,6 +27,32 @@ from PyQt5.QtWidgets import (
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
 
+def _log_file_path() -> str:
+    """Pick a writable location for ``error.log``.
+
+    Dev mode (running from source) keeps the historical project-root
+    ``error.log`` so existing tooling/docs stay valid. Installed builds
+    cannot write there — ``Program Files\\AIVEX\\APT\\`` is admin-only —
+    so we redirect to ``%LOCALAPPDATA%\\AIVEX\\APT\\error.log``
+    (writable by every Windows user, persists across upgrades).
+    """
+    if getattr(sys, "frozen", False):
+        base = (
+            os.environ.get("LOCALAPPDATA")
+            or os.environ.get("APPDATA")
+            or os.path.expanduser("~")
+        )
+        log_dir = os.path.join(base, "AIVEX", "APT")
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+            return os.path.join(log_dir, "error.log")
+        except OSError:
+            # Last-resort: a temp file we know we can open.
+            import tempfile
+            return os.path.join(tempfile.gettempdir(), "aivex_apt_error.log")
+    return "error.log"
+
+
 def _setup_logging() -> None:
     root = logging.getLogger()
     root.setLevel(logging.INFO)
@@ -37,11 +63,18 @@ def _setup_logging() -> None:
     if has_file:
         return
     formatter = logging.Formatter(LOG_FORMAT)
-    file_handler = logging.FileHandler("error.log", encoding="utf-8")
-    file_handler.setLevel(logging.WARNING)
-    file_handler.setFormatter(formatter)
-    file_handler._apt_marker = True  # type: ignore[attr-defined]
-    root.addHandler(file_handler)
+    log_path = _log_file_path()
+    try:
+        file_handler = logging.FileHandler(log_path, encoding="utf-8")
+    except (OSError, PermissionError):
+        # Even the temp fallback failed — degrade to stderr-only so the app
+        # still launches.
+        file_handler = None
+    if file_handler is not None:
+        file_handler.setLevel(logging.WARNING)
+        file_handler.setFormatter(formatter)
+        file_handler._apt_marker = True  # type: ignore[attr-defined]
+        root.addHandler(file_handler)
     # Console handler — INFO+ so launching from a terminal still surfaces
     # important events without polluting error.log with noise.
     stream_handler = logging.StreamHandler()

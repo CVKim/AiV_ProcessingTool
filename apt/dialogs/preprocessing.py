@@ -56,6 +56,7 @@ from apt.preprocessing import (
     save_job,
 )
 from apt.preprocessing.operations import get_operation
+from apt.samples import sample_image_paths
 from apt.widgets.batch_grid import BatchResultGrid
 from apt.widgets.image_strip import ImageStrip
 from apt.widgets.node_properties import NodePropertiesPanel
@@ -153,6 +154,11 @@ class PreprocessingPanel(BaseTaskPanel):
         self.load_button.clicked.connect(lambda: self._load_images(replace=True))
         self.add_button = QPushButton("Add Images…")
         self.add_button.clicked.connect(lambda: self._load_images(replace=False))
+        self.samples_button = QPushButton("Load Samples")
+        self.samples_button.setToolTip(
+            "도구에 번들된 데모 이미지를 빠르게 로드 (전처리 그래프를 즉시 시도해볼 수 있음)"
+        )
+        self.samples_button.clicked.connect(self._load_sample_images)
         self.save_job_button = QPushButton("Save Job…")
         self.save_job_button.clicked.connect(self._save_job)
         self.load_job_button = QPushButton("Load Job…")
@@ -178,9 +184,10 @@ class PreprocessingPanel(BaseTaskPanel):
         self.export_button.clicked.connect(self._export_outputs)
 
         for btn in (
-            self.load_button, self.add_button, self.save_job_button,
-            self.load_job_button, self.reset_button, self.fit_button,
-            self.layout_button, self.snap_button, self.export_button,
+            self.load_button, self.add_button, self.samples_button,
+            self.save_job_button, self.load_job_button, self.reset_button,
+            self.fit_button, self.layout_button, self.snap_button,
+            self.export_button,
         ):
             row.addWidget(btn)
         row.addSpacing(16)
@@ -329,6 +336,34 @@ class PreprocessingPanel(BaseTaskPanel):
         )
         if not paths:
             return
+        self._ingest_paths(paths, replace=replace, show_rejected_dialog=True)
+
+    def _load_sample_images(self) -> None:
+        """Load the demo images bundled with the app (or shipped at repo
+        root in dev). Replaces the current image set so the user sees a
+        clean canvas of samples."""
+        paths = sample_image_paths()
+        if not paths:
+            QMessageBox.information(
+                self,
+                "No samples found",
+                "번들된 sample 이미지를 찾지 못했습니다.\n"
+                "(개발 모드에선 <repo>/sample/, 빌드 EXE에선 _internal/sample/ 위치에 있어야 합니다.)",
+            )
+            return
+        self._ingest_paths(paths, replace=True, show_rejected_dialog=True)
+        if self._images:
+            self._show_status(
+                f"Loaded {len(self._images)} sample image(s) — try adding a node."
+            )
+
+    def _ingest_paths(
+        self,
+        paths: list[str],
+        *,
+        replace: bool,
+        show_rejected_dialog: bool,
+    ) -> None:
         valid: list[LoadedImage] = []
         rejected: list[str] = []
         for path in paths:
@@ -345,7 +380,7 @@ class PreprocessingPanel(BaseTaskPanel):
                 full=img,
                 preview=_downscale(img, _PREVIEW_MAX_DIM),
             ))
-        if rejected:
+        if rejected and show_rejected_dialog:
             QMessageBox.warning(
                 self,
                 "Some images skipped",
@@ -363,7 +398,6 @@ class PreprocessingPanel(BaseTaskPanel):
                 self._active_index = 0
         self._sync_image_strip()
         self._apply_active_image_to_pipeline()
-        # Pick a sensible default tab: grid when >1 image, active otherwise.
         self.preview_tabs.setCurrentIndex(1 if len(self._images) > 1 else 0)
         self._refresh_all()
 
