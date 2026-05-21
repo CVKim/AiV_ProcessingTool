@@ -170,13 +170,88 @@ def op_gaussian_blur(images, ksize: int = 5, sigma: float = 0.0):
     return cv2.GaussianBlur(images[0], (k, k), float(sigma))
 
 
-def op_median_blur(images, ksize: int = 5):
+def op_median_blur(images, ksize: int = 5, iterations: int = 1):
     k = _to_odd(ksize, 3)
-    return cv2.medianBlur(images[0], k)
+    out = images[0]
+    for _ in range(max(1, int(iterations))):
+        out = cv2.medianBlur(out, k)
+    return out
 
 
-def op_bilateral(images, d: int = 9, sigma_color: float = 75.0, sigma_space: float = 75.0):
-    return cv2.bilateralFilter(images[0], int(d), float(sigma_color), float(sigma_space))
+def op_bilateral(
+    images,
+    d: int = 9,
+    sigma_color: float = 75.0,
+    sigma_space: float = 75.0,
+    iterations: int = 1,
+):
+    out = images[0]
+    for _ in range(max(1, int(iterations))):
+        out = cv2.bilateralFilter(out, int(d), float(sigma_color), float(sigma_space))
+    return out
+
+
+def op_crop_xywh(images, x: int = 0, y: int = 0, width: int = 100, height: int = 100):
+    """Slice a rectangular region (clamped to image bounds)."""
+    img = images[0]
+    h, w = img.shape[:2]
+    x1 = max(0, min(int(x), w))
+    y1 = max(0, min(int(y), h))
+    x2 = max(0, min(x1 + int(width), w))
+    y2 = max(0, min(y1 + int(height), h))
+    if x2 <= x1 or y2 <= y1:
+        if img.ndim == 2:
+            return np.zeros((1, 1), dtype=np.uint8)
+        return np.zeros((1, 1, img.shape[2]), dtype=np.uint8)
+    return img[y1:y2, x1:x2].copy()
+
+
+def op_window_stretch(images, lower: int = 128, upper: int = 192):
+    """Map pixel-value window ``[lower, upper]`` linearly onto ``[0, 255]``.
+
+    Mirrors the crack-defect preprocessing script's contrast-stretch step:
+    ``(arr - lower) / (upper - lower) * 255`` clipped to uint8.
+    """
+    img = images[0].astype(np.float32)
+    lo = float(lower)
+    hi = float(upper)
+    if hi <= lo:
+        return np.zeros_like(images[0])
+    out = (img - lo) / (hi - lo) * 255.0
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
+def op_resize_smooth(
+    images,
+    scale: float = 0.5,
+    interp: str = "lanczos",
+    pre_blur_sigma: float = 0.0,
+):
+    """Anti-alias smoothing via downsize-then-upsize.
+
+    ``scale`` ∈ (0, 1) is the intermediate downsize factor; the image is
+    optionally pre-blurred (Gaussian sigma) then resampled down + back up to
+    the original size. Used to remove fine-scale artefacts while keeping
+    macro structure (sharp at the original resolution).
+    """
+    img = images[0]
+    interp_map = {
+        "lanczos": cv2.INTER_LANCZOS4,
+        "bilinear": cv2.INTER_LINEAR,
+        "bicubic": cv2.INTER_CUBIC,
+        "area": cv2.INTER_AREA,
+    }
+    interp_flag = interp_map.get(interp, cv2.INTER_LANCZOS4)
+    h, w = img.shape[:2]
+    scale = max(0.05, min(0.99, float(scale)))
+    arr = img.astype(np.float32)
+    if pre_blur_sigma and pre_blur_sigma > 0:
+        arr = cv2.GaussianBlur(arr, (0, 0), float(pre_blur_sigma))
+    sw = max(1, int(w * scale))
+    sh = max(1, int(h * scale))
+    small = cv2.resize(arr, (sw, sh), interpolation=interp_flag)
+    big = cv2.resize(small, (w, h), interpolation=interp_flag)
+    return np.clip(np.round(big), 0, 255).astype(np.uint8)
 
 
 def op_box_blur(images, ksize: int = 5):
@@ -352,6 +427,15 @@ OPERATIONS: tuple[Operation, ...] = (
                       choices=("horizontal", "vertical", "both")),
         ),
     ),
+    Operation(
+        key="crop_xywh", label="Crop (XYWH)", category="Geometry", inputs=1, fn=op_crop_xywh,
+        params=(
+            ParamSpec("x", "X", "int", 0, min=0, max=16384, step=1),
+            ParamSpec("y", "Y", "int", 0, min=0, max=16384, step=1),
+            ParamSpec("width", "Width", "int", 100, min=1, max=16384, step=1),
+            ParamSpec("height", "Height", "int", 100, min=1, max=16384, step=1),
+        ),
+    ),
     # ---- Color ----
     Operation(
         key="to_gray", label="Grayscale", category="Color", inputs=1, fn=op_to_gray,
@@ -373,6 +457,17 @@ OPERATIONS: tuple[Operation, ...] = (
             ParamSpec("gamma", "Gamma", "float", 1.0, min=0.1, max=4.0, step=0.05),
         ),
     ),
+    Operation(
+        key="window_stretch", label="Window Stretch", category="Color",
+        inputs=1, fn=op_window_stretch,
+        params=(
+            ParamSpec("lower", "Lower", "int", 128, min=0, max=255, step=1,
+                      hint="Pixels at or below this map to 0"),
+            ParamSpec("upper", "Upper", "int", 192, min=0, max=255, step=1,
+                      hint="Pixels at or above this map to 255"),
+        ),
+        hint="Linear contrast stretch of window [lower, upper] onto [0, 255]",
+    ),
     # ---- Filter ----
     Operation(
         key="gaussian_blur", label="Gaussian Blur", category="Filter", inputs=1, fn=op_gaussian_blur,
@@ -385,15 +480,29 @@ OPERATIONS: tuple[Operation, ...] = (
         key="median_blur", label="Median Blur", category="Filter", inputs=1, fn=op_median_blur,
         params=(
             ParamSpec("ksize", "Kernel (odd ≥3)", "int", 5, min=3, max=99, step=2),
+            ParamSpec("iterations", "Iterations", "int", 1, min=1, max=10, step=1),
         ),
     ),
     Operation(
         key="bilateral", label="Bilateral Filter", category="Filter", inputs=1, fn=op_bilateral,
         params=(
-            ParamSpec("d", "Diameter", "int", 9, min=1, max=51, step=1),
+            ParamSpec("d", "Diameter (-1 = auto)", "int", 9, min=-1, max=51, step=1),
             ParamSpec("sigma_color", "Sigma color", "float", 75.0, min=1.0, max=300.0, step=1.0),
             ParamSpec("sigma_space", "Sigma space", "float", 75.0, min=1.0, max=300.0, step=1.0),
+            ParamSpec("iterations", "Iterations", "int", 1, min=1, max=10, step=1),
         ),
+    ),
+    Operation(
+        key="resize_smooth", label="Resize Smooth (down→up)", category="Filter",
+        inputs=1, fn=op_resize_smooth,
+        params=(
+            ParamSpec("scale", "Scale (0.05–0.99)", "float", 0.5, min=0.05, max=0.99, step=0.05),
+            ParamSpec("interp", "Interpolation", "choice", "lanczos",
+                      choices=("lanczos", "bilinear", "bicubic", "area")),
+            ParamSpec("pre_blur_sigma", "Pre-blur sigma (0=off)", "float", 0.0,
+                      min=0.0, max=10.0, step=0.1),
+        ),
+        hint="Anti-alias smoothing via downsize then upsize to original size",
     ),
     Operation(
         key="box_blur", label="Box Blur", category="Filter", inputs=1, fn=op_box_blur,

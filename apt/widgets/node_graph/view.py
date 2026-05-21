@@ -25,8 +25,10 @@ class NodeView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.setBackgroundBrush(QColor("#0B0B0E"))
+        self.setFocusPolicy(Qt.StrongFocus)
         self._panning = False
         self._pan_anchor = None
+        self._space_held = False
 
     # Draw a dotted grid behind every paint so the canvas feels like a real
     # workspace instead of an empty void.
@@ -68,6 +70,40 @@ class NodeView(QGraphicsView):
             factor = self.MAX_SCALE / scale
             self.scale(factor, factor)
 
+    def reset_zoom(self) -> None:
+        """Restore 1:1 zoom centred on the current item bounds."""
+        self.resetTransform()
+        center = self.scene().itemsBoundingRect().center()
+        if not center.isNull():
+            self.centerOn(center)
+
+    # -- Keyboard ------------------------------------------------------
+    def keyPressEvent(self, event) -> None:  # noqa: N802
+        key = event.key()
+        mods = event.modifiers()
+        if key == Qt.Key_Space and not event.isAutoRepeat():
+            self._space_held = True
+            self.viewport().setCursor(Qt.OpenHandCursor)
+            event.accept()
+            return
+        if key == Qt.Key_F and not mods:
+            self.fit_to_content()
+            event.accept()
+            return
+        if key == Qt.Key_0 and (mods & Qt.ControlModifier):
+            self.reset_zoom()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event) -> None:  # noqa: N802
+        if event.key() == Qt.Key_Space and not event.isAutoRepeat():
+            self._space_held = False
+            self.viewport().setCursor(Qt.ArrowCursor)
+            event.accept()
+            return
+        super().keyReleaseEvent(event)
+
     def wheelEvent(self, event) -> None:  # noqa: N802
         factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15
         new_scale = self.transform().m11() * factor
@@ -76,10 +112,11 @@ class NodeView(QGraphicsView):
         self.scale(factor, factor)
 
     def mousePressEvent(self, event) -> None:  # noqa: N802
-        if event.button() == Qt.MiddleButton:
+        space_pan = self._space_held and event.button() == Qt.LeftButton
+        if event.button() == Qt.MiddleButton or space_pan:
             self._panning = True
             self._pan_anchor = event.pos()
-            self.setCursor(Qt.ClosedHandCursor)
+            self.viewport().setCursor(Qt.ClosedHandCursor)
             event.accept()
             return
         super().mousePressEvent(event)
@@ -95,10 +132,10 @@ class NodeView(QGraphicsView):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event) -> None:  # noqa: N802
-        if event.button() == Qt.MiddleButton:
+        if self._panning and (event.button() == Qt.MiddleButton or event.button() == Qt.LeftButton):
             self._panning = False
             self._pan_anchor = None
-            self.setCursor(Qt.ArrowCursor)
+            self.viewport().setCursor(Qt.OpenHandCursor if self._space_held else Qt.ArrowCursor)
             event.accept()
             return
         super().mouseReleaseEvent(event)

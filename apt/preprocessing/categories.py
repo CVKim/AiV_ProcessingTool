@@ -35,6 +35,33 @@ CATEGORY_STYLES: dict[str, CategoryStyle] = {
 ORIGIN_STYLE = CategoryStyle("#33B66B", "▶", "Source image")
 
 
+# Per-node status colours used by the canvas (status pip) and the
+# Properties panel (status label).
+STATUS_COLORS: dict[str, str] = {
+    "idle":    "#6E7079",   # gray — never computed yet
+    "success": "#33B66B",   # green — just executed cleanly
+    "cached":  "#5BA9F5",   # blue — result served from cache
+    "error":   "#E5484D",   # red — last compute raised
+}
+
+
+def status_color(status: str) -> str:
+    return STATUS_COLORS.get(status, STATUS_COLORS["idle"])
+
+
+def format_time_ms(ms: float, status: str) -> str:
+    """Compact time label, e.g. ``'12.3 ms'`` or ``'—'`` for idle."""
+    if status == "idle":
+        return "—"
+    if status == "error":
+        return "ERR"
+    if ms < 0.05:
+        return "<0.1 ms"
+    if ms < 100:
+        return f"{ms:.1f} ms"
+    return f"{ms:.0f} ms"
+
+
 def style_for(category: str) -> CategoryStyle:
     return CATEGORY_STYLES.get(category, CategoryStyle("#FF7029", "•", ""))
 

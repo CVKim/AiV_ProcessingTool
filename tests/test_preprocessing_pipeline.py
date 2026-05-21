@@ -140,6 +140,39 @@ def test_connect_into_origin_refused():
         p.connect(a.id, Pipeline.ORIGIN_ID, 0)
 
 
+def test_compute_records_timing_and_status(origin):
+    p = Pipeline()
+    p.set_origin(origin)
+    blur = _make(p, "gaussian_blur", inputs=[Pipeline.ORIGIN_ID], ksize=5)
+    p.compute(blur)
+    node = p.get(blur)
+    assert node.last_status == "success"
+    assert node.last_time_ms >= 0.0
+    assert node.last_error is None
+    assert node.last_output_shape == origin.shape
+
+
+def test_compute_marks_cached_on_second_pass(origin):
+    p = Pipeline()
+    p.set_origin(origin)
+    blur = _make(p, "gaussian_blur", inputs=[Pipeline.ORIGIN_ID])
+    p.compute(blur)
+    # Second compute hits the cache — status flips to "cached".
+    p.compute(blur)
+    assert p.get(blur).last_status == "cached"
+
+
+def test_compute_marks_error_on_failure(origin):
+    p = Pipeline()
+    p.set_origin(origin)
+    # Add a node with no input — compute will raise PipelineError.
+    node = p.add_node("gaussian_blur")
+    with pytest.raises(PipelineError):
+        p.compute(node.id)
+    assert p.get(node.id).last_status == "error"
+    assert p.get(node.id).last_error
+
+
 def test_id_assignment_does_not_reuse_gaps(origin):
     """Regression: after a delete+add, the new node id must not collide with
     a stale id that lives elsewhere — and the panel's export-clone path
