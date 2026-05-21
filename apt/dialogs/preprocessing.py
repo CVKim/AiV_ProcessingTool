@@ -25,20 +25,24 @@ _log = logging.getLogger("apt.preprocessing.panel")
 
 import cv2
 import numpy as np
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtCore import QEvent, Qt, QTimer
 from PyQt5.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QDoubleSpinBox,
     QFileDialog,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMessageBox,
     QPushButton,
     QScrollArea,
-    QShortcut,
+    QSpinBox,
     QSplitter,
     QTabWidget,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -103,7 +107,11 @@ class PreprocessingPanel(BaseTaskPanel):
         super().__init__(parent)
         self._recompute_timer.timeout.connect(self._recompute_preview)
         self._batch_timer.timeout.connect(self._recompute_batch_grid)
-        self._install_navigation_shortcuts()
+        # Hook an app-wide key filter so A/D can navigate images without
+        # stealing keystrokes from text-entry widgets (search box, etc.).
+        app = QApplication.instance()
+        if app is not None:
+            app.installEventFilter(self)
 
     # ------------------------------------------------------------------
     # Layout
@@ -220,7 +228,8 @@ class PreprocessingPanel(BaseTaskPanel):
             "Canvas:  F = fit  ·  Ctrl+0 = reset zoom  ·  Ctrl+D = duplicate  ·  "
             "Ctrl+A = select all  ·  Esc = deselect  ·  ←↑↓→ = nudge "
             "(Shift = ×5)  ·  Space + drag = pan  ·  Right-click node = menu"
-            "<br>Images:  [ / ] = previous / next  ·  , / . = aliases"
+            "<br>Images:  <b>A</b> = previous  ·  <b>D</b> = next  "
+            "<span style='color:#6E7079;'>(disabled while typing in a field)</span>"
         )
         graph_layout.addWidget(shortcuts)
 
@@ -441,25 +450,43 @@ class PreprocessingPanel(BaseTaskPanel):
         self.scene.set_snap_enabled(enabled)
 
     # ------------------------------------------------------------------
-    # Keyboard navigation across loaded images ( [ / ] / , / . )
+    # Keyboard navigation across loaded images
     # ------------------------------------------------------------------
-    def _install_navigation_shortcuts(self) -> None:
-        """Step through loaded images with bracket / comma-period keys.
+    # Bindings: D = next image, A = previous image (WASD-style).
+    #
+    # Implemented as an application-level event filter rather than a
+    # QShortcut because A/D are valid letters in the operation search
+    # field; we must let those keystrokes pass through whenever the
+    # focused widget is a text-entry control. QShortcut would
+    # unconditionally swallow the key.
 
-        Active anywhere in the panel (WidgetWithChildrenShortcut), so the
-        user doesn't need to give focus to the canvas. The previewed
-        result swaps to the newly-active image on the Active tab; the
-        All Images tab simply moves the highlight in the strip.
-        """
-        for seq, slot in (
-            ("]", self._activate_next_image),
-            (".", self._activate_next_image),
-            ("[", self._activate_prev_image),
-            (",", self._activate_prev_image),
-        ):
-            sc = QShortcut(QKeySequence(seq), self)
-            sc.setContext(Qt.WidgetWithChildrenShortcut)
-            sc.activated.connect(slot)
+    _NAV_TEXT_TYPES = (QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox)
+
+    def eventFilter(self, obj, event) -> bool:  # noqa: N802
+        if event.type() != QEvent.KeyPress:
+            return super().eventFilter(obj, event)
+        if event.modifiers() != Qt.NoModifier:
+            return super().eventFilter(obj, event)
+        key = event.key()
+        if key not in (Qt.Key_A, Qt.Key_D):
+            return super().eventFilter(obj, event)
+        # Only intercept while focus is inside *this* panel — otherwise other
+        # panels (Basic Sorting, NG Count, …) would lose their A/D too.
+        focus = QApplication.focusWidget()
+        if focus is None or (focus is not self and not self.isAncestorOf(focus)):
+            return super().eventFilter(obj, event)
+        # Hand the key back to text-entry widgets verbatim.
+        if isinstance(focus, self._NAV_TEXT_TYPES):
+            return super().eventFilter(obj, event)
+        if isinstance(focus, QComboBox) and focus.isEditable():
+            return super().eventFilter(obj, event)
+        if key == Qt.Key_D:
+            self._activate_next_image()
+            return True
+        if key == Qt.Key_A:
+            self._activate_prev_image()
+            return True
+        return super().eventFilter(obj, event)
 
     def _activate_next_image(self) -> None:
         self._step_active_image(+1)
