@@ -43,6 +43,108 @@ Two options:
 
 The installer build script parses the version from `apt/brand.py:APP_VERSION` so you only need to bump that one line per release. See [`installer/README.md`](installer/README.md) for details.
 
+### Releasing a new version
+
+새 버전(예: 2.0.1 버그픽스, 2.1.0 마이너, 3.0.0 메이저)을 인스톨러로 배포하는 표준 절차입니다. `apt/brand.py`의 `APP_VERSION` **한 줄**이 single source of truth — 다른 데 손댈 필요 없습니다.
+
+#### 사전 준비 (한 번만)
+1. **Inno Setup 6** 설치 — https://jrsoftware.org/isdl.php
+   `C:\Program Files (x86)\Inno Setup 6\ISCC.exe` 가 생기면 끝. `build.ps1`이 자동 인식.
+2. **PyInstaller** — `AiV_ProTool\Scripts\python.exe -m pip install pyinstaller` (이미 깔려 있으면 skip)
+
+#### 버전 번호 정하기 (Semantic Versioning)
+- `MAJOR.MINOR.PATCH` — 예: `2.1.3`
+- **PATCH** (`2.0.0` → `2.0.1`): 버그 픽스만. 사용자 작업 흐름 변화 없음.
+- **MINOR** (`2.0.x` → `2.1.0`): 새 기능 추가. 기존 동작 호환.
+- **MAJOR** (`2.x.x` → `3.0.0`): 기존 동작이 깨지는 변경 (Job 파일 포맷 변경 등).
+
+#### 5단계 릴리즈 절차
+
+**1. 버전 올리기** — `apt/brand.py` 의 한 줄만 수정:
+
+```python
+# apt/brand.py
+APP_VERSION = "2.1.0"   # ← 여기만 바꾸면 끝
+```
+
+**2. 커밋** — 변경 사항이 있으면 commit. 버전 bump도 별도 commit으로 남기면 git log 추적이 쉬워요:
+
+```powershell
+git add -A
+git commit -m "release: bump version to 2.1.0"
+```
+
+**3. 빌드 실행** — 한 줄 명령:
+
+```powershell
+cd e:\Dev\DL_Tool\installer
+.\build.ps1
+```
+
+진행 단계 (~4분):
+```
+=== Reading version from brand.py ===           ← 2.1.0 자동 감지
+=== Generating version_info.txt ===             ← APT.exe 메타데이터 자동 생성
+=== Running PyInstaller ===                     ← 가장 오래 걸림 (~3분)
+=== Copying mim2color.exe + INI into dist\APT ===
+=== Locating Inno Setup compiler (iscc.exe) ===
+=== Compiling installer ===                     ← Inno Setup 압축 (~30~60초)
+
+================================================================
+  Installer ready:
+  E:\Dev\DL_Tool\installer\Output\APT_Setup_v2.1.0.exe
+  size: 67.2 MB
+================================================================
+```
+
+산출물:
+- `installer\Output\APT_Setup_v2.1.0.exe` ← **이 한 파일만** 사용자에게 전달
+- 파일명에 버전이 자동으로 들어가서 구버전과 헷갈리지 않음
+
+**4. 본인 PC에서 사전 테스트** (필수)
+- 새 인스톨러를 본인 PC에서 한 번 실행해보세요. 기존 설치 위에 자동 업그레이드되는지 확인.
+- 핵심 패널 (Preprocessing 등) 한 번씩 열어보고 정상 동작 확인.
+- 문제 있으면 코드 수정 → `apt/brand.py` 그대로 두고 다시 `.\build.ps1` (덮어쓰기됨)
+
+**5. 사용자에게 배포**
+- USB / 공유 드라이브 / Slack / 메일 — 어떤 방법으로든 `APT_Setup_v2.1.0.exe` 전달
+- 사용자는 **그냥 더블클릭만** 하면 기존 버전 위에 자동 업그레이드
+- 사용자가 편집한 `mim_converter_config.ini`는 보존됨 (인스톨러의 `onlyifdoesntexist` 플래그)
+
+#### Git tag 남기기 (선택 권장)
+
+릴리즈 시점을 git에 기록해두면 나중에 "v2.0.0 시점 코드"로 돌아가기 쉬워요:
+
+```powershell
+git tag -a v2.1.0 -m "Release 2.1.0 — <한 줄 요약>"
+git push origin v2.1.0
+```
+
+GitHub에 가면 [Releases](https://github.com/CVKim/AiV_ProcessingTool/releases) 페이지에서 tag별로 변경 사항을 정리하고 `APT_Setup_v2.1.0.exe` 파일을 첨부 업로드해서 외부 공유용 다운로드 페이지로도 쓸 수 있습니다.
+
+#### 자주 묻는 케이스
+
+| 상황 | 답 |
+|---|---|
+| **버전만 바꾸고 코드 변화는 없는데도 빌드해도 되나요?** | 네. 이전 빌드를 재현하고 싶을 때 종종 함. |
+| **PATCH 빌드인데 사용자 폴더 데이터가 사라지나요?** | 아니요. `_internal\sample\`, INI 파일 모두 보존. 사용자가 만든 `.apt.json` 같은 외부 파일은 어차피 설치 폴더 밖이라 영향 없음. |
+| **빌드 중에 PyInstaller가 한참 멈춰 있어요** | 정상. PyInstaller는 의존성 분석 + 압축이라 ~3분 정도 걸림. 진행 표시가 없어도 끝까지 기다리면 됩니다. |
+| **`iscc.exe` 못 찾는다고 나옵니다** | Inno Setup 6 설치 안 됨. https://jrsoftware.org/isdl.php 에서 설치 후 재시도. |
+| **빌드 실패 — "Permission denied" on `dist\`** | 이전에 빌드한 EXE가 실행 중이거나 폴더가 다른 프로그램에서 열려있음. EXE 종료 + 폴더 닫고 재시도. |
+| **새 버전 빌드해도 인스톨러 크기는 비슷한가요?** | 네. Python 런타임 + Qt가 대부분이라 ~67MB 수준에서 변동 거의 없음. |
+
+#### 부분 재빌드 (시간 절약)
+
+빌드 중 어느 한 단계만 다시 돌리고 싶을 때:
+
+```powershell
+# PyInstaller 건너뛰기 (dist/가 fresh일 때 인스톨러만 다시)
+.\build.ps1 -SkipPyInstaller
+
+# Inno Setup 건너뛰기 (dist/APT/만 필요할 때)
+.\build.ps1 -SkipInstaller
+```
+
 ---
 
 ## 2. Features
