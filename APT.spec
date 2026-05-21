@@ -24,6 +24,9 @@ a = Analysis(
     datas=[
         ('AiV_LOGO.ico', '.'),
         ('apt/resources/AiV_LOGO.ico', 'apt/resources'),
+        # Demo images shipped for the Preprocessing panel's "Load Samples"
+        # button. Lands under _internal/sample/ in directory builds.
+        ('sample', 'sample'),
     ],
     hiddenimports=hidden,
     hookspath=[],
