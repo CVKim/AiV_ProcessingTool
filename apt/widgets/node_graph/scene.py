@@ -165,16 +165,117 @@ class NodeScene(QGraphicsScene):
             src = self._drag_origin
             self._drag_origin = None
             if isinstance(target, PortItem) and target.kind == "in" and target.node is not src.node:
-                try:
-                    self.pipeline.connect(src.node.node_id, target.node.node_id, target.index)
-                except PipelineError as exc:
-                    self.statusMessage.emit(str(exc))
-                else:
-                    self._rebuild_edges()
-                    self.graphChanged.emit()
+                self._connect_or_fork(src, target)
             event.accept()
             return
         super().mouseReleaseEvent(event)
+
+    # ------------------------------------------------------------------
+    # Smart connect: replace vs auto-fork when the port is occupied
+    # ------------------------------------------------------------------
+    def _connect_or_fork(self, src: PortItem, target: PortItem) -> None:
+        """Connect ``src.output`` → ``target.input``.
+
+        If the input port already holds a different source AND the target op
+        accepts only one input, clone the destination node so both incoming
+        branches survive (same params, edit independently after). This matches
+        the user's mental model of "wire two upstreams into the same op" —
+        rather than silently replacing the older edge.
+
+        For multi-input ops (the Combine category) we fall through to a
+        plain replace because the user deliberately picked that specific
+        port (port 0 or port 1).
+        """
+        from apt.preprocessing.operations import get_operation
+
+        src_id = src.node.node_id
+        dst_id = target.node.node_id
+        port_idx = target.index
+
+        try:
+            dst_node = self.pipeline.get(dst_id)
+        except PipelineError:
+            return
+
+        existing_src = (
+            dst_node.inputs[port_idx] if port_idx < len(dst_node.inputs) else ""
+        )
+
+        # User dropped the same connection again — nothing to do.
+        if existing_src == src_id:
+            return
+
+        # Empty port → plain connect.
+        if not existing_src:
+            self._do_connect(src_id, dst_id, port_idx)
+            return
+
+        # Port already holds a *different* source. For single-input ops, fork
+        # the destination so we keep both branches.
+        try:
+            op = get_operation(dst_node.op_key)
+        except KeyError:
+            self._do_connect(src_id, dst_id, port_idx)
+            return
+
+        if op.inputs > 1:
+            self._do_connect(src_id, dst_id, port_idx)
+            return
+
+        self._fork_destination(target.node, src_id)
+
+    def _do_connect(self, src_id: str, dst_id: str, port_idx: int) -> None:
+        try:
+            self.pipeline.connect(src_id, dst_id, port_idx)
+        except PipelineError as exc:
+            self.statusMessage.emit(str(exc))
+            return
+        self._rebuild_edges()
+        self.graphChanged.emit()
+
+    def _fork_destination(self, dest_item: NodeItem, src_id: str) -> None:
+        """Clone ``dest_item`` (op + params) and connect ``src_id`` to the clone.
+
+        Called when the user drags a second connection into a single-input
+        op's already-occupied port. Original node + its existing connection
+        stay intact; only the clone is wired to the new source.
+        """
+        try:
+            src_node = self.pipeline.get(dest_item.node_id)
+        except PipelineError:
+            return
+        try:
+            new_node = self.pipeline.add_node(src_node.op_key)
+        except PipelineError as exc:
+            self.statusMessage.emit(str(exc))
+            return
+        for k, v in src_node.params.items():
+            self.pipeline.set_param(new_node.id, k, v)
+        # Place the clone just below the original so the user can see what
+        # happened. Snap-to-grid in itemChange keeps the placement clean.
+        pos = dest_item.scenePos()
+        x = float(pos.x())
+        y = float(pos.y()) + NODE_HEIGHT + 30
+        new_node.position = (x, y)
+        self._add_node_item(
+            new_node.id,
+            scene_pos=QPointF(x + NODE_WIDTH / 2, y + NODE_HEIGHT / 2),
+        )
+        try:
+            self.pipeline.connect(src_id, new_node.id, 0)
+        except PipelineError as exc:
+            self.statusMessage.emit(str(exc))
+            return
+        self._rebuild_edges()
+        self.statusMessage.emit(
+            f"Duplicated {dest_item.node_id} → {new_node.id} so both branches "
+            f"are kept (same params · edit independently)."
+        )
+        # Select the new node so the inspector populates with its params.
+        self.clearSelection()
+        if new_node.id in self._nodes:
+            self._nodes[new_node.id].setSelected(True)
+        self.graphChanged.emit()
 
     def keyPressEvent(self, event) -> None:  # noqa: N802
         key = event.key()
