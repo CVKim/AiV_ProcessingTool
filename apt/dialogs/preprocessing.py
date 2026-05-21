@@ -53,6 +53,7 @@ from apt.preprocessing.operations import get_operation
 from apt.widgets.batch_grid import BatchResultGrid
 from apt.widgets.image_preview import ImagePreview
 from apt.widgets.image_strip import ImageStrip
+from apt.widgets.node_properties import NodePropertiesPanel
 from apt.widgets.op_picker import OpPicker
 from apt.widgets.parameter_form import ParameterForm
 from apt.widgets.node_graph import NodeScene, NodeView
@@ -243,6 +244,13 @@ class PreprocessingPanel(BaseTaskPanel):
         layout = QVBoxLayout(wrap)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
+
+        properties_group = QGroupBox("Properties")
+        properties_layout = QVBoxLayout(properties_group)
+        properties_layout.setContentsMargins(10, 14, 10, 10)
+        self.properties = NodePropertiesPanel()
+        properties_layout.addWidget(self.properties)
+        layout.addWidget(properties_group, 0)
 
         params_group = QGroupBox("Parameters")
         params_layout = QVBoxLayout(params_group)
@@ -455,6 +463,7 @@ class PreprocessingPanel(BaseTaskPanel):
         self._selected_node_id = node_id
         if not node_id:
             self.param_form.clear()
+            self.properties.clear()
             self.preview.set_image(None)
             self.preview_meta.setText("(no node selected)")
             self.batch_grid.set_header("(no node selected)")
@@ -465,6 +474,7 @@ class PreprocessingPanel(BaseTaskPanel):
         except PipelineError as exc:
             _log.warning("Selected node %r missing from pipeline: %s", node_id, exc)
             self.param_form.clear()
+            self.properties.clear()
             self.preview.set_image(None)
             self.preview_meta.setText(f"⚠ Node not found ({node_id})")
             return
@@ -479,6 +489,7 @@ class PreprocessingPanel(BaseTaskPanel):
                 self.param_form.show_params(op.label, op.params, node.params)
         except Exception:
             _log.exception("_on_node_selected: param form for %r", node_id)
+        self._refresh_properties_for(node_id)
         self._refresh_all()
 
     def _on_graph_changed(self) -> None:
@@ -548,10 +559,14 @@ class PreprocessingPanel(BaseTaskPanel):
         except PipelineError as exc:
             self.preview.set_image(None)
             self.preview_meta.setText(f"⚠ {exc}")
+            self.scene.refresh_all_node_visuals()
+            self._refresh_properties_for(self._selected_node_id)
             return
         except Exception as exc:  # noqa: BLE001
             self.preview.set_image(None)
             self.preview_meta.setText(f"⚠ {exc}")
+            self.scene.refresh_all_node_visuals()
+            self._refresh_properties_for(self._selected_node_id)
             return
         self.preview.set_image(result)
         h, w = result.shape[:2]
@@ -561,6 +576,21 @@ class PreprocessingPanel(BaseTaskPanel):
         self.preview_meta.setText(
             f"{node.display_title()} ({node.id}) · {active_name} · {w}×{h}px · {ch}ch"
         )
+        # Push per-node timings to the canvas + properties panel.
+        self.scene.refresh_all_node_visuals()
+        self._refresh_properties_for(self._selected_node_id)
+
+    def _refresh_properties_for(self, node_id: str) -> None:
+        if not node_id:
+            self.properties.clear()
+            return
+        try:
+            node = self.pipeline.get(node_id)
+        except PipelineError:
+            self.properties.clear()
+            return
+        downstream = NodePropertiesPanel.count_downstream(self.pipeline, node_id)
+        self.properties.show_node(node, downstream)
 
     def _recompute_batch_grid(self) -> None:
         if self.preview_tabs.currentIndex() != 1:

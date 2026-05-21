@@ -7,9 +7,12 @@ preprocessing``) sits on top of it.
 
 from apt.preprocessing.categories import (
     CATEGORY_STYLES,
+    STATUS_COLORS,
     CategoryStyle,
     ORIGIN_STYLE,
+    format_time_ms,
     short_hint,
+    status_color,
     style_for,
 )
 from apt.preprocessing.operations import (
@@ -44,10 +47,13 @@ __all__ = [
     "Pipeline",
     "PipelineError",
     "CATEGORY_STYLES",
+    "STATUS_COLORS",
     "CategoryStyle",
     "ORIGIN_STYLE",
     "style_for",
     "short_hint",
+    "status_color",
+    "format_time_ms",
     "JobFormatError",
     "JOB_FORMAT_TAG",
     "JOB_FORMAT_VERSION",

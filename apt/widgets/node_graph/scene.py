@@ -283,6 +283,19 @@ class NodeScene(QGraphicsScene):
             return
         item.update_params(node.params)
 
+    def refresh_all_node_visuals(self) -> None:
+        """Sync every NodeItem's status pip / time label from the pipeline.
+
+        Called after a compute pass so the canvas shows fresh per-node
+        timings (success / cached / error). Cheap: no graph mutation.
+        """
+        for node_id, item in self._nodes.items():
+            try:
+                node = self.pipeline.get(node_id)
+            except PipelineError:
+                continue
+            item.update_status(node.last_time_ms, node.last_status, node.last_error)
+
     def set_pipeline(self, pipeline: Pipeline) -> None:
         """Replace the underlying pipeline and rebuild the scene visuals.
 

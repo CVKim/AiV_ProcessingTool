@@ -121,6 +121,43 @@ def test_preprocessing_image_switch_is_stable(qt_app):
     assert panel._active_index == 0
 
 
+def test_preprocessing_properties_panel_populates_from_compute(qt_app):
+    """After a compute, the inspector's Properties panel shows the selected
+    node's Name / Type / Status / Time / I-O / Shape — the data needed to
+    reproduce the Cognex-style per-tool readout."""
+    import numpy as np
+    from apt.app import MainWindow
+    from apt.dialogs.preprocessing import LoadedImage, PreprocessingPanel
+    from apt.preprocessing import Pipeline
+
+    win = MainWindow()
+    panel = next(
+        win.stack.widget(i) for i in range(win.stack.count())
+        if isinstance(win.stack.widget(i), PreprocessingPanel)
+    )
+    img = np.full((50, 50, 3), 80, dtype=np.uint8)
+    panel._images = [LoadedImage("t.bmp", img, img)]
+    panel._active_index = 0
+    panel._sync_image_strip()
+    panel._apply_active_image_to_pipeline()
+
+    panel._add_op("gaussian_blur")
+    blur_id = next(n.id for n in panel.pipeline.nodes() if n.op_key == "gaussian_blur")
+    panel.pipeline.connect(Pipeline.ORIGIN_ID, blur_id, 0)
+    panel.scene._rebuild_edges()
+    panel._selected_node_id = blur_id
+    panel._recompute_preview()
+
+    node = panel.pipeline.get(blur_id)
+    assert node.last_status == "success"
+    assert node.last_time_ms >= 0.0
+    # Properties widget should reflect that the node has 1 wired input and 0 downstream.
+    panel._refresh_properties_for(blur_id)
+    # Smoke: widget renders without raising; status text is the success label.
+    assert panel.properties._status_label.text() == "Success"
+    assert "Gaussian Blur" in panel.properties._type.text()
+
+
 def test_preprocessing_remove_active_image_picks_safe_index(qt_app):
     import numpy as np
     from apt.app import MainWindow

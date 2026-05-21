@@ -9,6 +9,7 @@ that interactive parameter tweaks only recompute the dirty subtree.
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Iterable
 
@@ -33,6 +34,11 @@ class Node:
     ``position`` carries the canvas (x, y) of the node so that saving and
     loading a job file restores the same graph layout. Kept as a plain
     tuple — the pipeline module stays Qt-free.
+
+    Runtime fields (``last_time_ms``, ``last_status``, ``last_error``,
+    ``last_output_shape``) are populated by :meth:`Pipeline.compute` and
+    consumed by the UI to render a per-node status badge / time label.
+    They are intentionally NOT persisted in job files.
     """
 
     id: str
@@ -41,6 +47,10 @@ class Node:
     params: dict = field(default_factory=dict)
     title: str = ""
     position: tuple[float, float] = (0.0, 0.0)
+    last_time_ms: float = 0.0
+    last_status: str = "idle"         # "idle" | "success" | "error" | "cached"
+    last_error: str | None = None
+    last_output_shape: tuple[int, ...] | None = None
 
     def display_title(self) -> str:
         if self.title:
@@ -186,24 +196,53 @@ class Pipeline:
     # ------------------------------------------------------------------
     def compute(self, node_id: str) -> np.ndarray:
         if node_id in self._cache:
+            # Mark the node as "cached" so the UI can show that the result
+            # came from cache (and didn't burn fresh time on this run).
+            try:
+                cached_node = self.get(node_id)
+                if cached_node.last_status == "success":
+                    cached_node.last_status = "cached"
+            except PipelineError:
+                pass
             return self._cache[node_id]
         node = self.get(node_id)
         if node.op_key == "origin":
             if self._origin_image is None:
                 raise PipelineError("Origin image is not loaded")
             self._cache[node_id] = self._origin_image
+            node.last_time_ms = 0.0
+            node.last_status = "success"
+            node.last_error = None
+            node.last_output_shape = tuple(self._origin_image.shape)
             return self._origin_image
 
         op = get_operation(node.op_key)
         required = op.inputs
         actual_inputs = [i for i in node.inputs if i]
         if len(actual_inputs) < required:
+            node.last_status = "error"
+            node.last_error = (
+                f"needs {required} input(s), has {len(actual_inputs)}"
+            )
             raise PipelineError(
                 f"Node {node_id!r} ({node.op_key}) needs {required} input(s), "
                 f"has {len(actual_inputs)}"
             )
         images = [self.compute(src) for src in actual_inputs[:required]]
-        result = apply_operation(node.op_key, images, **node.params)
+
+        t0 = time.perf_counter()
+        try:
+            result = apply_operation(node.op_key, images, **node.params)
+        except Exception as exc:
+            node.last_time_ms = (time.perf_counter() - t0) * 1000.0
+            node.last_status = "error"
+            node.last_error = str(exc)
+            node.last_output_shape = None
+            raise
+        node.last_time_ms = (time.perf_counter() - t0) * 1000.0
+        node.last_status = "success"
+        node.last_error = None
+        node.last_output_shape = tuple(result.shape)
         self._cache[node_id] = result
         return result
 

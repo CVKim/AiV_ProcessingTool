@@ -30,7 +30,13 @@ from PyQt5.QtWidgets import (
     QGraphicsSimpleTextItem,
 )
 
-from apt.preprocessing import ORIGIN_STYLE, short_hint, style_for
+from apt.preprocessing import (
+    ORIGIN_STYLE,
+    format_time_ms,
+    short_hint,
+    status_color,
+    style_for,
+)
 from apt.preprocessing.operations import get_operation
 
 
@@ -143,12 +149,21 @@ class NodeItem(QGraphicsRectItem):
         self._title.setBrush(QBrush(QColor("#0B0B0E")))
         self._title.setPos(34, 8)
 
+        # Subtitle row: node_id  ·  time label (right-aligned via separate item)
         self._subtitle = QGraphicsSimpleTextItem(node_id, self)
         sub_font = QFont()
         sub_font.setPointSize(8)
         self._subtitle.setFont(sub_font)
         self._subtitle.setBrush(QBrush(COLOR_NODE_TEXT_DIM))
         self._subtitle.setPos(12, TITLE_HEIGHT + 8)
+
+        self._time_text = QGraphicsSimpleTextItem("—", self)
+        time_font = QFont("Consolas")
+        time_font.setPointSize(8)
+        time_font.setBold(True)
+        self._time_text.setFont(time_font)
+        self._time_text.setBrush(QBrush(COLOR_NODE_TEXT_DIM))
+        self._reposition_time()
 
         self._params_text = QGraphicsSimpleTextItem("", self)
         params_font = QFont()
@@ -157,6 +172,19 @@ class NodeItem(QGraphicsRectItem):
         self._params_text.setFont(params_font)
         self._params_text.setBrush(QBrush(COLOR_NODE_TEXT))
         self._params_text.setPos(12, TITLE_HEIGHT + 26)
+
+        # Status pip: small circle in the top-right corner of the title bar.
+        # Color reflects last execution state (idle/success/cached/error).
+        self._status_pip = QGraphicsEllipseItem(
+            -4, -4, 8, 8, self
+        )
+        self._status_pip.setPen(QPen(QColor("#0B0B0E"), 1))
+        self._status_pip.setBrush(QBrush(QColor(status_color("idle"))))
+        self._status_pip.setPos(NODE_WIDTH - 12, TITLE_HEIGHT / 2)
+        self._status_pip.setZValue(2)
+        self._last_status = "idle"
+        self._last_time_ms = 0.0
+        self._last_error: str | None = None
 
         # Ports
         self.inputs: list[PortItem] = []
@@ -183,6 +211,42 @@ class NodeItem(QGraphicsRectItem):
 
     def update_params(self, params: dict) -> None:
         self.set_params_summary(short_hint(self.op_key, params))
+
+    def update_status(
+        self,
+        time_ms: float,
+        status: str,
+        error: str | None = None,
+    ) -> None:
+        """Refresh the time label, status pip and error tooltip."""
+        self._last_status = status
+        self._last_time_ms = time_ms
+        self._last_error = error
+        # Pip colour
+        self._status_pip.setBrush(QBrush(QColor(status_color(status))))
+        # Time label (italic-ish, dimmed for idle / red for error)
+        label = format_time_ms(time_ms, status)
+        self._time_text.setText(label)
+        if status == "error":
+            self._time_text.setBrush(QBrush(QColor("#E5484D")))
+        elif status == "idle":
+            self._time_text.setBrush(QBrush(COLOR_NODE_TEXT_DIM))
+        else:
+            self._time_text.setBrush(QBrush(COLOR_NODE_TEXT))
+        self._reposition_time()
+        # Tooltip: helpful on hover, especially when errored.
+        if error:
+            self.setToolTip(f"{self.label}\n⚠ {error}")
+        else:
+            self.setToolTip(f"{self.label}\n{label}")
+
+    def _reposition_time(self) -> None:
+        """Right-align the time text under the title bar."""
+        if not hasattr(self, "_time_text"):
+            return
+        text_rect = self._time_text.boundingRect()
+        x = NODE_WIDTH - text_rect.width() - 10
+        self._time_text.setPos(x, TITLE_HEIGHT + 8)
 
     def _place_port(self, port: PortItem, index: int, total: int, side: str) -> None:
         x = 0 if side == "left" else NODE_WIDTH
