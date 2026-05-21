@@ -158,6 +158,31 @@ def test_preprocessing_properties_panel_populates_from_compute(qt_app):
     assert "Gaussian Blur" in panel.properties._type.text()
 
 
+def test_zoomable_preview_preserves_zoom_for_same_shape(qt_app):
+    """When a new image of the same shape replaces the current one, the
+    user's manual zoom should be kept. Different shape → auto-refit."""
+    import numpy as np
+    from apt.widgets.zoomable_image import ZoomableImageView
+
+    view = ZoomableImageView()
+    view.resize(400, 300)
+    img = np.full((200, 300, 3), 128, dtype=np.uint8)
+    view.set_image(img)
+    view.zoom_to_100()
+    assert view.current_zoom() == 1.0
+
+    # Same shape — zoom must be preserved.
+    img2 = np.full((200, 300, 3), 80, dtype=np.uint8)
+    view.set_image(img2)
+    assert view.current_zoom() == 1.0
+
+    # Different shape — view should refit (zoom changes).
+    img3 = np.full((100, 100, 3), 200, dtype=np.uint8)
+    view.set_image(img3)
+    # Just assert it changed away from 1.0 — exact factor depends on viewport.
+    assert view.current_zoom() != 1.0
+
+
 def test_preprocessing_image_navigation_shortcuts_step_and_wrap(qt_app):
     """``]`` / ``[`` (and ``.`` / ``,``) walk the loaded image set with
     wrap-around. Active index updates, ``_on_image_selected`` runs the
